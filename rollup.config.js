@@ -8,6 +8,7 @@ export default {
   output: {
     file: "dist/halo-button-card.js",
     format: "iife",
+    name: "HaloButtonCard",
     sourcemap: false
   },
   plugins: [
