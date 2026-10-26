@@ -175,14 +175,14 @@ export class HaloCoverCard extends HTMLElement {
         :host {
           display: block;
         }
-        .halo-cover-card {
+        ha-card.halo-cover-card {
           position: relative;
           display: flex;
           align-items: center;
           justify-content: space-between;
           border-radius: 14px;
-          padding: 8px 12px;
-          min-height: 56px;
+          padding: 10px 14px;
+          min-height: 64px;
           box-sizing: border-box;
           backdrop-filter: blur(16px) saturate(180%);
           -webkit-backdrop-filter: blur(16px) saturate(180%);
@@ -192,8 +192,9 @@ export class HaloCoverCard extends HTMLElement {
           cursor: pointer;
           user-select: none;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow: hidden;
         }
-        .halo-cover-card:hover {
+        ha-card.halo-cover-card:hover {
           filter: brightness(1.05);
         }
         .halo-left {
@@ -242,13 +243,13 @@ export class HaloCoverCard extends HTMLElement {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          line-height: 1.2;
+          line-height: 1.25;
         }
         .halo-status {
           font-size: 11.5px;
           font-weight: 600;
           color: ${accentCol};
-          line-height: 1.1;
+          line-height: 1.15;
         }
         .halo-progress-track {
           width: 100%;
@@ -272,7 +273,7 @@ export class HaloCoverCard extends HTMLElement {
         .halo-buttons {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
           flex-shrink: 0;
           margin-left: 10px;
         }
@@ -290,6 +291,7 @@ export class HaloCoverCard extends HTMLElement {
           justify-content: center;
           cursor: pointer;
           transition: all 0.15s ease;
+          box-sizing: border-box;
         }
         .halo-btn:hover {
           background: rgba(255, 255, 255, 0.16);
@@ -308,7 +310,7 @@ export class HaloCoverCard extends HTMLElement {
         }
       </style>
 
-      <div class="halo-cover-card" id="card-body">
+      <ha-card class="halo-cover-card" id="card-body">
         <div class="halo-left">
           <div class="halo-icon-badge">
             <ha-icon icon="${iconName}"></ha-icon>
@@ -323,23 +325,23 @@ export class HaloCoverCard extends HTMLElement {
         </div>
 
         <div class="halo-buttons">
-          <button class="halo-btn" id="btn-up" title="Monter">
-            <ha-icon icon="mdi:arrow-up"></ha-icon>
+          <button class="halo-btn" id="btn-down" title="Descendre">
+            <ha-icon icon="mdi:arrow-down"></ha-icon>
           </button>
           <button class="halo-btn" id="btn-stop" title="Arrêter">
             <ha-icon icon="mdi:stop"></ha-icon>
           </button>
-          <button class="halo-btn" id="btn-down" title="Descendre">
-            <ha-icon icon="mdi:arrow-down"></ha-icon>
+          <button class="halo-btn" id="btn-up" title="Monter">
+            <ha-icon icon="mdi:arrow-up"></ha-icon>
           </button>
         </div>
-      </div>
+      </ha-card>
     `;
 
     // Bind event listeners
     this._root.getElementById('card-body')?.addEventListener('click', (e) => this._handleTap(e));
-    this._root.getElementById('btn-up')?.addEventListener('click', (e) => this._handleAction(e, 'open'));
-    this._root.getElementById('btn-stop')?.addEventListener('click', (e) => this._handleAction(e, 'stop'));
     this._root.getElementById('btn-down')?.addEventListener('click', (e) => this._handleAction(e, 'close'));
+    this._root.getElementById('btn-stop')?.addEventListener('click', (e) => this._handleAction(e, 'stop'));
+    this._root.getElementById('btn-up')?.addEventListener('click', (e) => this._handleAction(e, 'open'));
   }
 }

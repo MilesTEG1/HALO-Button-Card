@@ -49,22 +49,22 @@ export function getHaloCardStyles(
   if (isUnavail) {
     return {
       background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))',
-      border: '1.25px solid rgba(245, 158, 11, 0.55)',
-      boxShadow: '0 0 16px rgba(245, 158, 11, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+      border: '1.5px solid #f59e0b',
+      boxShadow: '0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)'
     };
   }
 
   if (isMoving) {
     return {
       background: `linear-gradient(135deg, ${accentCol}26, rgba(20, 28, 38, 0.90))`,
-      border: `1.25px solid ${accentCol}77`,
-      boxShadow: `0 0 20px ${accentCol}55, inset 0 1px 0 rgba(255, 255, 255, 0.20)`
+      border: `1.5px solid ${accentCol}`,
+      boxShadow: `0 0 22px ${accentCol}77, 0 0 8px ${accentCol}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`
     };
   }
 
   return {
-    background: `linear-gradient(135deg, ${accentCol}18, rgba(20, 28, 38, 0.88))`,
-    border: `1.25px solid ${accentCol}44`,
-    boxShadow: `0 0 16px ${accentCol}33, inset 0 1px 0 rgba(255, 255, 255, 0.15)`
+    background: `linear-gradient(135deg, ${accentCol}1A, rgba(20, 28, 38, 0.88))`,
+    border: `1.5px solid ${accentCol}`,
+    boxShadow: `0 0 18px ${accentCol}60, 0 0 6px ${accentCol}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`
   };
 }
