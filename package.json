@@ -1,0 +1,39 @@
+{
+  "name": "halo-button-card",
+  "version": "1.0.0",
+  "description": "Turnkey Home Assistant Lovelace cards featuring HOLM Liquid Glass style and dynamic glowing halos.",
+  "main": "dist/halo-button-card.js",
+  "module": "dist/halo-button-card.js",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MilesTEG1/HALO-Button-Card.git"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "custom-card",
+    "halo",
+    "holm",
+    "liquid-glass",
+    "hacs"
+  ],
+  "author": "MilesTEG1",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MilesTEG1/HALO-Button-Card/issues"
+  },
+  "homepage": "https://github.com/MilesTEG1/HALO-Button-Card#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.0",
+    "rollup": "^4.24.0",
+    "tslib": "^2.7.0",
+    "typescript": "^5.6.3"
+  }
+}
