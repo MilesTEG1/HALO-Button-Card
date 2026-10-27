@@ -4,6 +4,9 @@
  */
 
 import { HaloCoverCard } from './components/halo-cover-card';
+import { HaloSeparatorCard } from './components/halo-separator-card';
+import { HaloCoverCardEditor } from './editors/halo-cover-card-editor';
+import { HaloSeparatorCardEditor } from './editors/halo-separator-card-editor';
 import { voletHelperInstance } from './core/volet-helper';
 
 const VERSION = '1.0.0';
@@ -35,10 +38,35 @@ window.customCards.push({
   preview: true
 });
 
+window.customCards.push({
+  type: 'halo-separator-card',
+  name: 'HALO Separator Card',
+  description: 'Sleek section divider with neon gradient line and HOLM styling.',
+  preview: true
+});
+
 // Register Web Component custom elements
 if (!customElements.get('halo-cover-card')) {
   customElements.define('halo-cover-card', HaloCoverCard);
 }
 
+if (!customElements.get('halo-cover-card-editor')) {
+  customElements.define('halo-cover-card-editor', HaloCoverCardEditor);
+}
+
+if (!customElements.get('halo-separator-card')) {
+  customElements.define('halo-separator-card', HaloSeparatorCard);
+}
+
+if (!customElements.get('halo-separator-card-editor')) {
+  customElements.define('halo-separator-card-editor', HaloSeparatorCardEditor);
+}
+
 // Export for external consumers
-export { HaloCoverCard, voletHelperInstance };
+export {
+  HaloCoverCard,
+  HaloCoverCardEditor,
+  HaloSeparatorCard,
+  HaloSeparatorCardEditor,
+  voletHelperInstance
+};
