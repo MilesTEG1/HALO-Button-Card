@@ -7,8 +7,8 @@
 import { HassEntity, VoletTrack } from '../types';
 
 export class VoletHelper {
-  public version = '2.2.0';
-  public QUIET_MS = 2500;
+  public version = '2.1.0';
+  public QUIET_MS = 3500;
   public GRACE_MS = 4000;
   public MAX_AGE_MS = 30000;
   public seq = 0;
@@ -21,6 +21,13 @@ export class VoletHelper {
 
   private _attachGlobal() {
     if (typeof window !== 'undefined') {
+      const existing = (window as any)._voletHelper;
+      if (existing && existing.tracking) {
+        Object.assign(this.tracking, existing.tracking);
+        if (Array.isArray(existing.cards)) {
+          this.cards = existing.cards;
+        }
+      }
       (window as any)._voletHelper = this;
     }
   }
@@ -36,12 +43,12 @@ export class VoletHelper {
 
   public reached(dir: 'opening' | 'closing' | null, p: number | null, st: string): boolean {
     if (dir === 'closing') return p === 0 || st === 'closed';
-    if (dir === 'opening') return p === 100 || st === 'open';
+    if (dir === 'opening') return p === 100;
     return false;
   }
 
   public register(el: any) {
-    if (!el || typeof el.requestUpdate !== 'function') return;
+    if (!el) return;
     for (let i = 0; i < this.cards.length; i++) {
       const c = this.cards[i].deref ? this.cards[i].deref() : this.cards[i];
       if (c === el) return;
@@ -125,8 +132,10 @@ export class VoletHelper {
   }
 
   public startMove(id: string, dir: 'opening' | 'closing', ms: number) {
-    const t = this.tracking[id];
-    if (!t) return;
+    let t = this.tracking[id];
+    if (!t) {
+      t = this.tracking[id] = this.newTrack(null, Date.now());
+    }
     if (t.timer) clearTimeout(t.timer);
     t.moving = true;
     t.dir = dir;
