@@ -31,15 +31,56 @@ export const HOLM_PALETTE: Record<string, string> = {
   'Blanc Glace': '#e2e8f0'
 };
 
+export function hexToRgb(hex: string): [number, number, number] | undefined {
+  if (!hex || typeof hex !== 'string') return undefined;
+  if (HOLM_PALETTE[hex]) {
+    hex = HOLM_PALETTE[hex];
+  }
+  const clean = hex.replace('#', '').trim();
+  if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    return [r, g, b];
+  }
+  if (clean.length === 6 || clean.length === 8) {
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      return [r, g, b];
+    }
+  }
+  return undefined;
+}
+
+export function rgbToHex(rgb: [number, number, number] | number[]): string {
+  if (!Array.isArray(rgb) || rgb.length < 3) return '#26c6da';
+  const r = Math.max(0, Math.min(255, Math.round(rgb[0])));
+  const g = Math.max(0, Math.min(255, Math.round(rgb[1])));
+  const b = Math.max(0, Math.min(255, Math.round(rgb[2])));
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+export function toHexColor(color: any, fallback: string): string {
+  if (!color) return fallback;
+  if (Array.isArray(color)) return rgbToHex(color);
+  if (typeof color === 'string') {
+    if (HOLM_PALETTE[color]) return HOLM_PALETTE[color];
+    if (color.startsWith('#')) return color;
+    if (color.startsWith('rgb')) return color;
+  }
+  return fallback;
+}
+
 export function resolveThemeColor(
   hass: HomeAssistant,
-  explicitColor?: string,
+  explicitColor?: string | [number, number, number],
   themeEntity?: string,
   fallback: string = '#26c6da'
 ): string {
   if (explicitColor) {
-    if (HOLM_PALETTE[explicitColor]) return HOLM_PALETTE[explicitColor];
-    if (explicitColor.startsWith('#') || explicitColor.startsWith('rgb')) return explicitColor;
+    return toHexColor(explicitColor, fallback);
   }
   const states = hass?.states || {};
   if (themeEntity && states[themeEntity]?.state) {
@@ -67,22 +108,22 @@ export function getCoverColors(
 ): CoverColors {
   const states = hass?.states || {};
   return {
-    closed:
-      config?.color_closed ||
-      states['input_text.couleur_volet_ferme']?.state ||
-      '#FFB69C',
-    open:
-      config?.color_open ||
-      states['input_text.couleur_volet_ouvert']?.state ||
-      '#96E1FF',
-    partial:
-      config?.color_partial ||
-      states['input_text.couleur_volet_partiel']?.state ||
-      '#38bdf8',
-    moving:
-      config?.color_moving ||
-      states['input_text.couleur_volet_en_mouvement']?.state ||
-      '#f59e0b'
+    closed: toHexColor(
+      config?.color_closed,
+      states['input_text.couleur_volet_ferme']?.state || '#FFB69C'
+    ),
+    open: toHexColor(
+      config?.color_open,
+      states['input_text.couleur_volet_ouvert']?.state || '#96E1FF'
+    ),
+    partial: toHexColor(
+      config?.color_partial,
+      states['input_text.couleur_volet_partiel']?.state || '#38bdf8'
+    ),
+    moving: toHexColor(
+      config?.color_moving,
+      states['input_text.couleur_volet_en_mouvement']?.state || '#f59e0b'
+    )
   };
 }
 

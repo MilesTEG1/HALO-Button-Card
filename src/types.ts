@@ -32,10 +32,10 @@ export interface HaloCoverCardConfig {
   entity: string;
   name?: string;
   icon?: string;
-  color_closed?: string;
-  color_open?: string;
-  color_partial?: string;
-  color_moving?: string;
+  color_closed?: string | [number, number, number];
+  color_open?: string | [number, number, number];
+  color_partial?: string | [number, number, number];
+  color_moving?: string | [number, number, number];
   show_slider?: boolean;
   tap_action?: Record<string, any>;
 }
@@ -45,7 +45,7 @@ export interface HaloSeparatorCardConfig {
   name?: string;
   title?: string;
   icon?: string;
-  color?: string;
+  color?: string | [number, number, number];
   theme_entity?: string;
 }
 
