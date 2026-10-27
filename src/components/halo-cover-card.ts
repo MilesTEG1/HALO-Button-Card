@@ -19,6 +19,16 @@ export class HaloCoverCard extends HTMLElement {
     this._root = this.attachShadow({ mode: 'open' });
   }
 
+  public static getConfigElement(): HTMLElement {
+    return document.createElement('halo-cover-card-editor');
+  }
+
+  public static getStubConfig(): Record<string, any> {
+    return {
+      entity: 'cover.volet_roulant'
+    };
+  }
+
   private get _helper() {
     return (window as any)._voletHelper || voletHelperInstance;
   }

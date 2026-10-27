@@ -40,6 +40,15 @@ export interface HaloCoverCardConfig {
   tap_action?: Record<string, any>;
 }
 
+export interface HaloSeparatorCardConfig {
+  type: string;
+  name?: string;
+  title?: string;
+  icon?: string;
+  color?: string;
+  theme_entity?: string;
+}
+
 export interface VoletTrack {
   lastPos: number | null;
   lastLu: number;

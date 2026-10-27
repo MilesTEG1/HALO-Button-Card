@@ -12,6 +12,55 @@ export interface CoverColors {
   moving: string;
 }
 
+export const HOLM_PALETTE: Record<string, string> = {
+  'Cyan HOLM': '#26c6da',
+  'Bleu Céleste': '#38bdf8',
+  'Saphir Océan': '#2f86ff',
+  'Menthe Givrée': '#00e5a3',
+  'Émeraude': '#10b981',
+  'Vert Lime': '#84cc16',
+  'Jaune Soleil': '#facc15',
+  'Ambre Doré': '#f59e0b',
+  'Orange Flamme': '#ff5a1f',
+  'Corail Pêche': '#fb923c',
+  'Rose Rubis': '#f43f5e',
+  'Rose Bonbon': '#f472b6',
+  'Fuchsia Néon': '#d946ef',
+  'Améthyste': '#a855f7',
+  'Violet Nuit': '#8b5cf6',
+  'Blanc Glace': '#e2e8f0'
+};
+
+export function resolveThemeColor(
+  hass: HomeAssistant,
+  explicitColor?: string,
+  themeEntity?: string,
+  fallback: string = '#26c6da'
+): string {
+  if (explicitColor) {
+    if (HOLM_PALETTE[explicitColor]) return HOLM_PALETTE[explicitColor];
+    if (explicitColor.startsWith('#') || explicitColor.startsWith('rgb')) return explicitColor;
+  }
+  const states = hass?.states || {};
+  if (themeEntity && states[themeEntity]?.state) {
+    const val = states[themeEntity].state;
+    if (HOLM_PALETTE[val]) return HOLM_PALETTE[val];
+    if (val.startsWith('#')) return val;
+  }
+  const commonEntities = [
+    'input_select.couleur_theme_ouvertures',
+    'input_select.couleur_theme_chauffage',
+    'input_select.couleur_theme_eclairage',
+    'input_select.couleur_theme_eclairages',
+    'input_select.couleur_theme_global'
+  ];
+  for (const ent of commonEntities) {
+    const st = states[ent]?.state;
+    if (st && HOLM_PALETTE[st]) return HOLM_PALETTE[st];
+  }
+  return fallback;
+}
+
 export function getCoverColors(
   hass: HomeAssistant,
   config?: HaloCoverCardConfig
