@@ -5,6 +5,9 @@
  */
 
 import { HomeAssistant, HaloCoverCardConfig } from '../types';
+import { hexToRgb, rgbToHex } from '../core/theme-helper';
+
+const COLOR_KEYS = ['color_closed', 'color_open', 'color_partial', 'color_moving'] as const;
 
 const SCHEMA = [
   {
@@ -24,22 +27,22 @@ const SCHEMA = [
       {
         name: 'color_closed',
         label: 'Couleur Fermé (optionnel)',
-        selector: { text: {} }
+        selector: { color_rgb: {} }
       },
       {
         name: 'color_open',
         label: 'Couleur Ouvert (optionnel)',
-        selector: { text: {} }
+        selector: { color_rgb: {} }
       },
       {
         name: 'color_partial',
         label: 'Couleur Partiel (optionnel)',
-        selector: { text: {} }
+        selector: { color_rgb: {} }
       },
       {
         name: 'color_moving',
         label: 'Couleur En mouvement (optionnel)',
-        selector: { text: {} }
+        selector: { color_rgb: {} }
       }
     ]
   }
@@ -62,11 +65,29 @@ export class HaloCoverCardEditor extends HTMLElement {
     }
   }
 
+  private _formData(): Record<string, any> {
+    if (!this._config) return {};
+    const data: Record<string, any> = { ...this._config };
+    for (const k of COLOR_KEYS) {
+      if (data[k] && typeof data[k] === 'string') {
+        const rgb = hexToRgb(data[k]);
+        if (rgb) data[k] = rgb;
+      }
+    }
+    return data;
+  }
+
   private _valueChanged(ev: CustomEvent) {
     if (!this._config || !ev.detail.value) return;
+    const val = { ...ev.detail.value };
+    for (const k of COLOR_KEYS) {
+      if (val[k] && Array.isArray(val[k])) {
+        val[k] = rgbToHex(val[k]);
+      }
+    }
     this._config = {
       ...this._config,
-      ...ev.detail.value
+      ...val
     };
     const event = new CustomEvent('config-changed', {
       detail: { config: this._config },
@@ -89,12 +110,12 @@ export class HaloCoverCardEditor extends HTMLElement {
       form = this.querySelector('#form') as any;
       if (form) {
         form.schema = SCHEMA;
-        form.data = this._config;
+        form.data = this._formData();
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
       }
     } else {
-      form.data = this._config;
+      form.data = this._formData();
       if (this._hass) form.hass = this._hass;
     }
   }

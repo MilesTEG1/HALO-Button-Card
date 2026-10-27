@@ -5,6 +5,7 @@
  */
 
 import { HomeAssistant, HaloSeparatorCardConfig } from '../types';
+import { hexToRgb, rgbToHex } from '../core/theme-helper';
 
 const SCHEMA = [
   {
@@ -19,8 +20,8 @@ const SCHEMA = [
   },
   {
     name: 'color',
-    label: 'Couleur personnalisée (optionnel, ex: #26c6da ou Cyan HOLM)',
-    selector: { text: {} }
+    label: 'Couleur personnalisée (optionnel)',
+    selector: { color_rgb: {} }
   },
   {
     name: 'theme_entity',
@@ -46,11 +47,25 @@ export class HaloSeparatorCardEditor extends HTMLElement {
     }
   }
 
+  private _formData(): Record<string, any> {
+    if (!this._config) return {};
+    const data: Record<string, any> = { ...this._config };
+    if (data.color && typeof data.color === 'string') {
+      const rgb = hexToRgb(data.color);
+      if (rgb) data.color = rgb;
+    }
+    return data;
+  }
+
   private _valueChanged(ev: CustomEvent) {
     if (!this._config || !ev.detail.value) return;
+    const val = { ...ev.detail.value };
+    if (val.color && Array.isArray(val.color)) {
+      val.color = rgbToHex(val.color);
+    }
     this._config = {
       ...this._config,
-      ...ev.detail.value
+      ...val
     };
     const event = new CustomEvent('config-changed', {
       detail: { config: this._config },
@@ -73,12 +88,12 @@ export class HaloSeparatorCardEditor extends HTMLElement {
       form = this.querySelector('#form') as any;
       if (form) {
         form.schema = SCHEMA;
-        form.data = this._config;
+        form.data = this._formData();
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
       }
     } else {
-      form.data = this._config;
+      form.data = this._formData();
       if (this._hass) form.hass = this._hass;
     }
   }
