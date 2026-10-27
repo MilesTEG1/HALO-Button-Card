@@ -19,6 +19,10 @@ export class HaloCoverCard extends HTMLElement {
     this._root = this.attachShadow({ mode: 'open' });
   }
 
+  private get _helper() {
+    return (window as any)._voletHelper || voletHelperInstance;
+  }
+
   public setConfig(config: HaloCoverCardConfig) {
     if (!config || !config.entity) {
       throw new Error('Please define a valid cover entity (e.g. cover.mon_volet)');
@@ -28,7 +32,7 @@ export class HaloCoverCard extends HTMLElement {
 
   public set hass(hass: HomeAssistant) {
     this._hass = hass;
-    voletHelperInstance.register(this);
+    this._helper.register(this);
     this._render();
   }
 
@@ -37,6 +41,10 @@ export class HaloCoverCard extends HTMLElement {
   }
 
   public refresh() {
+    this._render();
+  }
+
+  public requestUpdate(_name?: string, _oldValue?: any) {
     this._render();
   }
 
@@ -63,13 +71,13 @@ export class HaloCoverCard extends HTMLElement {
     const members = entity?.attributes?.entity_id || null;
 
     if (action === 'open') {
-      voletHelperInstance.markManualMove(id, 'opening', members, this._hass.states);
+      this._helper.markManualMove(id, 'opening', members, this._hass.states);
       this._hass.callService('cover', 'open_cover', { entity_id: id });
     } else if (action === 'stop') {
-      voletHelperInstance.markManualMove(id, 'stop', members, this._hass.states);
+      this._helper.markManualMove(id, 'stop', members, this._hass.states);
       this._hass.callService('cover', 'stop_cover', { entity_id: id });
     } else if (action === 'close') {
-      voletHelperInstance.markManualMove(id, 'closing', members, this._hass.states);
+      this._helper.markManualMove(id, 'closing', members, this._hass.states);
       this._hass.callService('cover', 'close_cover', { entity_id: id });
     }
     this._render();
@@ -103,11 +111,11 @@ export class HaloCoverCard extends HTMLElement {
     const members = Array.isArray(attrs.entity_id) ? attrs.entity_id : [];
     const isGroup = members.length > 0;
 
-    const p = voletHelperInstance.position(entity);
+    const p = this._helper.position(entity);
     const st = entity.state || 'unavailable';
     const isUnavail = st === 'unavailable' || st === 'unknown';
 
-    const moveInfo = voletHelperInstance.isEntityOrGroupMoving(entity, this._hass.states);
+    const moveInfo = this._helper.isEntityOrGroupMoving(entity, this._hass.states);
     const isMoving = moveInfo.moving;
     const moveDir = moveInfo.dir;
     const movingCount = moveInfo.count;
