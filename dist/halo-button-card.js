@@ -1,1 +1,819 @@
-var HaloButtonCard=function(t){"use strict";const e=new class{constructor(){this.version="2.1.0",this.QUIET_MS=3500,this.GRACE_MS=4e3,this.MAX_AGE_MS=3e4,this.seq=0,this.tracking={},this.cards=[],this._attachGlobal()}_attachGlobal(){if("undefined"!=typeof window){const t=window._voletHelper;t&&t.tracking&&(Object.assign(this.tracking,t.tracking),Array.isArray(t.cards)&&(this.cards=t.cards)),window._voletHelper=this}}position(t){if(!t)return null;const e=t.attributes||{};return void 0!==e.current_position&&null!==e.current_position?Number(e.current_position):"open"===t.state?100:"closed"===t.state?0:null}reached(t,e,n){return"closing"===t?0===e||"closed"===n:"opening"===t&&100===e}register(t){if(t){for(let e=0;e<this.cards.length;e++){if((this.cards[e].deref?this.cards[e].deref():this.cards[e])===t)return}this.cards.push("undefined"!=typeof WeakRef?new WeakRef(t):t)}}forceCardUpdate(t){if(!t)return!1;if("function"==typeof t.requestUpdate){this.seq=(this.seq||0)+1;const e=t._updateTimerMS;return t._updateTimerMS=this.seq,t.requestUpdate("_updateTimerMS",e),!0}return"function"==typeof t.refresh&&(t.refresh(),!0)}refreshAll(){let t=0;const e=[];for(let n=0;n<this.cards.length;n++){const i=this.cards[n],s=i.deref?i.deref():i;if(s&&!1!==s.isConnected){e.push(i);try{this.forceCardUpdate(s)&&t++}catch(t){}}}if(this.cards=e,0===t&&"undefined"!=typeof document)try{const t=e=>{const n=e.querySelectorAll("*");for(let e=0;e<n.length;e++){const i=n[e];"HALO-COVER-CARD"!==i.tagName&&"BUTTON-CARD"!==i.tagName&&"CUSTOM-BUTTON-CARD"!==i.tagName||this.forceCardUpdate(i),i.shadowRoot&&t(i.shadowRoot)}};t(document)}catch(t){}}newTrack(t,e){return{lastPos:t,lastLu:e,moving:!1,dir:null,until:0,timer:null}}stopMove(t){t.timer&&clearTimeout(t.timer),t.timer=null,t.moving=!1,t.dir=null,t.until=0}startMove(t,e,n){let i=this.tracking[t];i||(i=this.tracking[t]=this.newTrack(null,Date.now())),i.timer&&clearTimeout(i.timer),i.moving=!0,i.dir=e,i.until=Date.now()+n,i.timer=setTimeout(()=>{this.expire(t)},n+50)}expire(t){const e=this.tracking[t];if(!e)return;if(e.timer=null,!e.moving)return;const n=e.until-Date.now();n>0?e.timer=setTimeout(()=>{this.expire(t)},n+50):(this.stopMove(e),this.refreshAll())}checkMoving(t,e){const n={moving:!1,dir:null};if(!t||!e)return n;const i=e[t];if(!i)return n;const s=i.state||"unavailable";if("opening"===s||"closing"===s)return{moving:!0,dir:s};const o=this.tracking[t];if("unavailable"===s||"unknown"===s)return o&&(this.stopMove(o),o.lastPos=null),n;const r=this.position(i),a=i.last_updated?new Date(i.last_updated).getTime():0,l=Date.now();if(!o)return this.tracking[t]=this.newTrack(r,a),n;if(a!==o.lastLu){if(a>0&&l-a<=this.MAX_AGE_MS&&null!==r&&null!==o.lastPos&&r!==o.lastPos&&l>=(o.ignoreUntil||0)){const e=r<o.lastPos?"closing":"opening";this.reached(e,r,s)?this.stopMove(o):this.startMove(t,e,this.QUIET_MS)}o.lastLu=a}return null!==r&&(o.lastPos=r),o.moving&&(this.reached(o.dir,r,s)||l>=o.until)&&this.stopMove(o),o.moving?{moving:!0,dir:o.dir}:n}isEntityOrGroupMoving(t,e){if(!t||!e)return{moving:!1,dir:null,count:0};if("opening"===t.state||"closing"===t.state)return{moving:!0,dir:t.state,count:1};const n=t.entity_id,i=t.attributes||{},s=Array.isArray(i.entity_id)?i.entity_id:Array.isArray(i.group_entities)?i.group_entities:[];if(s.length>0){let t=0,n=null;for(let i=0;i<s.length;i++){const o=this.checkMoving(s[i],e);o.moving&&(t++,n||(n=o.dir))}return{moving:t>0,dir:n,count:t}}const o=this.checkMoving(n,e);return{moving:o.moving,dir:o.dir,count:o.moving?1:0}}markManualMove(t,e,n,i){(Array.isArray(n)&&n.length>0?n:[t]).forEach(t=>{if(!t)return;const n=i?i[t]:null,s=n?this.position(n):null,o=n&&n.state||null,r=n&&n.last_updated?new Date(n.last_updated).getTime():0;let a=this.tracking[t];if(a||(a=this.tracking[t]=this.newTrack(s,r)),"stop"===e)return this.stopMove(a),void(a.ignoreUntil=Date.now()+1500);const l=null!==s?s:a.lastPos;o&&this.reached(e,l,o)||this.startMove(t,e,this.GRACE_MS)}),this.refreshAll()}},n={"Cyan HOLM":"#26c6da","Bleu Céleste":"#38bdf8","Saphir Océan":"#2f86ff","Menthe Givrée":"#00e5a3","Émeraude":"#10b981","Vert Lime":"#84cc16","Jaune Soleil":"#facc15","Ambre Doré":"#f59e0b","Orange Flamme":"#ff5a1f","Corail Pêche":"#fb923c","Rose Rubis":"#f43f5e","Rose Bonbon":"#f472b6","Fuchsia Néon":"#d946ef","Améthyste":"#a855f7","Violet Nuit":"#8b5cf6","Blanc Glace":"#e2e8f0"};function i(t){if(!t||"string"!=typeof t)return;n[t]&&(t=n[t]);const e=t.replace("#","").trim();if(3===e.length){return[parseInt(e[0]+e[0],16),parseInt(e[1]+e[1],16),parseInt(e[2]+e[2],16)]}if(6===e.length||8===e.length){const t=parseInt(e.substring(0,2),16),n=parseInt(e.substring(2,4),16),i=parseInt(e.substring(4,6),16);if(!isNaN(t)&&!isNaN(n)&&!isNaN(i))return[t,n,i]}}function s(t){if(!Array.isArray(t)||t.length<3)return"#26c6da";return"#"+[Math.max(0,Math.min(255,Math.round(t[0]))),Math.max(0,Math.min(255,Math.round(t[1]))),Math.max(0,Math.min(255,Math.round(t[2])))].map(t=>t.toString(16).padStart(2,"0")).join("")}function o(t,e){if(!t)return e;if(Array.isArray(t))return s(t);if("string"==typeof t){if(n[t])return n[t];if(t.startsWith("#"))return t;if(t.startsWith("rgb"))return t}return e}class r extends HTMLElement{constructor(){super(),this._updateTimerMS=0,this._cardEl=null,this._unavailEl=null,this._badgeEl=null,this._iconEl=null,this._nameEl=null,this._statusEl=null,this._progressFillEl=null,this._root=this.attachShadow({mode:"open"})}static getConfigElement(){return document.createElement("halo-cover-card-editor")}static getStubConfig(){return{entity:"cover.volet_roulant"}}get _helper(){return window._voletHelper||e}setConfig(t){if(!t||!t.entity)throw new Error("Please define a valid cover entity (e.g. cover.mon_volet)");this._config=t,this._hass&&this._render()}set hass(t){const e=this._hass;this._hass=t,this._helper.register(this),this._cardEl?this._hasChanged(e,t)&&this._render():this._render()}getCardSize(){return 2}refresh(){this._render()}requestUpdate(t,e){this._render()}_hasChanged(t,e){if(!t||!e||!this._config)return!0;const n=this._config.entity;if(!n)return!0;if(t.states[n]!==e.states[n])return!0;const i=t.states[n],s=i?.attributes?.entity_id;if(Array.isArray(s))for(const n of s)if(t.states[n]!==e.states[n])return!0;const o=this._helper.tracking[n];if(o&&o.moving)return!0;const r=["input_text.couleur_volet_ferme","input_text.couleur_volet_ouvert","input_text.couleur_volet_partiel","input_text.couleur_volet_en_mouvement"];for(const n of r)if(t.states[n]!==e.states[n])return!0;return!1}_fireEvent(t,e){const n=new CustomEvent(t,{bubbles:!0,composed:!0,detail:e});this.dispatchEvent(n)}_handleTap(t){t.stopPropagation(),this._fireEvent("hass-more-info",{entityId:this._config.entity})}_handleAction(t,e){t.stopPropagation();const n=this._config.entity;if(!n||!this._hass)return;const i=this._hass.states[n],s=i?.attributes?.entity_id||null;"open"===e?(this._helper.markManualMove(n,"opening",s,this._hass.states),this._hass.callService("cover","open_cover",{entity_id:n})):"stop"===e?(this._helper.markManualMove(n,"stop",s,this._hass.states),this._hass.callService("cover","stop_cover",{entity_id:n})):"close"===e&&(this._helper.markManualMove(n,"closing",s,this._hass.states),this._hass.callService("cover","close_cover",{entity_id:n})),this._render()}_buildDom(){this._root.innerHTML='\n      <style>\n        :host {\n          display: block;\n        }\n        ha-card.halo-cover-card {\n          position: relative;\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          border-radius: 14px;\n          padding: 10px 14px;\n          min-height: 64px;\n          box-sizing: border-box;\n          backdrop-filter: blur(16px) saturate(180%);\n          -webkit-backdrop-filter: blur(16px) saturate(180%);\n          cursor: pointer;\n          user-select: none;\n          transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),\n                      border 0.3s cubic-bezier(0.4, 0, 0.2, 1),\n                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),\n                      filter 0.15s ease;\n          overflow: hidden;\n        }\n        ha-card.halo-cover-card:hover {\n          filter: brightness(1.05);\n        }\n        .halo-left {\n          display: flex;\n          align-items: center;\n          gap: 12px;\n          min-width: 0;\n          flex: 1;\n        }\n        .halo-icon-badge {\n          width: 38px;\n          height: 38px;\n          min-width: 38px;\n          border-radius: 11px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          flex-shrink: 0;\n          transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;\n        }\n        .halo-icon-badge ha-icon {\n          --mdc-icon-size: 22px;\n          width: 22px;\n          height: 22px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          transition: color 0.3s ease;\n        }\n        .halo-info {\n          display: flex;\n          flex-direction: column;\n          gap: 2px;\n          min-width: 0;\n          flex: 1;\n          overflow: hidden;\n          text-align: left;\n        }\n        .halo-name {\n          font-size: 13.5px;\n          font-weight: 600;\n          color: #ffffff;\n          white-space: nowrap;\n          overflow: hidden;\n          text-overflow: ellipsis;\n          line-height: 1.25;\n        }\n        .halo-status {\n          font-size: 11.5px;\n          font-weight: 600;\n          line-height: 1.15;\n          transition: color 0.3s ease;\n        }\n        .halo-progress-track {\n          width: 100%;\n          max-width: 130px;\n          height: 3px;\n          min-height: 3px;\n          border-radius: 3px;\n          background: rgba(255, 255, 255, 0.10);\n          overflow: hidden;\n          margin-top: 3px;\n        }\n        .halo-progress-fill {\n          display: block;\n          height: 100%;\n          border-radius: 3px;\n          transition: width 0.6s ease, background 0.3s ease, box-shadow 0.3s ease;\n        }\n        .halo-buttons {\n          display: flex;\n          align-items: center;\n          gap: 4px;\n          flex-shrink: 0;\n          margin-left: 10px;\n        }\n        .halo-btn {\n          width: 34px;\n          height: 32px;\n          min-width: 34px;\n          border-radius: 9px;\n          padding: 0;\n          background: rgba(255, 255, 255, 0.08);\n          border: 1px solid rgba(255, 255, 255, 0.12);\n          box-shadow: none;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          cursor: pointer;\n          transition: all 0.15s ease;\n          box-sizing: border-box;\n        }\n        .halo-btn:hover {\n          background: rgba(255, 255, 255, 0.16);\n          border-color: rgba(255, 255, 255, 0.25);\n          transform: translateY(-1px);\n        }\n        .halo-btn:active {\n          transform: translateY(1px) scale(0.96);\n          background: rgba(255, 255, 255, 0.22);\n        }\n        .halo-btn ha-icon {\n          --mdc-icon-size: 18px;\n          width: 18px;\n          height: 18px;\n          color: #ffffff;\n          pointer-events: none;\n        }\n        .unavailable-box {\n          display: none;\n          padding: 14px;\n          background: rgba(245, 158, 11, 0.15);\n          border: 1px solid #f59e0b;\n          border-radius: 14px;\n          color: #ffffff;\n          font-size: 13px;\n        }\n      </style>\n\n      <div class="unavailable-box" id="unavail-box"></div>\n\n      <ha-card class="halo-cover-card" id="card-body">\n        <div class="halo-left">\n          <div class="halo-icon-badge" id="icon-badge">\n            <ha-icon id="cover-icon"></ha-icon>\n          </div>\n          <div class="halo-info">\n            <span class="halo-name" id="cover-name"></span>\n            <span class="halo-status" id="cover-status"></span>\n            <div class="halo-progress-track">\n              <i class="halo-progress-fill" id="progress-fill"></i>\n            </div>\n          </div>\n        </div>\n\n        <div class="halo-buttons">\n          <button class="halo-btn" id="btn-down" title="Descendre" type="button">\n            <ha-icon icon="mdi:arrow-down"></ha-icon>\n          </button>\n          <button class="halo-btn" id="btn-stop" title="Arrêter" type="button">\n            <ha-icon icon="mdi:stop"></ha-icon>\n          </button>\n          <button class="halo-btn" id="btn-up" title="Monter" type="button">\n            <ha-icon icon="mdi:arrow-up"></ha-icon>\n          </button>\n        </div>\n      </ha-card>\n    ',this._cardEl=this._root.getElementById("card-body"),this._unavailEl=this._root.getElementById("unavail-box"),this._badgeEl=this._root.getElementById("icon-badge"),this._iconEl=this._root.getElementById("cover-icon"),this._nameEl=this._root.getElementById("cover-name"),this._statusEl=this._root.getElementById("cover-status"),this._progressFillEl=this._root.getElementById("progress-fill"),this._cardEl?.addEventListener("click",t=>this._handleTap(t)),this._root.getElementById("btn-down")?.addEventListener("click",t=>this._handleAction(t,"close")),this._root.getElementById("btn-stop")?.addEventListener("click",t=>this._handleAction(t,"stop")),this._root.getElementById("btn-up")?.addEventListener("click",t=>this._handleAction(t,"open"))}_render(){if(!this._config||!this._hass)return;this._cardEl||this._buildDom();const t=this._config.entity,e=this._hass.states[t],n=function(t,e){const n=t?.states||{};return{closed:o(e?.color_closed,n["input_text.couleur_volet_ferme"]?.state||"#FFB69C"),open:o(e?.color_open,n["input_text.couleur_volet_ouvert"]?.state||"#96E1FF"),partial:o(e?.color_partial,n["input_text.couleur_volet_partiel"]?.state||"#38bdf8"),moving:o(e?.color_moving,n["input_text.couleur_volet_en_mouvement"]?.state||"#f59e0b")}}(this._hass,this._config);if(!e)return this._unavailEl&&(this._unavailEl.textContent=`Entité non trouvée : ${t}`,this._unavailEl.style.display="block"),void(this._cardEl&&(this._cardEl.style.display="none"));this._unavailEl&&(this._unavailEl.style.display="none"),this._cardEl&&(this._cardEl.style.display="flex");const i=e.attributes||{},s=(Array.isArray(i.entity_id)?i.entity_id:[]).length>0,r=this._helper.position(e),a=e.state||"unavailable",l="unavailable"===a||"unknown"===a,c=this._helper.isEntityOrGroupMoving(e,this._hass.states),h=c.moving,d=c.dir,u=c.count,p=!(h||l||0!==r&&"closed"!==a),_=!h&&!l&&!p&&(100===r||null==r&&"open"===a),g=!h&&!l&&!p&&!_&&null!=r&&r>0&&r<100;let f=n.closed;l?f="#f59e0b":h?f=n.moving:p?f=n.closed:_?f=n.open:g&&(f=n.partial);let m=this._config.name||i.friendly_name||"Volet";m=m.replace(/^Volet\s+roulant\s+/i,"");let b="Fermé";l?b="Indisponible":h?b=s?u>1?`${u} volets en mouvement…`:"closing"===d?"Fermeture…":"Ouverture…":"closing"===d?null!=r?`Fermeture… ${100-r} %`:"Fermeture…":null!=r?`Ouverture… ${r} %`:"Ouverture…":p?b="Fermé":_?b="Ouvert":g&&(b=`Partiel (${r}%)`);const v=null!=r?100-r:p?100:0;let x="mdi:window-shutter";x=l?"mdi:alert-circle":h?"closing"===d?"mdi:arrow-down-bold-circle":"mdi:arrow-up-bold-circle":_||g?"mdi:window-shutter-open":"mdi:window-shutter";const y=function(t,e,n){return e?{background:"linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))",border:"1.5px solid #f59e0b",boxShadow:"0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)"}:n?{background:`linear-gradient(135deg, ${t}26, rgba(20, 28, 38, 0.90))`,border:`1.5px solid ${t}`,boxShadow:`0 0 22px ${t}77, 0 0 8px ${t}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`}:{background:`linear-gradient(135deg, ${t}1A, rgba(20, 28, 38, 0.88))`,border:`1.5px solid ${t}`,boxShadow:`0 0 18px ${t}60, 0 0 6px ${t}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`}}(f,l,h);if(this._cardEl&&(this._cardEl.style.background!==y.background&&(this._cardEl.style.background=y.background),this._cardEl.style.border!==y.border&&(this._cardEl.style.border=y.border),this._cardEl.style.boxShadow!==y.boxShadow&&(this._cardEl.style.boxShadow=y.boxShadow)),this._badgeEl){const t=`${f}22`,e=`1.25px solid ${f}55`,n=`0 0 12px ${f}44`;this._badgeEl.style.background!==t&&(this._badgeEl.style.background=t),this._badgeEl.style.border!==e&&(this._badgeEl.style.border=e),this._badgeEl.style.boxShadow!==n&&(this._badgeEl.style.boxShadow=n)}if(this._iconEl&&(this._iconEl.getAttribute("icon")!==x&&this._iconEl.setAttribute("icon",x),this._iconEl.style.color!==f&&(this._iconEl.style.color=f)),this._nameEl&&this._nameEl.textContent!==m&&(this._nameEl.textContent=m),this._statusEl&&(this._statusEl.textContent!==b&&(this._statusEl.textContent=b),this._statusEl.style.color!==f&&(this._statusEl.style.color=f)),this._progressFillEl){const t=`${v}%`,e=`0 0 6px ${f}88`;this._progressFillEl.style.width!==t&&(this._progressFillEl.style.width=t),this._progressFillEl.style.background!==f&&(this._progressFillEl.style.background=f),this._progressFillEl.style.boxShadow!==e&&(this._progressFillEl.style.boxShadow=e)}}}class a extends HTMLElement{constructor(){super(),this._containerEl=null,this._iconEl=null,this._titleEl=null,this._lineEl=null,this._root=this.attachShadow({mode:"open"})}static getConfigElement(){return document.createElement("halo-separator-card-editor")}static getStubConfig(){return{name:"Section",icon:"mdi:bookmark"}}setConfig(t){if(!t)throw new Error("Invalid configuration");this._config=t,this._hass&&this._render()}set hass(t){const e=this._hass;this._hass=t,this._containerEl?this._hasChanged(e,t)&&this._render():this._render()}getCardSize(){return 1}_hasChanged(t,e){if(!t||!e||!this._config)return!0;if(this._config.theme_entity&&t.states[this._config.theme_entity]!==e.states[this._config.theme_entity])return!0;const n=["input_select.couleur_theme_ouvertures","input_select.couleur_theme_chauffage","input_select.couleur_theme_eclairage","input_select.couleur_theme_eclairages","input_select.couleur_theme_global"];for(const i of n)if(t.states[i]!==e.states[i])return!0;return!1}_buildDom(){this._root.innerHTML='\n      <style>\n        :host {\n          display: block;\n          background: transparent !important;\n          border: none !important;\n          box-shadow: none !important;\n        }\n        .halo-separator {\n          display: flex;\n          align-items: center;\n          gap: 10px;\n          padding: 14px 0px 6px 0px;\n          width: 100%;\n          box-sizing: border-box;\n          user-select: none;\n        }\n        .halo-separator-icon {\n          width: 18px;\n          height: 18px;\n          min-width: 18px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          transform: translateY(-2px);\n          flex-shrink: 0;\n        }\n        .halo-separator-icon ha-icon {\n          --mdc-icon-size: 18px;\n          width: 18px;\n          height: 18px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          transition: color 0.3s ease;\n        }\n        .halo-separator-title {\n          color: #e6f2f5;\n          font-size: 14px;\n          font-weight: 600;\n          letter-spacing: -0.2px;\n          white-space: nowrap;\n          line-height: 1.2;\n          flex-shrink: 0;\n        }\n        .halo-separator-line {\n          flex: 1;\n          height: 2px;\n          min-height: 2px;\n          border-radius: 2px;\n          transition: background 0.3s ease;\n        }\n      </style>\n      <div class="halo-separator" id="container">\n        <div class="halo-separator-icon">\n          <ha-icon id="sep-icon"></ha-icon>\n        </div>\n        <span class="halo-separator-title" id="sep-title"></span>\n        <div class="halo-separator-line" id="sep-line"></div>\n      </div>\n    ',this._containerEl=this._root.getElementById("container"),this._iconEl=this._root.getElementById("sep-icon"),this._titleEl=this._root.getElementById("sep-title"),this._lineEl=this._root.getElementById("sep-line")}_render(){if(!this._config)return;this._containerEl||this._buildDom();const t=this._config.name||this._config.title||"Section",e=this._config.icon||"mdi:bookmark",i=function(t,e,i,s="#26c6da"){if(e)return o(e,s);const r=t?.states||{};if(i&&r[i]?.state){const t=r[i].state;if(n[t])return n[t];if(t.startsWith("#"))return t}const a=["input_select.couleur_theme_ouvertures","input_select.couleur_theme_chauffage","input_select.couleur_theme_eclairage","input_select.couleur_theme_eclairages","input_select.couleur_theme_global"];for(const t of a){const e=r[t]?.state;if(e&&n[e])return n[e]}return s}(this._hass,this._config.color,this._config.theme_entity,"#26c6da");if(this._iconEl&&(this._iconEl.getAttribute("icon")!==e&&this._iconEl.setAttribute("icon",e),this._iconEl.style.color!==i&&(this._iconEl.style.color=i)),this._titleEl&&this._titleEl.textContent!==t&&(this._titleEl.textContent=t),this._lineEl){const t=`linear-gradient(90deg, ${i} 0%, ${i}44 60%, transparent 100%)`;this._lineEl.style.background!==t&&(this._lineEl.style.background=t)}}}const l=["color_closed","color_open","color_partial","color_moving"],c=[{name:"entity",label:"Entité Volet ou Groupe",selector:{entity:{domain:"cover"}}},{name:"name",label:"Nom personnalisé (optionnel)",selector:{text:{}}},{type:"grid",name:"",schema:[{name:"color_closed",label:"Couleur Fermé (optionnel)",selector:{color_rgb:{}}},{name:"color_open",label:"Couleur Ouvert (optionnel)",selector:{color_rgb:{}}},{name:"color_partial",label:"Couleur Partiel (optionnel)",selector:{color_rgb:{}}},{name:"color_moving",label:"Couleur En mouvement (optionnel)",selector:{color_rgb:{}}}]}];class h extends HTMLElement{setConfig(t){this._config={...t},this._render()}set hass(t){this._hass=t;const e=this.querySelector("ha-form");e&&(e.hass=t)}_formData(){if(!this._config)return{};const t={...this._config};for(const e of l)if(t[e]&&"string"==typeof t[e]){const n=i(t[e]);n&&(t[e]=n)}return t}_valueChanged(t){if(!this._config||!t.detail.value)return;const e={...t.detail.value};for(const t of l)e[t]&&Array.isArray(e[t])&&(e[t]=s(e[t]));this._config={...this._config,...e};const n=new CustomEvent("config-changed",{detail:{config:this._config},bubbles:!0,composed:!0});this.dispatchEvent(n)}_render(){if(!this._config)return;let t=this.querySelector("ha-form");t?(t.data=this._formData(),this._hass&&(t.hass=this._hass)):(this.innerHTML='\n        <div style="padding: 8px 0;">\n          <ha-form id="form"></ha-form>\n        </div>\n      ',t=this.querySelector("#form"),t&&(t.schema=c,t.data=this._formData(),this._hass&&(t.hass=this._hass),t.addEventListener("value-changed",t=>this._valueChanged(t))))}}const d=[{name:"name",label:"Titre de la section",selector:{text:{}}},{name:"icon",label:"Icône",selector:{icon:{}}},{name:"color",label:"Couleur personnalisée (optionnel)",selector:{color_rgb:{}}},{name:"theme_entity",label:"Entité sélecteur de thème (optionnel)",selector:{entity:{domain:"input_select"}}}];class u extends HTMLElement{setConfig(t){this._config={...t},this._render()}set hass(t){this._hass=t;const e=this.querySelector("ha-form");e&&(e.hass=t)}_formData(){if(!this._config)return{};const t={...this._config};if(t.color&&"string"==typeof t.color){const e=i(t.color);e&&(t.color=e)}return t}_valueChanged(t){if(!this._config||!t.detail.value)return;const e={...t.detail.value};e.color&&Array.isArray(e.color)&&(e.color=s(e.color)),this._config={...this._config,...e};const n=new CustomEvent("config-changed",{detail:{config:this._config},bubbles:!0,composed:!0});this.dispatchEvent(n)}_render(){if(!this._config)return;let t=this.querySelector("ha-form");t?(t.data=this._formData(),this._hass&&(t.hass=this._hass)):(this.innerHTML='\n        <div style="padding: 8px 0;">\n          <ha-form id="form"></ha-form>\n        </div>\n      ',t=this.querySelector("#form"),t&&(t.schema=d,t.data=this._formData(),this._hass&&(t.hass=this._hass),t.addEventListener("value-changed",t=>this._valueChanged(t))))}}return console.info("%c  HALO-BUTTON-CARD  %c v1.0.0 ","color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;","color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;"),window.customCards=window.customCards||[],window.customCards.push({type:"halo-cover-card",name:"HALO Cover Card",description:"Turnkey roller shutter card with Liquid Glass styling and dynamic glowing halo.",preview:!0}),window.customCards.push({type:"halo-separator-card",name:"HALO Separator Card",description:"Sleek section divider with neon gradient line and HOLM styling.",preview:!0}),customElements.get("halo-cover-card")||customElements.define("halo-cover-card",r),customElements.get("halo-cover-card-editor")||customElements.define("halo-cover-card-editor",h),customElements.get("halo-separator-card")||customElements.define("halo-separator-card",a),customElements.get("halo-separator-card-editor")||customElements.define("halo-separator-card-editor",u),t.HaloCoverCard=r,t.HaloCoverCardEditor=h,t.HaloSeparatorCard=a,t.HaloSeparatorCardEditor=u,t.voletHelperInstance=e,t}({});
+var HaloButtonCard = (function (t) {
+  "use strict";
+  const e = new (class {
+      constructor() {
+        ((this.version = "2.1.0"),
+          (this.QUIET_MS = 3500),
+          (this.GRACE_MS = 4e3),
+          (this.MAX_AGE_MS = 3e4),
+          (this.seq = 0),
+          (this.tracking = {}),
+          (this.cards = []),
+          this._attachGlobal());
+      }
+      _attachGlobal() {
+        if ("undefined" != typeof window) {
+          const t = window._voletHelper;
+          (t &&
+            t.tracking &&
+            (Object.assign(this.tracking, t.tracking),
+            Array.isArray(t.cards) && (this.cards = t.cards)),
+            (window._voletHelper = this));
+        }
+      }
+      position(t) {
+        if (!t) return null;
+        const e = t.attributes || {};
+        return void 0 !== e.current_position && null !== e.current_position
+          ? Number(e.current_position)
+          : "open" === t.state
+            ? 100
+            : "closed" === t.state
+              ? 0
+              : null;
+      }
+      reached(t, e, n) {
+        return "closing" === t
+          ? 0 === e || "closed" === n
+          : "opening" === t && 100 === e;
+      }
+      register(t) {
+        if (t) {
+          for (let e = 0; e < this.cards.length; e++) {
+            if (
+              (this.cards[e].deref ? this.cards[e].deref() : this.cards[e]) ===
+              t
+            )
+              return;
+          }
+          this.cards.push("undefined" != typeof WeakRef ? new WeakRef(t) : t);
+        }
+      }
+      forceCardUpdate(t) {
+        if (!t) return !1;
+        if ("function" == typeof t.requestUpdate) {
+          this.seq = (this.seq || 0) + 1;
+          const e = t._updateTimerMS;
+          return (
+            (t._updateTimerMS = this.seq),
+            t.requestUpdate("_updateTimerMS", e),
+            !0
+          );
+        }
+        return "function" == typeof t.refresh && (t.refresh(), !0);
+      }
+      refreshAll() {
+        let t = 0;
+        const e = [];
+        for (let n = 0; n < this.cards.length; n++) {
+          const i = this.cards[n],
+            s = i.deref ? i.deref() : i;
+          if (s && !1 !== s.isConnected) {
+            e.push(i);
+            try {
+              this.forceCardUpdate(s) && t++;
+            } catch (t) {}
+          }
+        }
+        if (((this.cards = e), 0 === t && "undefined" != typeof document))
+          try {
+            const t = (e) => {
+              const n = e.querySelectorAll("*");
+              for (let e = 0; e < n.length; e++) {
+                const i = n[e];
+                (("HALO-COVER-CARD" !== i.tagName &&
+                  "BUTTON-CARD" !== i.tagName &&
+                  "CUSTOM-BUTTON-CARD" !== i.tagName) ||
+                  this.forceCardUpdate(i),
+                  i.shadowRoot && t(i.shadowRoot));
+              }
+            };
+            t(document);
+          } catch (t) {}
+      }
+      newTrack(t, e) {
+        return {
+          lastPos: t,
+          lastLu: e,
+          moving: !1,
+          dir: null,
+          until: 0,
+          timer: null,
+        };
+      }
+      stopMove(t) {
+        (t.timer && clearTimeout(t.timer),
+          (t.timer = null),
+          (t.moving = !1),
+          (t.dir = null),
+          (t.until = 0));
+      }
+      startMove(t, e, n) {
+        let i = this.tracking[t];
+        (i || (i = this.tracking[t] = this.newTrack(null, Date.now())),
+          i.timer && clearTimeout(i.timer),
+          (i.moving = !0),
+          (i.dir = e),
+          (i.until = Date.now() + n),
+          (i.timer = setTimeout(() => {
+            this.expire(t);
+          }, n + 50)));
+      }
+      expire(t) {
+        const e = this.tracking[t];
+        if (!e) return;
+        if (((e.timer = null), !e.moving)) return;
+        const n = e.until - Date.now();
+        n > 0
+          ? (e.timer = setTimeout(() => {
+              this.expire(t);
+            }, n + 50))
+          : (this.stopMove(e), this.refreshAll());
+      }
+      checkMoving(t, e) {
+        const n = { moving: !1, dir: null };
+        if (!t || !e) return n;
+        const i = e[t];
+        if (!i) return n;
+        const s = i.state || "unavailable";
+        if ("opening" === s || "closing" === s) return { moving: !0, dir: s };
+        const o = this.tracking[t];
+        if ("unavailable" === s || "unknown" === s)
+          return (o && (this.stopMove(o), (o.lastPos = null)), n);
+        const r = this.position(i),
+          a = i.last_updated ? new Date(i.last_updated).getTime() : 0,
+          l = Date.now();
+        if (!o) return ((this.tracking[t] = this.newTrack(r, a)), n);
+        if (a !== o.lastLu) {
+          if (
+            a > 0 &&
+            l - a <= this.MAX_AGE_MS &&
+            null !== r &&
+            null !== o.lastPos &&
+            r !== o.lastPos &&
+            l >= (o.ignoreUntil || 0)
+          ) {
+            const e = r < o.lastPos ? "closing" : "opening";
+            this.reached(e, r, s)
+              ? this.stopMove(o)
+              : this.startMove(t, e, this.QUIET_MS);
+          }
+          o.lastLu = a;
+        }
+        return (
+          null !== r && (o.lastPos = r),
+          o.moving &&
+            (this.reached(o.dir, r, s) || l >= o.until) &&
+            this.stopMove(o),
+          o.moving ? { moving: !0, dir: o.dir } : n
+        );
+      }
+      isEntityOrGroupMoving(t, e) {
+        if (!t || !e) return { moving: !1, dir: null, count: 0 };
+        if ("opening" === t.state || "closing" === t.state)
+          return { moving: !0, dir: t.state, count: 1 };
+        const n = t.entity_id,
+          i = t.attributes || {},
+          s = Array.isArray(i.entity_id)
+            ? i.entity_id
+            : Array.isArray(i.group_entities)
+              ? i.group_entities
+              : [];
+        if (s.length > 0) {
+          let t = 0,
+            n = null;
+          for (let i = 0; i < s.length; i++) {
+            const o = this.checkMoving(s[i], e);
+            o.moving && (t++, n || (n = o.dir));
+          }
+          return { moving: t > 0, dir: n, count: t };
+        }
+        const o = this.checkMoving(n, e);
+        return { moving: o.moving, dir: o.dir, count: o.moving ? 1 : 0 };
+      }
+      markManualMove(t, e, n, i) {
+        ((Array.isArray(n) && n.length > 0 ? n : [t]).forEach((t) => {
+          if (!t) return;
+          const n = i ? i[t] : null,
+            s = n ? this.position(n) : null,
+            o = (n && n.state) || null,
+            r = n && n.last_updated ? new Date(n.last_updated).getTime() : 0;
+          let a = this.tracking[t];
+          if ((a || (a = this.tracking[t] = this.newTrack(s, r)), "stop" === e))
+            return (this.stopMove(a), void (a.ignoreUntil = Date.now() + 1500));
+          const l = null !== s ? s : a.lastPos;
+          (o && this.reached(e, l, o)) || this.startMove(t, e, this.GRACE_MS);
+        }),
+          this.refreshAll());
+      }
+    })(),
+    n = {
+      "Cyan HOLM": "#26c6da",
+      "Bleu Céleste": "#38bdf8",
+      "Saphir Océan": "#2f86ff",
+      "Menthe Givrée": "#00e5a3",
+      Émeraude: "#10b981",
+      "Vert Lime": "#84cc16",
+      "Jaune Soleil": "#facc15",
+      "Ambre Doré": "#f59e0b",
+      "Orange Flamme": "#ff5a1f",
+      "Corail Pêche": "#fb923c",
+      "Rose Rubis": "#f43f5e",
+      "Rose Bonbon": "#f472b6",
+      "Fuchsia Néon": "#d946ef",
+      Améthyste: "#a855f7",
+      "Violet Nuit": "#8b5cf6",
+      "Blanc Glace": "#e2e8f0",
+    };
+  function i(t) {
+    if (!t || "string" != typeof t) return;
+    n[t] && (t = n[t]);
+    const e = t.replace("#", "").trim();
+    if (3 === e.length) {
+      return [
+        parseInt(e[0] + e[0], 16),
+        parseInt(e[1] + e[1], 16),
+        parseInt(e[2] + e[2], 16),
+      ];
+    }
+    if (6 === e.length || 8 === e.length) {
+      const t = parseInt(e.substring(0, 2), 16),
+        n = parseInt(e.substring(2, 4), 16),
+        i = parseInt(e.substring(4, 6), 16);
+      if (!isNaN(t) && !isNaN(n) && !isNaN(i)) return [t, n, i];
+    }
+  }
+  function s(t) {
+    if (!Array.isArray(t) || t.length < 3) return "#26c6da";
+    return (
+      "#" +
+      [
+        Math.max(0, Math.min(255, Math.round(t[0]))),
+        Math.max(0, Math.min(255, Math.round(t[1]))),
+        Math.max(0, Math.min(255, Math.round(t[2]))),
+      ]
+        .map((t) => t.toString(16).padStart(2, "0"))
+        .join("")
+    );
+  }
+  function o(t, e) {
+    if (!t) return e;
+    if (Array.isArray(t)) return s(t);
+    if ("string" == typeof t) {
+      if (n[t]) return n[t];
+      if (t.startsWith("#")) return t;
+      if (t.startsWith("rgb")) return t;
+    }
+    return e;
+  }
+  class r extends HTMLElement {
+    constructor() {
+      (super(),
+        (this._updateTimerMS = 0),
+        (this._cardEl = null),
+        (this._unavailEl = null),
+        (this._badgeEl = null),
+        (this._iconEl = null),
+        (this._nameEl = null),
+        (this._statusEl = null),
+        (this._progressFillEl = null),
+        (this._root = this.attachShadow({ mode: "open" })));
+    }
+    static getConfigElement() {
+      return document.createElement("halo-cover-card-editor");
+    }
+    static getStubConfig() {
+      return { entity: "cover.volet_roulant" };
+    }
+    get _helper() {
+      return window._voletHelper || e;
+    }
+    setConfig(t) {
+      if (!t || !t.entity)
+        throw new Error(
+          "Please define a valid cover entity (e.g. cover.mon_volet)",
+        );
+      ((this._config = t), this._hass && this._render());
+    }
+    set hass(t) {
+      const e = this._hass;
+      ((this._hass = t),
+        this._helper.register(this),
+        this._cardEl
+          ? this._hasChanged(e, t) && this._render()
+          : this._render());
+    }
+    getCardSize() {
+      return 2;
+    }
+    refresh() {
+      this._render();
+    }
+    requestUpdate(t, e) {
+      this._render();
+    }
+    _hasChanged(t, e) {
+      if (!t || !e || !this._config) return !0;
+      const n = this._config.entity;
+      if (!n) return !0;
+      if (t.states[n] !== e.states[n]) return !0;
+      const i = t.states[n],
+        s = i?.attributes?.entity_id;
+      if (Array.isArray(s))
+        for (const n of s) if (t.states[n] !== e.states[n]) return !0;
+      const o = this._helper.tracking[n];
+      if (o && o.moving) return !0;
+      const r = [
+        "input_text.couleur_volet_ferme",
+        "input_text.couleur_volet_ouvert",
+        "input_text.couleur_volet_partiel",
+        "input_text.couleur_volet_en_mouvement",
+      ];
+      for (const n of r) if (t.states[n] !== e.states[n]) return !0;
+      return !1;
+    }
+    _fireEvent(t, e) {
+      const n = new CustomEvent(t, { bubbles: !0, composed: !0, detail: e });
+      this.dispatchEvent(n);
+    }
+    _handleTap(t) {
+      (t.stopPropagation(),
+        this._fireEvent("hass-more-info", { entityId: this._config.entity }));
+    }
+    _handleAction(t, e) {
+      t.stopPropagation();
+      const n = this._config.entity;
+      if (!n || !this._hass) return;
+      const i = this._hass.states[n],
+        s = i?.attributes?.entity_id || null;
+      ("open" === e
+        ? (this._helper.markManualMove(n, "opening", s, this._hass.states),
+          this._hass.callService("cover", "open_cover", { entity_id: n }))
+        : "stop" === e
+          ? (this._helper.markManualMove(n, "stop", s, this._hass.states),
+            this._hass.callService("cover", "stop_cover", { entity_id: n }))
+          : "close" === e &&
+            (this._helper.markManualMove(n, "closing", s, this._hass.states),
+            this._hass.callService("cover", "close_cover", { entity_id: n })),
+        this._render());
+    }
+    _buildDom() {
+      ((this._root.innerHTML =
+        '\n      <style>\n        :host {\n          display: block;\n        }\n        ha-card.halo-cover-card {\n          position: relative;\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          border-radius: 14px;\n          padding: 10px 14px;\n          min-height: 64px;\n          box-sizing: border-box;\n          backdrop-filter: blur(16px) saturate(180%);\n          -webkit-backdrop-filter: blur(16px) saturate(180%);\n          cursor: pointer;\n          user-select: none;\n          transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),\n                      border 0.3s cubic-bezier(0.4, 0, 0.2, 1),\n                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),\n                      filter 0.15s ease;\n          overflow: hidden;\n        }\n        ha-card.halo-cover-card:hover {\n          filter: brightness(1.05);\n        }\n        .halo-left {\n          display: flex;\n          align-items: center;\n          gap: 12px;\n          min-width: 0;\n          flex: 1;\n        }\n        .halo-icon-badge {\n          width: 38px;\n          height: 38px;\n          min-width: 38px;\n          border-radius: 11px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          flex-shrink: 0;\n          transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;\n        }\n        .halo-icon-badge ha-icon {\n          --mdc-icon-size: 22px;\n          width: 22px;\n          height: 22px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          transition: color 0.3s ease;\n        }\n        .halo-info {\n          display: flex;\n          flex-direction: column;\n          gap: 2px;\n          min-width: 0;\n          flex: 1;\n          overflow: hidden;\n          text-align: left;\n        }\n        .halo-name {\n          font-size: 13.5px;\n          font-weight: 600;\n          color: #ffffff;\n          white-space: nowrap;\n          overflow: hidden;\n          text-overflow: ellipsis;\n          line-height: 1.25;\n        }\n        .halo-status {\n          font-size: 11.5px;\n          font-weight: 600;\n          line-height: 1.15;\n          transition: color 0.3s ease;\n        }\n        .halo-progress-track {\n          width: 100%;\n          max-width: 130px;\n          height: 3px;\n          min-height: 3px;\n          border-radius: 3px;\n          background: rgba(255, 255, 255, 0.10);\n          overflow: hidden;\n          margin-top: 3px;\n        }\n        .halo-progress-fill {\n          display: block;\n          height: 100%;\n          border-radius: 3px;\n          transition: width 0.6s ease, background 0.3s ease, box-shadow 0.3s ease;\n        }\n        .halo-buttons {\n          display: flex;\n          align-items: center;\n          gap: 4px;\n          flex-shrink: 0;\n          margin-left: 10px;\n        }\n        .halo-btn {\n          width: 34px;\n          height: 32px;\n          min-width: 34px;\n          border-radius: 9px;\n          padding: 0;\n          background: rgba(255, 255, 255, 0.08);\n          border: 1px solid rgba(255, 255, 255, 0.12);\n          box-shadow: none;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          cursor: pointer;\n          transition: all 0.15s ease;\n          box-sizing: border-box;\n        }\n        .halo-btn:hover {\n          background: rgba(255, 255, 255, 0.16);\n          border-color: rgba(255, 255, 255, 0.25);\n          transform: translateY(-1px);\n        }\n        .halo-btn:active {\n          transform: translateY(1px) scale(0.96);\n          background: rgba(255, 255, 255, 0.22);\n        }\n        .halo-btn ha-icon {\n          --mdc-icon-size: 18px;\n          width: 18px;\n          height: 18px;\n          color: #ffffff;\n          pointer-events: none;\n        }\n        .unavailable-box {\n          display: none;\n          padding: 14px;\n          background: rgba(245, 158, 11, 0.15);\n          border: 1px solid #f59e0b;\n          border-radius: 14px;\n          color: #ffffff;\n          font-size: 13px;\n        }\n      </style>\n\n      <div class="unavailable-box" id="unavail-box"></div>\n\n      <ha-card class="halo-cover-card" id="card-body">\n        <div class="halo-left">\n          <div class="halo-icon-badge" id="icon-badge">\n            <ha-icon id="cover-icon"></ha-icon>\n          </div>\n          <div class="halo-info">\n            <span class="halo-name" id="cover-name"></span>\n            <span class="halo-status" id="cover-status"></span>\n            <div class="halo-progress-track">\n              <i class="halo-progress-fill" id="progress-fill"></i>\n            </div>\n          </div>\n        </div>\n\n        <div class="halo-buttons">\n          <button class="halo-btn" id="btn-down" title="Descendre" type="button">\n            <ha-icon icon="mdi:arrow-down"></ha-icon>\n          </button>\n          <button class="halo-btn" id="btn-stop" title="Arrêter" type="button">\n            <ha-icon icon="mdi:stop"></ha-icon>\n          </button>\n          <button class="halo-btn" id="btn-up" title="Monter" type="button">\n            <ha-icon icon="mdi:arrow-up"></ha-icon>\n          </button>\n        </div>\n      </ha-card>\n    '),
+        (this._cardEl = this._root.getElementById("card-body")),
+        (this._unavailEl = this._root.getElementById("unavail-box")),
+        (this._badgeEl = this._root.getElementById("icon-badge")),
+        (this._iconEl = this._root.getElementById("cover-icon")),
+        (this._nameEl = this._root.getElementById("cover-name")),
+        (this._statusEl = this._root.getElementById("cover-status")),
+        (this._progressFillEl = this._root.getElementById("progress-fill")),
+        this._cardEl?.addEventListener("click", (t) => this._handleTap(t)),
+        this._root
+          .getElementById("btn-down")
+          ?.addEventListener("click", (t) => this._handleAction(t, "close")),
+        this._root
+          .getElementById("btn-stop")
+          ?.addEventListener("click", (t) => this._handleAction(t, "stop")),
+        this._root
+          .getElementById("btn-up")
+          ?.addEventListener("click", (t) => this._handleAction(t, "open")));
+    }
+    _render() {
+      if (!this._config || !this._hass) return;
+      this._cardEl || this._buildDom();
+      const t = this._config.entity,
+        e = this._hass.states[t],
+        n = (function (t, e) {
+          const n = t?.states || {};
+          return {
+            closed: o(
+              e?.color_closed,
+              n["input_text.couleur_volet_ferme"]?.state || "#FFB69C",
+            ),
+            open: o(
+              e?.color_open,
+              n["input_text.couleur_volet_ouvert"]?.state || "#96E1FF",
+            ),
+            partial: o(
+              e?.color_partial,
+              n["input_text.couleur_volet_partiel"]?.state || "#38bdf8",
+            ),
+            moving: o(
+              e?.color_moving,
+              n["input_text.couleur_volet_en_mouvement"]?.state || "#f59e0b",
+            ),
+          };
+        })(this._hass, this._config);
+      if (!e)
+        return (
+          this._unavailEl &&
+            ((this._unavailEl.textContent = `Entité non trouvée : ${t}`),
+            (this._unavailEl.style.display = "block")),
+          void (this._cardEl && (this._cardEl.style.display = "none"))
+        );
+      (this._unavailEl && (this._unavailEl.style.display = "none"),
+        this._cardEl && (this._cardEl.style.display = "flex"));
+      const i = e.attributes || {},
+        s = (Array.isArray(i.entity_id) ? i.entity_id : []).length > 0,
+        r = this._helper.position(e),
+        a = e.state || "unavailable",
+        l = "unavailable" === a || "unknown" === a,
+        c = this._helper.isEntityOrGroupMoving(e, this._hass.states),
+        h = c.moving,
+        d = c.dir,
+        u = c.count,
+        p = !(h || l || (0 !== r && "closed" !== a)),
+        _ = !h && !l && !p && (100 === r || (null == r && "open" === a)),
+        g = !h && !l && !p && !_ && null != r && r > 0 && r < 100;
+      let f = n.closed;
+      l
+        ? (f = "#f59e0b")
+        : h
+          ? (f = n.moving)
+          : p
+            ? (f = n.closed)
+            : _
+              ? (f = n.open)
+              : g && (f = n.partial);
+      let m = this._config.name || i.friendly_name || "Volet";
+      m = m.replace(/^Volet\s+roulant\s+/i, "");
+      let b = "Fermé";
+      l
+        ? (b = "Indisponible")
+        : h
+          ? (b = s
+              ? u > 1
+                ? `${u} volets en mouvement…`
+                : "closing" === d
+                  ? "Fermeture…"
+                  : "Ouverture…"
+              : "closing" === d
+                ? null != r
+                  ? `Fermeture… ${100 - r} %`
+                  : "Fermeture…"
+                : null != r
+                  ? `Ouverture… ${r} %`
+                  : "Ouverture…")
+          : p
+            ? (b = "Fermé")
+            : _
+              ? (b = "Ouvert")
+              : g && (b = `Partiel (${r}%)`);
+      const v = null != r ? 100 - r : p ? 100 : 0;
+      let x = "mdi:window-shutter";
+      x = l
+        ? "mdi:alert-circle"
+        : h
+          ? "closing" === d
+            ? "mdi:arrow-down-bold-circle"
+            : "mdi:arrow-up-bold-circle"
+          : _ || g
+            ? "mdi:window-shutter-open"
+            : "mdi:window-shutter";
+      const y = (function (t, e, n) {
+        return e
+          ? {
+              background:
+                "linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))",
+              border: "1.5px solid #f59e0b",
+              boxShadow:
+                "0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)",
+            }
+          : n
+            ? {
+                background: `linear-gradient(135deg, ${t}26, rgba(20, 28, 38, 0.90))`,
+                border: `1.5px solid ${t}`,
+                boxShadow: `0 0 22px ${t}77, 0 0 8px ${t}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`,
+              }
+            : {
+                background: `linear-gradient(135deg, ${t}1A, rgba(20, 28, 38, 0.88))`,
+                border: `1.5px solid ${t}`,
+                boxShadow: `0 0 18px ${t}60, 0 0 6px ${t}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`,
+              };
+      })(f, l, h);
+      if (
+        (this._cardEl &&
+          (this._cardEl.style.background !== y.background &&
+            (this._cardEl.style.background = y.background),
+          this._cardEl.style.border !== y.border &&
+            (this._cardEl.style.border = y.border),
+          this._cardEl.style.boxShadow !== y.boxShadow &&
+            (this._cardEl.style.boxShadow = y.boxShadow)),
+        this._badgeEl)
+      ) {
+        const t = `${f}22`,
+          e = `1.25px solid ${f}55`,
+          n = `0 0 12px ${f}44`;
+        (this._badgeEl.style.background !== t &&
+          (this._badgeEl.style.background = t),
+          this._badgeEl.style.border !== e && (this._badgeEl.style.border = e),
+          this._badgeEl.style.boxShadow !== n &&
+            (this._badgeEl.style.boxShadow = n));
+      }
+      if (
+        (this._iconEl &&
+          (this._iconEl.getAttribute("icon") !== x &&
+            this._iconEl.setAttribute("icon", x),
+          this._iconEl.style.color !== f && (this._iconEl.style.color = f)),
+        this._nameEl &&
+          this._nameEl.textContent !== m &&
+          (this._nameEl.textContent = m),
+        this._statusEl &&
+          (this._statusEl.textContent !== b && (this._statusEl.textContent = b),
+          this._statusEl.style.color !== f && (this._statusEl.style.color = f)),
+        this._progressFillEl)
+      ) {
+        const t = `${v}%`,
+          e = `0 0 6px ${f}88`;
+        (this._progressFillEl.style.width !== t &&
+          (this._progressFillEl.style.width = t),
+          this._progressFillEl.style.background !== f &&
+            (this._progressFillEl.style.background = f),
+          this._progressFillEl.style.boxShadow !== e &&
+            (this._progressFillEl.style.boxShadow = e));
+      }
+    }
+  }
+  class a extends HTMLElement {
+    constructor() {
+      (super(),
+        (this._containerEl = null),
+        (this._iconEl = null),
+        (this._titleEl = null),
+        (this._lineEl = null),
+        (this._root = this.attachShadow({ mode: "open" })));
+    }
+    static getConfigElement() {
+      return document.createElement("halo-separator-card-editor");
+    }
+    static getStubConfig() {
+      return { name: "Section", icon: "mdi:bookmark" };
+    }
+    setConfig(t) {
+      if (!t) throw new Error("Invalid configuration");
+      ((this._config = t), this._hass && this._render());
+    }
+    set hass(t) {
+      const e = this._hass;
+      ((this._hass = t),
+        this._containerEl
+          ? this._hasChanged(e, t) && this._render()
+          : this._render());
+    }
+    getCardSize() {
+      return 1;
+    }
+    _hasChanged(t, e) {
+      if (!t || !e || !this._config) return !0;
+      if (
+        this._config.theme_entity &&
+        t.states[this._config.theme_entity] !==
+          e.states[this._config.theme_entity]
+      )
+        return !0;
+      const n = [
+        "input_select.couleur_theme_ouvertures",
+        "input_select.couleur_theme_chauffage",
+        "input_select.couleur_theme_eclairage",
+        "input_select.couleur_theme_eclairages",
+        "input_select.couleur_theme_global",
+      ];
+      for (const i of n) if (t.states[i] !== e.states[i]) return !0;
+      return !1;
+    }
+    _buildDom() {
+      ((this._root.innerHTML =
+        '\n      <style>\n        :host {\n          display: block;\n          background: transparent !important;\n          border: none !important;\n          box-shadow: none !important;\n        }\n        .halo-separator {\n          display: flex;\n          align-items: center;\n          gap: 10px;\n          padding: 14px 0px 6px 0px;\n          width: 100%;\n          box-sizing: border-box;\n          user-select: none;\n        }\n        .halo-separator-icon {\n          width: 18px;\n          height: 18px;\n          min-width: 18px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          transform: translateY(-2px);\n          flex-shrink: 0;\n        }\n        .halo-separator-icon ha-icon {\n          --mdc-icon-size: 18px;\n          width: 18px;\n          height: 18px;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          transition: color 0.3s ease;\n        }\n        .halo-separator-title {\n          color: #e6f2f5;\n          font-size: 14px;\n          font-weight: 600;\n          letter-spacing: -0.2px;\n          white-space: nowrap;\n          line-height: 1.2;\n          flex-shrink: 0;\n        }\n        .halo-separator-line {\n          flex: 1;\n          height: 2px;\n          min-height: 2px;\n          border-radius: 2px;\n          transition: background 0.3s ease;\n        }\n      </style>\n      <div class="halo-separator" id="container">\n        <div class="halo-separator-icon">\n          <ha-icon id="sep-icon"></ha-icon>\n        </div>\n        <span class="halo-separator-title" id="sep-title"></span>\n        <div class="halo-separator-line" id="sep-line"></div>\n      </div>\n    '),
+        (this._containerEl = this._root.getElementById("container")),
+        (this._iconEl = this._root.getElementById("sep-icon")),
+        (this._titleEl = this._root.getElementById("sep-title")),
+        (this._lineEl = this._root.getElementById("sep-line")));
+    }
+    _render() {
+      if (!this._config) return;
+      this._containerEl || this._buildDom();
+      const t = this._config.name || this._config.title || "Section",
+        e = this._config.icon || "mdi:bookmark",
+        i = (function (t, e, i, s = "#26c6da") {
+          if (e) return o(e, s);
+          const r = t?.states || {};
+          if (i && r[i]?.state) {
+            const t = r[i].state;
+            if (n[t]) return n[t];
+            if (t.startsWith("#")) return t;
+          }
+          const a = [
+            "input_select.couleur_theme_ouvertures",
+            "input_select.couleur_theme_chauffage",
+            "input_select.couleur_theme_eclairage",
+            "input_select.couleur_theme_eclairages",
+            "input_select.couleur_theme_global",
+          ];
+          for (const t of a) {
+            const e = r[t]?.state;
+            if (e && n[e]) return n[e];
+          }
+          return s;
+        })(
+          this._hass,
+          this._config.color,
+          this._config.theme_entity,
+          "#26c6da",
+        );
+      if (
+        (this._iconEl &&
+          (this._iconEl.getAttribute("icon") !== e &&
+            this._iconEl.setAttribute("icon", e),
+          this._iconEl.style.color !== i && (this._iconEl.style.color = i)),
+        this._titleEl &&
+          this._titleEl.textContent !== t &&
+          (this._titleEl.textContent = t),
+        this._lineEl)
+      ) {
+        const t = `linear-gradient(90deg, ${i} 0%, ${i}44 60%, transparent 100%)`;
+        this._lineEl.style.background !== t &&
+          (this._lineEl.style.background = t);
+      }
+    }
+  }
+  const l = ["color_closed", "color_open", "color_partial", "color_moving"],
+    c = [
+      {
+        name: "entity",
+        label: "Entité Volet ou Groupe",
+        selector: { entity: { domain: "cover" } },
+      },
+      {
+        name: "name",
+        label: "Nom personnalisé (optionnel)",
+        selector: { text: {} },
+      },
+      {
+        type: "grid",
+        name: "",
+        schema: [
+          {
+            name: "color_closed",
+            label: "Couleur Fermé (optionnel)",
+            selector: { color_rgb: {} },
+          },
+          {
+            name: "color_open",
+            label: "Couleur Ouvert (optionnel)",
+            selector: { color_rgb: {} },
+          },
+          {
+            name: "color_partial",
+            label: "Couleur Partiel (optionnel)",
+            selector: { color_rgb: {} },
+          },
+          {
+            name: "color_moving",
+            label: "Couleur En mouvement (optionnel)",
+            selector: { color_rgb: {} },
+          },
+        ],
+      },
+    ];
+  class h extends HTMLElement {
+    setConfig(t) {
+      ((this._config = { ...t }), this._render());
+    }
+    set hass(t) {
+      this._hass = t;
+      const e = this.querySelector("ha-form");
+      e && (e.hass = t);
+    }
+    _formData() {
+      if (!this._config) return {};
+      const t = { ...this._config };
+      for (const e of l)
+        if (t[e] && "string" == typeof t[e]) {
+          const n = i(t[e]);
+          n && (t[e] = n);
+        }
+      return t;
+    }
+    _valueChanged(t) {
+      if (!this._config || !t.detail.value) return;
+      const e = { ...t.detail.value };
+      for (const t of l) e[t] && Array.isArray(e[t]) && (e[t] = s(e[t]));
+      this._config = { ...this._config, ...e };
+      const n = new CustomEvent("config-changed", {
+        detail: { config: this._config },
+        bubbles: !0,
+        composed: !0,
+      });
+      this.dispatchEvent(n);
+    }
+    _render() {
+      if (!this._config) return;
+      let t = this.querySelector("ha-form");
+      t
+        ? ((t.data = this._formData()), this._hass && (t.hass = this._hass))
+        : ((this.innerHTML =
+            '\n        <div style="padding: 8px 0;">\n          <ha-form id="form"></ha-form>\n        </div>\n      '),
+          (t = this.querySelector("#form")),
+          t &&
+            ((t.schema = c),
+            (t.data = this._formData()),
+            this._hass && (t.hass = this._hass),
+            t.addEventListener("value-changed", (t) => this._valueChanged(t))));
+    }
+  }
+  const d = [
+    { name: "name", label: "Titre de la section", selector: { text: {} } },
+    { name: "icon", label: "Icône", selector: { icon: {} } },
+    {
+      name: "color",
+      label: "Couleur personnalisée (optionnel)",
+      selector: { color_rgb: {} },
+    },
+    {
+      name: "theme_entity",
+      label: "Entité sélecteur de thème (optionnel)",
+      selector: { entity: { domain: "input_select" } },
+    },
+  ];
+  class u extends HTMLElement {
+    setConfig(t) {
+      ((this._config = { ...t }), this._render());
+    }
+    set hass(t) {
+      this._hass = t;
+      const e = this.querySelector("ha-form");
+      e && (e.hass = t);
+    }
+    _formData() {
+      if (!this._config) return {};
+      const t = { ...this._config };
+      if (t.color && "string" == typeof t.color) {
+        const e = i(t.color);
+        e && (t.color = e);
+      }
+      return t;
+    }
+    _valueChanged(t) {
+      if (!this._config || !t.detail.value) return;
+      const e = { ...t.detail.value };
+      (e.color && Array.isArray(e.color) && (e.color = s(e.color)),
+        (this._config = { ...this._config, ...e }));
+      const n = new CustomEvent("config-changed", {
+        detail: { config: this._config },
+        bubbles: !0,
+        composed: !0,
+      });
+      this.dispatchEvent(n);
+    }
+    _render() {
+      if (!this._config) return;
+      let t = this.querySelector("ha-form");
+      t
+        ? ((t.data = this._formData()), this._hass && (t.hass = this._hass))
+        : ((this.innerHTML =
+            '\n        <div style="padding: 8px 0;">\n          <ha-form id="form"></ha-form>\n        </div>\n      '),
+          (t = this.querySelector("#form")),
+          t &&
+            ((t.schema = d),
+            (t.data = this._formData()),
+            this._hass && (t.hass = this._hass),
+            t.addEventListener("value-changed", (t) => this._valueChanged(t))));
+    }
+  }
+  return (
+    console.info(
+      "%c  HALO-BUTTON-CARD  %c v1.0.0 ",
+      "color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;",
+      "color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;",
+    ),
+    (window.customCards = window.customCards || []),
+    window.customCards.push({
+      type: "halo-cover-card",
+      name: "HALO Cover Card",
+      description:
+        "Turnkey roller shutter card with Liquid Glass styling and dynamic glowing halo.",
+      preview: !0,
+    }),
+    window.customCards.push({
+      type: "halo-separator-card",
+      name: "HALO Separator Card",
+      description:
+        "Sleek section divider with neon gradient line and HOLM styling.",
+      preview: !0,
+    }),
+    customElements.get("halo-cover-card") ||
+      customElements.define("halo-cover-card", r),
+    customElements.get("halo-cover-card-editor") ||
+      customElements.define("halo-cover-card-editor", h),
+    customElements.get("halo-separator-card") ||
+      customElements.define("halo-separator-card", a),
+    customElements.get("halo-separator-card-editor") ||
+      customElements.define("halo-separator-card-editor", u),
+    (t.HaloCoverCard = r),
+    (t.HaloCoverCardEditor = h),
+    (t.HaloSeparatorCard = a),
+    (t.HaloSeparatorCardEditor = u),
+    (t.voletHelperInstance = e),
+    t
+  );
+})({});
