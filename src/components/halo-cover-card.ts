@@ -1,6 +1,7 @@
 /**
  * HALO Button Card — Halo Cover Card Component
  * Turnkey roller shutter tile with HOLM Liquid Glass styling and dynamic halo.
+ * High-performance persistent DOM architecture (zero flicker, zero lost clicks).
  * (c) 2026 MilesTEG1 — MIT License
  */
 
@@ -13,6 +14,15 @@ export class HaloCoverCard extends HTMLElement {
   private _hass!: HomeAssistant;
   private _root: ShadowRoot;
   public _updateTimerMS = 0;
+
+  // Persistent DOM references
+  private _cardEl: HTMLElement | null = null;
+  private _unavailEl: HTMLElement | null = null;
+  private _badgeEl: HTMLElement | null = null;
+  private _iconEl: HTMLElement | null = null;
+  private _nameEl: HTMLElement | null = null;
+  private _statusEl: HTMLElement | null = null;
+  private _progressFillEl: HTMLElement | null = null;
 
   constructor() {
     super();
@@ -38,12 +48,26 @@ export class HaloCoverCard extends HTMLElement {
       throw new Error('Please define a valid cover entity (e.g. cover.mon_volet)');
     }
     this._config = config;
+    if (this._hass) {
+      this._render();
+    }
   }
 
   public set hass(hass: HomeAssistant) {
+    const oldHass = this._hass;
     this._hass = hass;
     this._helper.register(this);
-    this._render();
+
+    // Initial render
+    if (!this._cardEl) {
+      this._render();
+      return;
+    }
+
+    // Only re-render if relevant states changed
+    if (this._hasChanged(oldHass, hass)) {
+      this._render();
+    }
   }
 
   public getCardSize(): number {
@@ -56,6 +80,41 @@ export class HaloCoverCard extends HTMLElement {
 
   public requestUpdate(_name?: string, _oldValue?: any) {
     this._render();
+  }
+
+  private _hasChanged(oldHass?: HomeAssistant, newHass?: HomeAssistant): boolean {
+    if (!oldHass || !newHass || !this._config) return true;
+    const id = this._config.entity;
+    if (!id) return true;
+
+    // Check cover state change
+    if (oldHass.states[id] !== newHass.states[id]) return true;
+
+    // Check group members
+    const oldEntity = oldHass.states[id];
+    const members = oldEntity?.attributes?.entity_id;
+    if (Array.isArray(members)) {
+      for (const m of members) {
+        if (oldHass.states[m] !== newHass.states[m]) return true;
+      }
+    }
+
+    // Check active tracking
+    const track = this._helper.tracking[id];
+    if (track && track.moving) return true;
+
+    // Check color helper changes
+    const colorEntities = [
+      'input_text.couleur_volet_ferme',
+      'input_text.couleur_volet_ouvert',
+      'input_text.couleur_volet_partiel',
+      'input_text.couleur_volet_en_mouvement'
+    ];
+    for (const ce of colorEntities) {
+      if (oldHass.states[ce] !== newHass.states[ce]) return true;
+    }
+
+    return false;
   }
 
   private _fireEvent(type: string, detail: any) {
@@ -93,29 +152,218 @@ export class HaloCoverCard extends HTMLElement {
     this._render();
   }
 
+  private _buildDom() {
+    this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+        ha-card.halo-cover-card {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-radius: 14px;
+          padding: 10px 14px;
+          min-height: 64px;
+          box-sizing: border-box;
+          backdrop-filter: blur(16px) saturate(180%);
+          -webkit-backdrop-filter: blur(16px) saturate(180%);
+          cursor: pointer;
+          user-select: none;
+          transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      border 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      filter 0.15s ease;
+          overflow: hidden;
+        }
+        ha-card.halo-cover-card:hover {
+          filter: brightness(1.05);
+        }
+        .halo-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+          flex: 1;
+        }
+        .halo-icon-badge {
+          width: 38px;
+          height: 38px;
+          min-width: 38px;
+          border-radius: 11px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .halo-icon-badge ha-icon {
+          --mdc-icon-size: 22px;
+          width: 22px;
+          height: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.3s ease;
+        }
+        .halo-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: 0;
+          flex: 1;
+          overflow: hidden;
+          text-align: left;
+        }
+        .halo-name {
+          font-size: 13.5px;
+          font-weight: 600;
+          color: #ffffff;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1.25;
+        }
+        .halo-status {
+          font-size: 11.5px;
+          font-weight: 600;
+          line-height: 1.15;
+          transition: color 0.3s ease;
+        }
+        .halo-progress-track {
+          width: 100%;
+          max-width: 130px;
+          height: 3px;
+          min-height: 3px;
+          border-radius: 3px;
+          background: rgba(255, 255, 255, 0.10);
+          overflow: hidden;
+          margin-top: 3px;
+        }
+        .halo-progress-fill {
+          display: block;
+          height: 100%;
+          border-radius: 3px;
+          transition: width 0.6s ease, background 0.3s ease, box-shadow 0.3s ease;
+        }
+        .halo-buttons {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex-shrink: 0;
+          margin-left: 10px;
+        }
+        .halo-btn {
+          width: 34px;
+          height: 32px;
+          min-width: 34px;
+          border-radius: 9px;
+          padding: 0;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          box-sizing: border-box;
+        }
+        .halo-btn:hover {
+          background: rgba(255, 255, 255, 0.16);
+          border-color: rgba(255, 255, 255, 0.25);
+          transform: translateY(-1px);
+        }
+        .halo-btn:active {
+          transform: translateY(1px) scale(0.96);
+          background: rgba(255, 255, 255, 0.22);
+        }
+        .halo-btn ha-icon {
+          --mdc-icon-size: 18px;
+          width: 18px;
+          height: 18px;
+          color: #ffffff;
+          pointer-events: none;
+        }
+        .unavailable-box {
+          display: none;
+          padding: 14px;
+          background: rgba(245, 158, 11, 0.15);
+          border: 1px solid #f59e0b;
+          border-radius: 14px;
+          color: #ffffff;
+          font-size: 13px;
+        }
+      </style>
+
+      <div class="unavailable-box" id="unavail-box"></div>
+
+      <ha-card class="halo-cover-card" id="card-body">
+        <div class="halo-left">
+          <div class="halo-icon-badge" id="icon-badge">
+            <ha-icon id="cover-icon"></ha-icon>
+          </div>
+          <div class="halo-info">
+            <span class="halo-name" id="cover-name"></span>
+            <span class="halo-status" id="cover-status"></span>
+            <div class="halo-progress-track">
+              <i class="halo-progress-fill" id="progress-fill"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="halo-buttons">
+          <button class="halo-btn" id="btn-down" title="Descendre" type="button">
+            <ha-icon icon="mdi:arrow-down"></ha-icon>
+          </button>
+          <button class="halo-btn" id="btn-stop" title="Arrêter" type="button">
+            <ha-icon icon="mdi:stop"></ha-icon>
+          </button>
+          <button class="halo-btn" id="btn-up" title="Monter" type="button">
+            <ha-icon icon="mdi:arrow-up"></ha-icon>
+          </button>
+        </div>
+      </ha-card>
+    `;
+
+    this._cardEl = this._root.getElementById('card-body');
+    this._unavailEl = this._root.getElementById('unavail-box');
+    this._badgeEl = this._root.getElementById('icon-badge');
+    this._iconEl = this._root.getElementById('cover-icon');
+    this._nameEl = this._root.getElementById('cover-name');
+    this._statusEl = this._root.getElementById('cover-status');
+    this._progressFillEl = this._root.getElementById('progress-fill');
+
+    this._cardEl?.addEventListener('click', (e) => this._handleTap(e));
+    this._root.getElementById('btn-down')?.addEventListener('click', (e) => this._handleAction(e, 'close'));
+    this._root.getElementById('btn-stop')?.addEventListener('click', (e) => this._handleAction(e, 'stop'));
+    this._root.getElementById('btn-up')?.addEventListener('click', (e) => this._handleAction(e, 'open'));
+  }
+
   private _render() {
     if (!this._config || !this._hass) return;
+    if (!this._cardEl) {
+      this._buildDom();
+    }
 
     const id = this._config.entity;
     const entity = this._hass.states[id] as HassEntity | undefined;
     const colors = getCoverColors(this._hass, this._config);
 
     if (!entity) {
-      this._root.innerHTML = `
-        <style>
-          .unavailable {
-            padding: 14px;
-            background: rgba(245, 158, 11, 0.15);
-            border: 1px solid #f59e0b;
-            border-radius: 14px;
-            color: #ffffff;
-            font-size: 13px;
-          }
-        </style>
-        <div class="unavailable">Entité non trouvée : ${id}</div>
-      `;
+      if (this._unavailEl) {
+        this._unavailEl.textContent = `Entité non trouvée : ${id}`;
+        this._unavailEl.style.display = 'block';
+      }
+      if (this._cardEl) {
+        this._cardEl.style.display = 'none';
+      }
       return;
     }
+
+    if (this._unavailEl) this._unavailEl.style.display = 'none';
+    if (this._cardEl) this._cardEl.style.display = 'flex';
 
     const attrs = entity.attributes || {};
     const members = Array.isArray(attrs.entity_id) ? attrs.entity_id : [];
@@ -188,178 +436,59 @@ export class HaloCoverCard extends HTMLElement {
 
     const cardStyles = getHaloCardStyles(accentCol, isUnavail, isMoving);
 
-    this._root.innerHTML = `
-      <style>
-        :host {
-          display: block;
-        }
-        ha-card.halo-cover-card {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          border-radius: 14px;
-          padding: 10px 14px;
-          min-height: 64px;
-          box-sizing: border-box;
-          backdrop-filter: blur(16px) saturate(180%);
-          -webkit-backdrop-filter: blur(16px) saturate(180%);
-          background: ${cardStyles.background};
-          border: ${cardStyles.border};
-          box-shadow: ${cardStyles.boxShadow};
-          cursor: pointer;
-          user-select: none;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          overflow: hidden;
-        }
-        ha-card.halo-cover-card:hover {
-          filter: brightness(1.05);
-        }
-        .halo-left {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          min-width: 0;
-          flex: 1;
-        }
-        .halo-icon-badge {
-          width: 38px;
-          height: 38px;
-          min-width: 38px;
-          border-radius: 11px;
-          background: ${accentCol}22;
-          border: 1.25px solid ${accentCol}55;
-          box-shadow: 0 0 12px ${accentCol}44;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          transition: all 0.3s ease;
-        }
-        .halo-icon-badge ha-icon {
-          --mdc-icon-size: 22px;
-          width: 22px;
-          height: 22px;
-          color: ${accentCol};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .halo-info {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          min-width: 0;
-          flex: 1;
-          overflow: hidden;
-          text-align: left;
-        }
-        .halo-name {
-          font-size: 13.5px;
-          font-weight: 600;
-          color: #ffffff;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          line-height: 1.25;
-        }
-        .halo-status {
-          font-size: 11.5px;
-          font-weight: 600;
-          color: ${accentCol};
-          line-height: 1.15;
-        }
-        .halo-progress-track {
-          width: 100%;
-          max-width: 130px;
-          height: 3px;
-          min-height: 3px;
-          border-radius: 3px;
-          background: rgba(255, 255, 255, 0.10);
-          overflow: hidden;
-          margin-top: 3px;
-        }
-        .halo-progress-fill {
-          display: block;
-          height: 100%;
-          width: ${closurePct}%;
-          background: ${accentCol};
-          box-shadow: 0 0 6px ${accentCol}88;
-          border-radius: 3px;
-          transition: width 0.6s ease, background 0.3s ease;
-        }
-        .halo-buttons {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          flex-shrink: 0;
-          margin-left: 10px;
-        }
-        .halo-btn {
-          width: 34px;
-          height: 32px;
-          min-width: 34px;
-          border-radius: 9px;
-          padding: 0;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          box-shadow: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.15s ease;
-          box-sizing: border-box;
-        }
-        .halo-btn:hover {
-          background: rgba(255, 255, 255, 0.16);
-          border-color: rgba(255, 255, 255, 0.25);
-          transform: translateY(-1px);
-        }
-        .halo-btn:active {
-          transform: translateY(1px) scale(0.96);
-          background: rgba(255, 255, 255, 0.22);
-        }
-        .halo-btn ha-icon {
-          --mdc-icon-size: 18px;
-          width: 18px;
-          height: 18px;
-          color: #ffffff;
-        }
-      </style>
+    // Update card body styling
+    if (this._cardEl) {
+      if (this._cardEl.style.background !== cardStyles.background) {
+        this._cardEl.style.background = cardStyles.background;
+      }
+      if (this._cardEl.style.border !== cardStyles.border) {
+        this._cardEl.style.border = cardStyles.border;
+      }
+      if (this._cardEl.style.boxShadow !== cardStyles.boxShadow) {
+        this._cardEl.style.boxShadow = cardStyles.boxShadow;
+      }
+    }
 
-      <ha-card class="halo-cover-card" id="card-body">
-        <div class="halo-left">
-          <div class="halo-icon-badge">
-            <ha-icon icon="${iconName}"></ha-icon>
-          </div>
-          <div class="halo-info">
-            <span class="halo-name">${name}</span>
-            <span class="halo-status">${statusText}</span>
-            <div class="halo-progress-track">
-              <i class="halo-progress-fill"></i>
-            </div>
-          </div>
-        </div>
+    // Update icon badge styling
+    if (this._badgeEl) {
+      const bg = `${accentCol}22`;
+      const border = `1.25px solid ${accentCol}55`;
+      const shadow = `0 0 12px ${accentCol}44`;
+      if (this._badgeEl.style.background !== bg) this._badgeEl.style.background = bg;
+      if (this._badgeEl.style.border !== border) this._badgeEl.style.border = border;
+      if (this._badgeEl.style.boxShadow !== shadow) this._badgeEl.style.boxShadow = shadow;
+    }
 
-        <div class="halo-buttons">
-          <button class="halo-btn" id="btn-down" title="Descendre">
-            <ha-icon icon="mdi:arrow-down"></ha-icon>
-          </button>
-          <button class="halo-btn" id="btn-stop" title="Arrêter">
-            <ha-icon icon="mdi:stop"></ha-icon>
-          </button>
-          <button class="halo-btn" id="btn-up" title="Monter">
-            <ha-icon icon="mdi:arrow-up"></ha-icon>
-          </button>
-        </div>
-      </ha-card>
-    `;
+    // Update icon
+    if (this._iconEl) {
+      if (this._iconEl.getAttribute('icon') !== iconName) {
+        this._iconEl.setAttribute('icon', iconName);
+      }
+      if (this._iconEl.style.color !== accentCol) {
+        this._iconEl.style.color = accentCol;
+      }
+    }
 
-    // Bind event listeners
-    this._root.getElementById('card-body')?.addEventListener('click', (e) => this._handleTap(e));
-    this._root.getElementById('btn-down')?.addEventListener('click', (e) => this._handleAction(e, 'close'));
-    this._root.getElementById('btn-stop')?.addEventListener('click', (e) => this._handleAction(e, 'stop'));
-    this._root.getElementById('btn-up')?.addEventListener('click', (e) => this._handleAction(e, 'open'));
+    // Update name and status text
+    if (this._nameEl && this._nameEl.textContent !== name) {
+      this._nameEl.textContent = name;
+    }
+    if (this._statusEl) {
+      if (this._statusEl.textContent !== statusText) {
+        this._statusEl.textContent = statusText;
+      }
+      if (this._statusEl.style.color !== accentCol) {
+        this._statusEl.style.color = accentCol;
+      }
+    }
+
+    // Update progress fill
+    if (this._progressFillEl) {
+      const widthStr = `${closurePct}%`;
+      const shadow = `0 0 6px ${accentCol}88`;
+      if (this._progressFillEl.style.width !== widthStr) this._progressFillEl.style.width = widthStr;
+      if (this._progressFillEl.style.background !== accentCol) this._progressFillEl.style.background = accentCol;
+      if (this._progressFillEl.style.boxShadow !== shadow) this._progressFillEl.style.boxShadow = shadow;
+    }
   }
 }
