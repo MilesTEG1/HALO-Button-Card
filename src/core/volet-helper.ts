@@ -7,7 +7,7 @@
 import { HassEntity, VoletTrack } from '../types';
 
 export class VoletHelper {
-  public version = '2.1.0';
+  public version = '1.1.0';
   public QUIET_MS = 3500;
   public GRACE_MS = 4000;
   public MAX_AGE_MS = 30000;
