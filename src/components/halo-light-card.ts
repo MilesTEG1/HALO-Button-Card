@@ -219,7 +219,7 @@ export class HaloLightCard extends HTMLElement {
   private _onCardPointerDown(e: PointerEvent) {
     // Si l'utilisateur clique sur un sous-bouton ou le main-icon, ne pas armer le hold de la carte
     const target = e.target as HTMLElement;
-    if (target.closest('.sub-btn') || target.closest('.main-icon-btn')) {
+    if (target.closest('.sub-btn') || target.closest('.main-icon-btn') || target.closest('.sub-buttons-container')) {
       return;
     }
 
@@ -234,7 +234,7 @@ export class HaloLightCard extends HTMLElement {
 
   private _onCardPointerUp(e: PointerEvent) {
     const target = e.target as HTMLElement;
-    if (target.closest('.sub-btn') || target.closest('.main-icon-btn')) {
+    if (target.closest('.sub-btn') || target.closest('.main-icon-btn') || target.closest('.sub-buttons-container')) {
       return;
     }
 
@@ -261,19 +261,19 @@ export class HaloLightCard extends HTMLElement {
       <style>
         :host {
           display: block;
+          --ha-card-border-width: 0px !important;
+          --ha-card-box-shadow: none !important;
         }
         ha-card.halo-light-card {
           position: relative;
           display: grid;
-          grid-template-areas:
-            "main_icon n sub_brightness sub_kelvin sub_toggle"
-            "main_icon l sub_brightness sub_kelvin sub_toggle";
-          grid-template-columns: 44px 1fr auto auto auto;
-          grid-template-rows: min-content min-content;
+          grid-template-areas: "main_icon info actions";
+          grid-template-columns: 44px 1fr auto;
           align-items: center;
-          gap: 2px 8px;
+          gap: 0 10px;
           border-radius: 16px;
           padding: 10px 12px;
+          min-height: 66px;
           box-sizing: border-box;
           backdrop-filter: blur(20px) saturate(180%);
           -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -281,9 +281,10 @@ export class HaloLightCard extends HTMLElement {
           user-select: none;
           cursor: pointer;
           overflow: hidden;
+          outline: none;
         }
         ha-card.halo-light-card:hover {
-          filter: brightness(1.03);
+          filter: brightness(1.02);
         }
 
         /* 1. Main Icon (gauche) */
@@ -291,23 +292,23 @@ export class HaloLightCard extends HTMLElement {
           grid-area: main_icon;
           width: 44px;
           height: 44px;
+          min-width: 44px;
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          justify-self: start;
           align-self: center;
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
           cursor: pointer;
           box-sizing: border-box;
           outline: none;
         }
         .main-icon-btn:hover {
-          filter: brightness(1.15);
+          filter: brightness(1.12);
           transform: translateY(-1px);
         }
         .main-icon-btn:active {
-          transform: translateY(1px) scale(0.95);
+          transform: translateY(1px) scale(0.96);
         }
         .main-icon-btn ha-icon {
           --mdc-icon-size: 24px;
@@ -316,15 +317,22 @@ export class HaloLightCard extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: color 0.3s ease;
+          transition: color 0.25s ease;
           pointer-events: none;
         }
 
-        /* 2. Nom & Label */
-        .light-name {
-          grid-area: n;
-          justify-self: start;
+        /* 2. Nom & Label (centre) */
+        .light-info {
+          grid-area: info;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
           align-self: center;
+          min-width: 0;
+          overflow: hidden;
+          cursor: pointer;
+        }
+        .light-name {
           font-size: 14px;
           font-weight: 600;
           color: #e6f2f5;
@@ -332,60 +340,58 @@ export class HaloLightCard extends HTMLElement {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 100%;
           line-height: 1.25;
-          cursor: pointer;
         }
         .light-label {
-          grid-area: l;
-          justify-self: start;
-          align-self: center;
           font-size: 12px;
+          font-weight: 400;
           color: rgba(220, 235, 240, 0.65);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 100%;
           line-height: 1.2;
-          cursor: pointer;
+          margin-top: 2px;
         }
 
-        /* 3. Sous-boutons (droite) */
-        .sub-btn {
-          justify-self: end;
+        /* 3. Conteneur Sous-Boutons (droite) */
+        .sub-buttons-container {
+          grid-area: actions;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 8px;
           align-self: center;
+          flex-shrink: 0;
+        }
+
+        .sub-btn {
           height: 36px;
           border-radius: 10px;
           box-sizing: border-box;
           cursor: pointer;
           transition: all 0.25s ease;
           outline: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          user-select: none;
         }
         .sub-btn:hover {
-          filter: brightness(1.15);
+          filter: brightness(1.12);
           transform: translateY(-1px);
         }
         .sub-btn:active {
-          transform: translateY(1px) scale(0.95);
+          transform: translateY(1px) scale(0.96);
         }
 
         /* Sub Brightness */
         .sub-brightness {
-          grid-area: sub_brightness;
           min-width: 48px;
           padding: 0 6px;
-          display: grid;
-          grid-template-areas: "i l";
-          grid-template-columns: 14px auto;
+          display: inline-flex;
           align-items: center;
-          gap: 0 4px;
+          justify-content: center;
+          gap: 4px;
           box-shadow: none;
         }
         .sub-brightness ha-icon {
-          grid-area: i;
           --mdc-icon-size: 14px;
           width: 14px;
           height: 14px;
@@ -393,7 +399,6 @@ export class HaloLightCard extends HTMLElement {
           transition: color 0.25s ease;
         }
         .sub-brightness span {
-          grid-area: l;
           font-size: 11px;
           font-weight: 600;
           pointer-events: none;
@@ -403,18 +408,15 @@ export class HaloLightCard extends HTMLElement {
 
         /* Sub Kelvin */
         .sub-kelvin {
-          grid-area: sub_kelvin;
           min-width: 52px;
           padding: 0 6px;
-          display: grid;
-          grid-template-areas: "i l";
-          grid-template-columns: 14px auto;
+          display: inline-flex;
           align-items: center;
-          gap: 0 4px;
+          justify-content: center;
+          gap: 4px;
           box-shadow: none;
         }
         .sub-kelvin ha-icon {
-          grid-area: i;
           --mdc-icon-size: 14px;
           width: 14px;
           height: 14px;
@@ -422,7 +424,6 @@ export class HaloLightCard extends HTMLElement {
           transition: color 0.25s ease;
         }
         .sub-kelvin span {
-          grid-area: l;
           font-size: 11px;
           font-weight: 600;
           pointer-events: none;
@@ -432,11 +433,10 @@ export class HaloLightCard extends HTMLElement {
 
         /* Sub Toggle */
         .sub-toggle {
-          grid-area: sub_toggle;
           width: 36px;
           min-width: 36px;
           padding: 0;
-          display: flex;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
         }
@@ -445,7 +445,7 @@ export class HaloLightCard extends HTMLElement {
           width: 18px;
           height: 18px;
           pointer-events: none;
-          transition: color 0.3s ease;
+          transition: color 0.25s ease;
         }
 
         .unavailable-box {
@@ -466,21 +466,25 @@ export class HaloLightCard extends HTMLElement {
           <ha-icon id="main-icon"></ha-icon>
         </div>
 
-        <div class="light-name" id="light-name" role="button" tabindex="0" title="Détails"></div>
-        <div class="light-label" id="light-label" role="button" tabindex="0" title="Détails"></div>
-
-        <div class="sub-btn sub-brightness" id="sub-brightness" role="button" tabindex="0" title="Cycle luminosité">
-          <ha-icon icon="mdi:white-balance-sunny" id="sub-brightness-icon"></ha-icon>
-          <span id="sub-brightness-label"></span>
+        <div class="light-info" id="light-info" role="button" tabindex="0" title="Détails">
+          <div class="light-name" id="light-name"></div>
+          <div class="light-label" id="light-label"></div>
         </div>
 
-        <div class="sub-btn sub-kelvin" id="sub-kelvin" role="button" tabindex="0" title="Cycle température">
-          <ha-icon icon="mdi:palette-outline" id="sub-kelvin-icon"></ha-icon>
-          <span id="sub-kelvin-label"></span>
-        </div>
+        <div class="sub-buttons-container" id="sub-buttons-container">
+          <div class="sub-btn sub-brightness" id="sub-brightness" role="button" tabindex="0" title="Cycle luminosité">
+            <ha-icon icon="mdi:white-balance-sunny" id="sub-brightness-icon"></ha-icon>
+            <span id="sub-brightness-label"></span>
+          </div>
 
-        <div class="sub-btn sub-toggle" id="sub-toggle" role="button" tabindex="0" title="Marche / Arrêt">
-          <ha-icon icon="mdi:power" id="sub-toggle-icon"></ha-icon>
+          <div class="sub-btn sub-kelvin" id="sub-kelvin" role="button" tabindex="0" title="Cycle température">
+            <ha-icon icon="mdi:palette-outline" id="sub-kelvin-icon"></ha-icon>
+            <span id="sub-kelvin-label"></span>
+          </div>
+
+          <div class="sub-btn sub-toggle" id="sub-toggle" role="button" tabindex="0" title="Marche / Arrêt">
+            <ha-icon icon="mdi:power" id="sub-toggle-icon"></ha-icon>
+          </div>
         </div>
       </ha-card>
     `;
@@ -505,6 +509,9 @@ export class HaloLightCard extends HTMLElement {
     this._cardEl?.addEventListener('pointerdown', (e) => this._onCardPointerDown(e));
     this._cardEl?.addEventListener('pointerup', (e) => this._onCardPointerUp(e));
     this._cardEl?.addEventListener('pointercancel', () => this._onCardPointerCancel());
+
+    // Événement Info (Clic = more-info)
+    this._root.getElementById('light-info')?.addEventListener('click', (e) => this._handleMoreInfo(e));
 
     // Événement Main Icon (Clic = toggle)
     this._mainIconBtnEl?.addEventListener('click', (e) => this._handleMainIconToggle(e));
@@ -566,9 +573,9 @@ export class HaloLightCard extends HTMLElement {
 
     // 2. Main Icon Button
     if (this._mainIconBtnEl && this._mainIconEl) {
-      let iconBg = 'rgba(255, 255, 255, 0.05)';
-      let iconBorder = '1px solid rgba(255, 255, 255, 0.10)';
-      let iconShadow = '0 0 8px rgba(148, 163, 184, 0.12)';
+      let iconBg = 'rgba(255, 255, 255, 0.04)';
+      let iconBorder = '1px solid rgba(255, 255, 255, 0.08)';
+      let iconShadow = 'none';
       let iconCol = '#94a3b8';
 
       if (isUnavail) {
@@ -622,7 +629,7 @@ export class HaloLightCard extends HTMLElement {
       this._config.show_brightness_btn !== false;
 
     if (this._subBrightnessEl) {
-      this._subBrightnessEl.style.display = showBrightness ? 'grid' : 'none';
+      this._subBrightnessEl.style.display = showBrightness ? 'inline-flex' : 'none';
 
       if (showBrightness) {
         let bBg = 'rgba(255, 255, 255, 0.04)';
@@ -658,7 +665,7 @@ export class HaloLightCard extends HTMLElement {
       this._config.show_temp_btn !== false;
 
     if (this._subKelvinEl) {
-      this._subKelvinEl.style.display = showKelvin ? 'grid' : 'none';
+      this._subKelvinEl.style.display = showKelvin ? 'inline-flex' : 'none';
 
       if (showKelvin) {
         let kBg = 'rgba(255, 255, 255, 0.04)';
@@ -693,7 +700,7 @@ export class HaloLightCard extends HTMLElement {
       this._config.show_power_btn !== false;
 
     if (this._subToggleEl) {
-      this._subToggleEl.style.display = showToggle ? 'flex' : 'none';
+      this._subToggleEl.style.display = showToggle ? 'inline-flex' : 'none';
 
       if (showToggle) {
         // Si sub_toggle_entity est spécifié, vérifier son état propre
@@ -701,8 +708,8 @@ export class HaloLightCard extends HTMLElement {
         const toggleTargetEntity = this._hass.states[toggleTargetId];
         const isToggleOn = toggleTargetEntity ? toggleTargetEntity.state === 'on' : isOn;
 
-        let tBg = 'rgba(255, 255, 255, 0.05)';
-        let tBorder = '1px solid rgba(255, 255, 255, 0.10)';
+        let tBg = 'rgba(255, 255, 255, 0.04)';
+        let tBorder = '1px solid rgba(255, 255, 255, 0.08)';
         let tShadow = 'none';
         let tIconCol = '#64748b';
 
