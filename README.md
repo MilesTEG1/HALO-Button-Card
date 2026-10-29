@@ -50,6 +50,20 @@ Each card state is highlighted by an ambient glow, illustrated below using custo
 
 ---
 
+## 📱 Mobile Experience & Responsive Layout
+
+HALO cards are engineered from the ground up for high-density, touch-optimized interaction across smartphones, tablets, and wall-mounted dashboards:
+
+<p align="center">
+  <img src="docs/screenshots/10-mobile-view-volets.png" alt="HALO Button Card Mobile View" width="55%" />
+</p>
+
+- **Calibrated Height (68px)**: Consistent tile footprint preventing layout shifts and flickering in Lovelace `sections` or `grid` views.
+- **Finger-Friendly Micro-Controls**: Distinct touch zones for Down, Stop, and Up commands with instant tactile feedback.
+- **Glassmorphic Contrast**: Readable white frosted typography and ambient halos that maintain high legibility even under direct ambient lighting.
+
+---
+
 ## 📦 Installation
 
 ### Option 1: Via HACS (Recommended)
@@ -126,12 +140,39 @@ color: '#26c6da'
 
 ## 🖥️ Graphical UI Configuration (No YAML Needed)
 
-Every card in the suite includes an integrated graphical editor built on `<ha-form>`:
+Every card in the suite includes an integrated graphical editor built on Home Assistant's native `<ha-form>`. Power users can still write raw YAML, but visual configuration is 100% supported out of the box.
 
-1. Edit your dashboard and click **Add Card**.
-2. Search for **HALO Cover Card** or **HALO Separator Card**.
-3. Use the visual dropdowns to select your entity, customize names, and pick icons with interactive search.
-4. Click on any color swatch to launch the **2D Color Wheel** with luminance sliders, RGB primary adjustments (0-255), and hexadecimal inputs.
+### 🔍 Interactive Card Discovery
+
+HALO cards register with `window.customCards` for seamless discovery in the native Home Assistant card picker:
+
+<p align="center">
+  <img src="docs/screenshots/09-card-picker-discovery.png" alt="HALO Cards in Lovelace Card Picker" width="90%" />
+</p>
+
+### 🎛️ Visual Editors & Precision 2D Color Wheel
+
+Configuring cards is completely visual—no need to memorize configuration keys or write hex codes manually:
+
+<p align="center">
+  <img src="docs/screenshots/06-editor-cover-card-general.png" alt="Cover Card Editor" width="48%" />
+  &nbsp;
+  <img src="docs/screenshots/07-editor-cover-color-wheel.png" alt="2D Color Wheel Dialog" width="48%" />
+</p>
+
+1. **Cover Card Editor (`halo-cover-card`)**: Select target `cover` entities or groups with automatic domain filtering, customize labels, and tune individual state colors.
+2. **Precision 2D Color Wheel**: Tap any color swatch to launch Home Assistant's native 2D color picker with hue/saturation navigation, brightness slider, discrete RGB primary channels (0-255), and hexadecimal inputs.
+
+### 📑 Section Divider Editor (`halo-separator-card`)
+
+<p align="center">
+  <img src="docs/screenshots/08-editor-separator-card.png" alt="Separator Card Editor" width="80%" />
+</p>
+
+- **Section Title**: Frosted typography heading.
+- **Interactive Icon Picker**: Live Material Design Icons search (`mdi:...`).
+- **Gradient Accent Color**: Dynamic neon line color selector.
+- **Theme Binding**: Optional `input_select` dropdown selector to sync divider tones across dashboard views.
 
 ---
 
