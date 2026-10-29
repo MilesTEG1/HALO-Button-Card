@@ -7,13 +7,12 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.1.1
- * 📅 Date         : 2026-10-29
+ * 📦 Version      : 1.1.0
+ * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 💡 v1.1.1 (2026-10-29) : Calibrage précis hauteur (64px) et centrage vertical des sous-boutons.
- *   - 💡 v1.1.0 (2026-10-29) : Intégration de custom:halo-light-card et custom:halo-light-card-editor.
+ *   - 💡 v1.1.0 (2026-10-30) : Intégration de custom:halo-light-card, éditeur visuel UI, calibrage 64px et bundle lisible/non-minifié.
  *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
  * ==============================================================================
  */
@@ -27,7 +26,7 @@ import { HaloLightCardEditor } from './editors/halo-light-card-editor';
 import { voletHelperInstance } from './core/volet-helper';
 import * as lightHelper from './core/light-helper';
 
-const VERSION = '1.1.1';
+const VERSION = '1.1.0';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
