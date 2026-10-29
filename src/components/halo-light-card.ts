@@ -2,16 +2,20 @@
  * ==============================================================================
  * 📌 Nom du fichier : src/components/halo-light-card.ts
  * 📝 Description   : Composant Web custom:halo-light-card
- *                    Tuile d'éclairage unifiée clé en main avec esthétique HOLM
- *                    Liquid Glass, halo spéculaire dynamique néon, slider horizontal
- *                    interactif de luminosité, micro-boutons adaptatifs et Persistent DOM.
+ *                    Tuile d'éclairage unifiée avec sous-boutons intégrés,
+ *                    reproduisant au pixel près la référence tuile_avec_sous_boutons
+ *                    (dashboard-eclairage/lights).
+ *                    Persistent DOM, zéro scintillement, réactivité instantanée.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.0.0
+ * 📦 Version      : 1.1.0
  * 📅 Date         : 2026-10-29
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.1.0 (2026-10-29) : Alignement 1:1 strict avec tuile_avec_sous_boutons
+ *                              (layout grid 44px 1fr auto auto auto, sous-boutons
+ *                              sub_brightness, sub_kelvin, sub_toggle).
  *   - 💡 v1.0.0 (2026-10-29) : Création initiale de halo-light-card.
  * ==============================================================================
  */
@@ -24,7 +28,7 @@ import {
   getKelvin,
   getNextBrightnessPct,
   getNextKelvin,
-  formatKelvin,
+  formatKelvinShort,
   formatLightStatus,
   getLightAccentColor,
   getLightCardStyles
@@ -38,29 +42,22 @@ export class HaloLightCard extends HTMLElement {
   // Persistent DOM references
   private _cardEl: HTMLElement | null = null;
   private _unavailEl: HTMLElement | null = null;
-  private _badgeEl: HTMLElement | null = null;
-  private _iconEl: HTMLElement | null = null;
-  private _infoEl: HTMLElement | null = null;
+  private _mainIconBtnEl: HTMLElement | null = null;
+  private _mainIconEl: HTMLElement | null = null;
   private _nameEl: HTMLElement | null = null;
-  private _statusEl: HTMLElement | null = null;
-  private _sliderWrapperEl: HTMLElement | null = null;
-  private _sliderTrackEl: HTMLElement | null = null;
-  private _sliderFillEl: HTMLElement | null = null;
-  private _sliderThumbEl: HTMLElement | null = null;
-  private _btnBrightnessEl: HTMLElement | null = null;
-  private _btnBrightnessLabelEl: HTMLElement | null = null;
-  private _btnTempEl: HTMLElement | null = null;
-  private _btnTempLabelEl: HTMLElement | null = null;
-  private _btnPowerEl: HTMLElement | null = null;
-  private _btnPowerIconEl: HTMLElement | null = null;
+  private _labelEl: HTMLElement | null = null;
+  private _subBrightnessEl: HTMLElement | null = null;
+  private _subBrightnessIconEl: HTMLElement | null = null;
+  private _subBrightnessLabelEl: HTMLElement | null = null;
+  private _subKelvinEl: HTMLElement | null = null;
+  private _subKelvinIconEl: HTMLElement | null = null;
+  private _subKelvinLabelEl: HTMLElement | null = null;
+  private _subToggleEl: HTMLElement | null = null;
+  private _subToggleIconEl: HTMLElement | null = null;
 
-  // Slider dragging state
-  private _isDragging = false;
-  private _dragPct = 0;
-
-  // Long press timer for badge
-  private _holdTimer: any = null;
-  private _isLongPress = false;
+  // Hold timer for card hold action
+  private _cardHoldTimer: any = null;
+  private _cardIsHold = false;
 
   constructor() {
     super();
@@ -113,13 +110,19 @@ export class HaloLightCard extends HTMLElement {
     // Entité de la lumière
     if (oldHass.states[id] !== newHass.states[id]) return true;
 
+    // Entité de sous-toggle si distincte
+    if (this._config.sub_toggle_entity) {
+      const ste = this._config.sub_toggle_entity;
+      if (oldHass.states[ste] !== newHass.states[ste]) return true;
+    }
+
     // Entité de thème spécifique si configurée
     if (this._config.theme_entity) {
       const te = this._config.theme_entity;
       if (oldHass.states[te] !== newHass.states[te]) return true;
     }
 
-    // Helper de thème d'éclairages global HOLM
+    // Sélecteur de thème d'éclairages global HOLM
     const commonThemeEntities = [
       'input_select.couleur_theme_eclairages',
       'input_select.couleur_theme_eclairage',
@@ -150,45 +153,31 @@ export class HaloLightCard extends HTMLElement {
     window.dispatchEvent(event);
   }
 
-  private _handleBadgePointerDown(e: PointerEvent) {
+  // --- Gestionnaires d'actions ---
+
+  private _handleMoreInfo(e: Event) {
     e.stopPropagation();
-    this._isLongPress = false;
-    this._holdTimer = setTimeout(() => {
-      this._isLongPress = true;
-      this._fireHaptic('heavy');
-      this._fireEvent('hass-more-info', { entityId: this._config.entity });
-    }, 500);
+    const id = this._config.entity;
+    if (!id) return;
+    this._fireHaptic('light');
+    this._fireEvent('hass-more-info', { entityId: id });
   }
 
-  private _handleBadgePointerUp(e: PointerEvent) {
-    e.stopPropagation();
-    if (this._holdTimer) {
-      clearTimeout(this._holdTimer);
-      this._holdTimer = null;
-    }
-    if (!this._isLongPress) {
-      this._handleToggle(e);
-    }
-  }
-
-  private _handleBadgePointerCancel(e: PointerEvent) {
-    if (this._holdTimer) {
-      clearTimeout(this._holdTimer);
-      this._holdTimer = null;
-    }
-  }
-
-  private _handleInfoTap(e: Event) {
-    e.stopPropagation();
-    this._fireEvent('hass-more-info', { entityId: this._config.entity });
-  }
-
-  private _handleToggle(e: Event) {
+  private _handleMainIconToggle(e: Event) {
     e.stopPropagation();
     const id = this._config.entity;
     if (!id || !this._hass) return;
     this._fireHaptic('light');
     this._hass.callService('light', 'toggle', { entity_id: id });
+  }
+
+  private _handleSubToggle(e: Event) {
+    e.stopPropagation();
+    const id = this._config.sub_toggle_entity || this._config.entity;
+    if (!id || !this._hass) return;
+    this._fireHaptic('light');
+    const domain = id.split('.')[0] || 'light';
+    this._hass.callService(domain, 'toggle', { entity_id: id });
   }
 
   private _handleBrightnessCycle(e: Event) {
@@ -197,8 +186,9 @@ export class HaloLightCard extends HTMLElement {
     if (!id || !this._hass) return;
 
     const entity = this._hass.states[id];
+    const isOn = entity?.state === 'on';
     const currentPct = getBrightnessPct(entity);
-    const nextPct = getNextBrightnessPct(currentPct);
+    const nextPct = getNextBrightnessPct(currentPct, isOn);
 
     this._fireHaptic('light');
     this._hass.callService('light', 'turn_on', {
@@ -207,14 +197,15 @@ export class HaloLightCard extends HTMLElement {
     });
   }
 
-  private _handleTempCycle(e: Event) {
+  private _handleKelvinCycle(e: Event) {
     e.stopPropagation();
     const id = this._config.entity;
     if (!id || !this._hass) return;
 
     const entity = this._hass.states[id];
+    const isOn = entity?.state === 'on';
     const currentK = getKelvin(entity);
-    const nextK = getNextKelvin(currentK);
+    const nextK = getNextKelvin(currentK, isOn);
 
     this._fireHaptic('light');
     this._hass.callService('light', 'turn_on', {
@@ -223,71 +214,45 @@ export class HaloLightCard extends HTMLElement {
     });
   }
 
-  // --- Gestion du Slider Interactif (Pointer Events) ---
+  // --- Gestion du Hold / Tap sur le conteneur ha-card ---
 
-  private _onSliderPointerDown(e: PointerEvent) {
-    e.stopPropagation();
-    this._isDragging = true;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    this._updateSliderFromPointer(e);
-  }
-
-  private _onSliderPointerMove(e: PointerEvent) {
-    if (!this._isDragging) return;
-    e.stopPropagation();
-    this._updateSliderFromPointer(e);
-  }
-
-  private _onSliderPointerUp(e: PointerEvent) {
-    if (!this._isDragging) return;
-    e.stopPropagation();
-    this._isDragging = false;
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {}
-    this._commitBrightness(this._dragPct);
-  }
-
-  private _onSliderPointerCancel(e: PointerEvent) {
-    if (!this._isDragging) return;
-    this._isDragging = false;
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {}
-    this._render();
-  }
-
-  private _updateSliderFromPointer(e: PointerEvent) {
-    if (!this._sliderTrackEl) return;
-    const rect = this._sliderTrackEl.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    let pct = Math.round((x / rect.width) * 100);
-    pct = Math.max(0, Math.min(100, pct));
-    this._dragPct = pct;
-
-    if (this._sliderFillEl) {
-      this._sliderFillEl.style.width = `${pct}%`;
+  private _onCardPointerDown(e: PointerEvent) {
+    // Si l'utilisateur clique sur un sous-bouton ou le main-icon, ne pas armer le hold de la carte
+    const target = e.target as HTMLElement;
+    if (target.closest('.sub-btn') || target.closest('.main-icon-btn')) {
+      return;
     }
-    if (this._sliderThumbEl) {
-      this._sliderThumbEl.style.left = `${pct}%`;
+
+    this._cardIsHold = false;
+    this._cardHoldTimer = setTimeout(() => {
+      this._cardIsHold = true;
+      this._fireHaptic('heavy');
+      // Hold action de la tuile de référence : toggle
+      this._handleMainIconToggle(e);
+    }, 500);
+  }
+
+  private _onCardPointerUp(e: PointerEvent) {
+    const target = e.target as HTMLElement;
+    if (target.closest('.sub-btn') || target.closest('.main-icon-btn')) {
+      return;
     }
-    if (this._statusEl) {
-      this._statusEl.textContent = pct === 0 ? 'Éteint' : `Luminosité : ${pct} %`;
+
+    if (this._cardHoldTimer) {
+      clearTimeout(this._cardHoldTimer);
+      this._cardHoldTimer = null;
+    }
+
+    if (!this._cardIsHold) {
+      // Tap action de la tuile de référence : more-info
+      this._handleMoreInfo(e);
     }
   }
 
-  private _commitBrightness(pct: number) {
-    const id = this._config.entity;
-    if (!id || !this._hass) return;
-
-    this._fireHaptic('light');
-    if (pct === 0) {
-      this._hass.callService('light', 'turn_off', { entity_id: id });
-    } else {
-      this._hass.callService('light', 'turn_on', {
-        entity_id: id,
-        brightness_pct: pct
-      });
+  private _onCardPointerCancel() {
+    if (this._cardHoldTimer) {
+      clearTimeout(this._cardHoldTimer);
+      this._cardHoldTimer = null;
     }
   }
 
@@ -299,171 +264,196 @@ export class HaloLightCard extends HTMLElement {
         }
         ha-card.halo-light-card {
           position: relative;
-          display: flex;
+          display: grid;
+          grid-template-areas:
+            "main_icon n sub_brightness sub_kelvin sub_toggle"
+            "main_icon l sub_brightness sub_kelvin sub_toggle";
+          grid-template-columns: 44px 1fr auto auto auto;
+          grid-template-rows: min-content min-content;
           align-items: center;
-          justify-content: space-between;
-          border-radius: 14px;
-          padding: 10px 14px;
-          min-height: 64px;
+          gap: 2px 8px;
+          border-radius: 16px;
+          padding: 10px 12px;
           box-sizing: border-box;
-          backdrop-filter: blur(16px) saturate(180%);
-          -webkit-backdrop-filter: blur(16px) saturate(180%);
-          cursor: pointer;
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
           user-select: none;
-          transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                      border 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                      filter 0.15s ease;
+          cursor: pointer;
           overflow: hidden;
         }
         ha-card.halo-light-card:hover {
-          filter: brightness(1.05);
+          filter: brightness(1.03);
         }
-        .halo-left {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          min-width: 0;
-          flex: 1;
-        }
-        .halo-icon-badge {
-          width: 38px;
-          height: 38px;
-          min-width: 38px;
-          border-radius: 11px;
+
+        /* 1. Main Icon (gauche) */
+        .main-icon-btn {
+          grid-area: main_icon;
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          flex-shrink: 0;
+          justify-self: start;
+          align-self: center;
+          transition: all 0.3s ease;
           cursor: pointer;
-          transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.1s ease;
+          box-sizing: border-box;
+          outline: none;
         }
-        .halo-icon-badge:active {
-          transform: scale(0.92);
+        .main-icon-btn:hover {
+          filter: brightness(1.15);
+          transform: translateY(-1px);
         }
-        .halo-icon-badge ha-icon {
-          --mdc-icon-size: 22px;
-          width: 22px;
-          height: 22px;
+        .main-icon-btn:active {
+          transform: translateY(1px) scale(0.95);
+        }
+        .main-icon-btn ha-icon {
+          --mdc-icon-size: 24px;
+          width: 24px;
+          height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: color 0.3s ease;
           pointer-events: none;
         }
-        .halo-info {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          min-width: 0;
-          flex: 1;
-          overflow: hidden;
-          text-align: left;
-          cursor: pointer;
-        }
-        .halo-name {
-          font-size: 13.5px;
+
+        /* 2. Nom & Label */
+        .light-name {
+          grid-area: n;
+          justify-self: start;
+          align-self: center;
+          font-size: 14px;
           font-weight: 600;
-          color: #ffffff;
+          color: #e6f2f5;
+          letter-spacing: -0.2px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          max-width: 100%;
           line-height: 1.25;
-        }
-        .halo-status {
-          font-size: 11.5px;
-          font-weight: 600;
-          line-height: 1.15;
-          transition: color 0.3s ease;
-        }
-        .halo-slider-wrapper {
-          width: 100%;
-          max-width: 130px;
-          height: 16px;
-          display: flex;
-          align-items: center;
           cursor: pointer;
-          touch-action: none;
-          position: relative;
-          margin-top: 2px;
         }
-        .halo-slider-track {
-          width: 100%;
-          height: 4px;
-          border-radius: 4px;
-          background: rgba(255, 255, 255, 0.12);
-          position: relative;
-          pointer-events: none;
+        .light-label {
+          grid-area: l;
+          justify-self: start;
+          align-self: center;
+          font-size: 12px;
+          color: rgba(220, 235, 240, 0.65);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+          line-height: 1.2;
+          cursor: pointer;
         }
-        .halo-slider-fill {
-          height: 100%;
-          border-radius: 4px;
-          position: absolute;
-          left: 0;
-          top: 0;
-          pointer-events: none;
-          transition: width 0.15s ease, background 0.3s ease, box-shadow 0.3s ease;
-        }
-        .halo-slider-thumb {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          position: absolute;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          pointer-events: none;
-          border: 1px solid rgba(255, 255, 255, 0.6);
-          transition: left 0.15s ease, background 0.3s ease, box-shadow 0.3s ease;
-        }
-        .halo-buttons {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          flex-shrink: 0;
-          margin-left: 8px;
-        }
-        .halo-btn {
-          width: 34px;
-          height: 32px;
-          min-width: 34px;
-          border-radius: 9px;
-          padding: 0;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          box-shadow: none;
+
+        /* 3. Sous-boutons (droite) */
+        .sub-btn {
+          justify-self: end;
+          align-self: center;
+          height: 36px;
+          border-radius: 10px;
+          box-sizing: border-box;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          outline: none;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
-          transition: all 0.15s ease;
-          box-sizing: border-box;
-          font-size: 11px;
-          font-weight: 700;
-          color: #ffffff;
-          font-family: inherit;
         }
-        .halo-btn:hover {
-          background: rgba(255, 255, 255, 0.16);
-          border-color: rgba(255, 255, 255, 0.25);
+        .sub-btn:hover {
+          filter: brightness(1.15);
           transform: translateY(-1px);
         }
-        .halo-btn:active {
-          transform: translateY(1px) scale(0.96);
-          background: rgba(255, 255, 255, 0.22);
+        .sub-btn:active {
+          transform: translateY(1px) scale(0.95);
         }
-        .halo-btn ha-icon {
+
+        /* Sub Brightness */
+        .sub-brightness {
+          grid-area: sub_brightness;
+          min-width: 48px;
+          padding: 0 6px;
+          display: grid;
+          grid-template-areas: "i l";
+          grid-template-columns: 14px auto;
+          align-items: center;
+          gap: 0 4px;
+          box-shadow: none;
+        }
+        .sub-brightness ha-icon {
+          grid-area: i;
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+          pointer-events: none;
+          transition: color 0.25s ease;
+        }
+        .sub-brightness span {
+          grid-area: l;
+          font-size: 11px;
+          font-weight: 600;
+          pointer-events: none;
+          white-space: nowrap;
+          transition: color 0.25s ease;
+        }
+
+        /* Sub Kelvin */
+        .sub-kelvin {
+          grid-area: sub_kelvin;
+          min-width: 52px;
+          padding: 0 6px;
+          display: grid;
+          grid-template-areas: "i l";
+          grid-template-columns: 14px auto;
+          align-items: center;
+          gap: 0 4px;
+          box-shadow: none;
+        }
+        .sub-kelvin ha-icon {
+          grid-area: i;
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+          pointer-events: none;
+          transition: color 0.25s ease;
+        }
+        .sub-kelvin span {
+          grid-area: l;
+          font-size: 11px;
+          font-weight: 600;
+          pointer-events: none;
+          white-space: nowrap;
+          transition: color 0.25s ease;
+        }
+
+        /* Sub Toggle */
+        .sub-toggle {
+          grid-area: sub_toggle;
+          width: 36px;
+          min-width: 36px;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .sub-toggle ha-icon {
           --mdc-icon-size: 18px;
           width: 18px;
           height: 18px;
-          color: #ffffff;
           pointer-events: none;
+          transition: color 0.3s ease;
         }
+
         .unavailable-box {
           display: none;
           padding: 14px;
           background: rgba(245, 158, 11, 0.15);
           border: 1px solid #f59e0b;
-          border-radius: 14px;
+          border-radius: 16px;
           color: #ffffff;
           font-size: 13px;
         }
@@ -472,73 +462,57 @@ export class HaloLightCard extends HTMLElement {
       <div class="unavailable-box" id="unavail-box"></div>
 
       <ha-card class="halo-light-card" id="card-body">
-        <div class="halo-left">
-          <div class="halo-icon-badge" id="icon-badge" title="Basculer / Maintenir pour détails">
-            <ha-icon id="light-icon"></ha-icon>
-          </div>
-          <div class="halo-info" id="info-zone" title="Ouvrir les détails">
-            <span class="halo-name" id="light-name"></span>
-            <span class="halo-status" id="light-status"></span>
-            <div class="halo-slider-wrapper" id="slider-wrapper" title="Régler la luminosité">
-              <div class="halo-slider-track" id="slider-track">
-                <div class="halo-slider-fill" id="slider-fill"></div>
-                <div class="halo-slider-thumb" id="slider-thumb"></div>
-              </div>
-            </div>
-          </div>
+        <div class="main-icon-btn" id="main-icon-btn" role="button" tabindex="0" title="Basculer">
+          <ha-icon id="main-icon"></ha-icon>
         </div>
 
-        <div class="halo-buttons" id="buttons-zone">
-          <button class="halo-btn" id="btn-brightness" title="Cycle luminosité" type="button">
-            <span id="btn-brightness-label"></span>
-          </button>
-          <button class="halo-btn" id="btn-temp" title="Cycle température" type="button">
-            <span id="btn-temp-label"></span>
-          </button>
-          <button class="halo-btn" id="btn-power" title="Marche / Arrêt" type="button">
-            <ha-icon id="btn-power-icon" icon="mdi:power"></ha-icon>
-          </button>
+        <div class="light-name" id="light-name" role="button" tabindex="0" title="Détails"></div>
+        <div class="light-label" id="light-label" role="button" tabindex="0" title="Détails"></div>
+
+        <div class="sub-btn sub-brightness" id="sub-brightness" role="button" tabindex="0" title="Cycle luminosité">
+          <ha-icon icon="mdi:white-balance-sunny" id="sub-brightness-icon"></ha-icon>
+          <span id="sub-brightness-label"></span>
+        </div>
+
+        <div class="sub-btn sub-kelvin" id="sub-kelvin" role="button" tabindex="0" title="Cycle température">
+          <ha-icon icon="mdi:palette-outline" id="sub-kelvin-icon"></ha-icon>
+          <span id="sub-kelvin-label"></span>
+        </div>
+
+        <div class="sub-btn sub-toggle" id="sub-toggle" role="button" tabindex="0" title="Marche / Arrêt">
+          <ha-icon icon="mdi:power" id="sub-toggle-icon"></ha-icon>
         </div>
       </ha-card>
     `;
 
-    // Attachement des références Persistent DOM
+    // Récupération des références Persistent DOM
     this._cardEl = this._root.getElementById('card-body');
     this._unavailEl = this._root.getElementById('unavail-box');
-    this._badgeEl = this._root.getElementById('icon-badge');
-    this._iconEl = this._root.getElementById('light-icon');
-    this._infoEl = this._root.getElementById('info-zone');
+    this._mainIconBtnEl = this._root.getElementById('main-icon-btn');
+    this._mainIconEl = this._root.getElementById('main-icon');
     this._nameEl = this._root.getElementById('light-name');
-    this._statusEl = this._root.getElementById('light-status');
-    this._sliderWrapperEl = this._root.getElementById('slider-wrapper');
-    this._sliderTrackEl = this._root.getElementById('slider-track');
-    this._sliderFillEl = this._root.getElementById('slider-fill');
-    this._sliderThumbEl = this._root.getElementById('slider-thumb');
-    this._btnBrightnessEl = this._root.getElementById('btn-brightness');
-    this._btnBrightnessLabelEl = this._root.getElementById('btn-brightness-label');
-    this._btnTempEl = this._root.getElementById('btn-temp');
-    this._btnTempLabelEl = this._root.getElementById('btn-temp-label');
-    this._btnPowerEl = this._root.getElementById('btn-power');
-    this._btnPowerIconEl = this._root.getElementById('btn-power-icon');
+    this._labelEl = this._root.getElementById('light-label');
+    this._subBrightnessEl = this._root.getElementById('sub-brightness');
+    this._subBrightnessIconEl = this._root.getElementById('sub-brightness-icon');
+    this._subBrightnessLabelEl = this._root.getElementById('sub-brightness-label');
+    this._subKelvinEl = this._root.getElementById('sub-kelvin');
+    this._subKelvinIconEl = this._root.getElementById('sub-kelvin-icon');
+    this._subKelvinLabelEl = this._root.getElementById('sub-kelvin-label');
+    this._subToggleEl = this._root.getElementById('sub-toggle');
+    this._subToggleIconEl = this._root.getElementById('sub-toggle-icon');
 
-    // Événements Badge (Clic court = Toggle, Long press = More-Info)
-    this._badgeEl?.addEventListener('pointerdown', (e) => this._handleBadgePointerDown(e));
-    this._badgeEl?.addEventListener('pointerup', (e) => this._handleBadgePointerUp(e));
-    this._badgeEl?.addEventListener('pointercancel', (e) => this._handleBadgePointerCancel(e));
+    // Événements sur ha-card (Tap = more-info, Hold = toggle)
+    this._cardEl?.addEventListener('pointerdown', (e) => this._onCardPointerDown(e));
+    this._cardEl?.addEventListener('pointerup', (e) => this._onCardPointerUp(e));
+    this._cardEl?.addEventListener('pointercancel', () => this._onCardPointerCancel());
 
-    // Événements Info Zone (Clic = More-Info)
-    this._infoEl?.addEventListener('click', (e) => this._handleInfoTap(e));
+    // Événement Main Icon (Clic = toggle)
+    this._mainIconBtnEl?.addEventListener('click', (e) => this._handleMainIconToggle(e));
 
-    // Événements Slider Interactif (Pointer Events)
-    this._sliderWrapperEl?.addEventListener('pointerdown', (e) => this._onSliderPointerDown(e));
-    this._sliderWrapperEl?.addEventListener('pointermove', (e) => this._onSliderPointerMove(e));
-    this._sliderWrapperEl?.addEventListener('pointerup', (e) => this._onSliderPointerUp(e));
-    this._sliderWrapperEl?.addEventListener('pointercancel', (e) => this._onSliderPointerCancel(e));
-
-    // Événements Micro-boutons
-    this._btnBrightnessEl?.addEventListener('click', (e) => this._handleBrightnessCycle(e));
-    this._btnTempEl?.addEventListener('click', (e) => this._handleTempCycle(e));
-    this._btnPowerEl?.addEventListener('click', (e) => this._handleToggle(e));
+    // Événements Sous-boutons
+    this._subBrightnessEl?.addEventListener('click', (e) => this._handleBrightnessCycle(e));
+    this._subKelvinEl?.addEventListener('click', (e) => this._handleKelvinCycle(e));
+    this._subToggleEl?.addEventListener('click', (e) => this._handleSubToggle(e));
   }
 
   private _render() {
@@ -562,7 +536,7 @@ export class HaloLightCard extends HTMLElement {
     }
 
     if (this._unavailEl) this._unavailEl.style.display = 'none';
-    if (this._cardEl) this._cardEl.style.display = 'flex';
+    if (this._cardEl) this._cardEl.style.display = 'grid';
 
     const attrs = entity.attributes || {};
     const st = entity.state;
@@ -577,7 +551,7 @@ export class HaloLightCard extends HTMLElement {
     const accentCol = getLightAccentColor(this._hass, this._config, entity);
     const cardStyles = getLightCardStyles(accentCol, isOn, isUnavail);
 
-    // 1. Mise à jour du conteneur ha-card
+    // 1. Mise à jour de ha-card (fond, bordure, box-shadow)
     if (this._cardEl) {
       if (this._cardEl.style.background !== cardStyles.background) {
         this._cardEl.style.background = cardStyles.background;
@@ -590,145 +564,160 @@ export class HaloLightCard extends HTMLElement {
       }
     }
 
-    // 2. Mise à jour du Badge
-    if (this._badgeEl) {
-      let bg = 'rgba(255, 255, 255, 0.05)';
-      let border = '1.25px solid rgba(255, 255, 255, 0.10)';
-      let shadow = 'none';
+    // 2. Main Icon Button
+    if (this._mainIconBtnEl && this._mainIconEl) {
+      let iconBg = 'rgba(255, 255, 255, 0.05)';
+      let iconBorder = '1px solid rgba(255, 255, 255, 0.10)';
+      let iconShadow = '0 0 8px rgba(148, 163, 184, 0.12)';
+      let iconCol = '#94a3b8';
 
       if (isUnavail) {
-        bg = 'rgba(245, 158, 11, 0.20)';
-        border = '1.25px solid rgba(245, 158, 11, 0.50)';
-        shadow = '0 0 12px rgba(245, 158, 11, 0.40)';
+        iconBg = 'rgba(245, 158, 11, 0.20)';
+        iconBorder = '1px solid rgba(245, 158, 11, 0.50)';
+        iconShadow = '0 0 10px rgba(245, 158, 11, 0.40)';
+        iconCol = '#f59e0b';
       } else if (isOn) {
-        bg = `${accentCol}26`;
-        border = `1.25px solid ${accentCol}66`;
-        shadow = `0 0 12px ${accentCol}44`;
+        iconBg = `${accentCol}26`;
+        iconBorder = `1px solid ${accentCol}66`;
+        iconShadow = `0 0 10px ${accentCol}40`;
+        iconCol = accentCol;
       }
 
-      if (this._badgeEl.style.background !== bg) this._badgeEl.style.background = bg;
-      if (this._badgeEl.style.border !== border) this._badgeEl.style.border = border;
-      if (this._badgeEl.style.boxShadow !== shadow) this._badgeEl.style.boxShadow = shadow;
-    }
+      if (this._mainIconBtnEl.style.background !== iconBg) this._mainIconBtnEl.style.background = iconBg;
+      if (this._mainIconBtnEl.style.border !== iconBorder) this._mainIconBtnEl.style.border = iconBorder;
+      if (this._mainIconBtnEl.style.boxShadow !== iconShadow) this._mainIconBtnEl.style.boxShadow = iconShadow;
 
-    // 3. Mise à jour de l'icône
-    if (this._iconEl) {
-      let iconName = this._config.icon;
+      let iconName = this._config.icon || attrs.icon;
       if (!iconName) {
-        if (isUnavail) {
-          iconName = 'mdi:alert-circle';
-        } else if (isOn) {
-          iconName = 'mdi:lightbulb';
-        } else {
-          iconName = 'mdi:lightbulb-outline';
-        }
+        iconName = isUnavail ? 'mdi:alert-circle' : 'mdi:lightbulb';
       }
-
-      let iconColor = '#94a3b8';
-      if (isUnavail) {
-        iconColor = '#f59e0b';
-      } else if (isOn) {
-        iconColor = accentCol;
+      if (this._mainIconEl.getAttribute('icon') !== iconName) {
+        this._mainIconEl.setAttribute('icon', iconName);
       }
-
-      if (this._iconEl.getAttribute('icon') !== iconName) {
-        this._iconEl.setAttribute('icon', iconName);
-      }
-      if (this._iconEl.style.color !== iconColor) {
-        this._iconEl.style.color = iconColor;
+      if (this._mainIconEl.style.color !== iconCol) {
+        this._mainIconEl.style.color = iconCol;
       }
     }
 
-    // 4. Mise à jour du nom
-    let name = this._config.name || attrs.friendly_name || 'Éclairage';
-    name = name.replace(/^Lumière\s+/i, '').replace(/^Lampe\s+/i, '');
-    if (this._nameEl && this._nameEl.textContent !== name) {
-      this._nameEl.textContent = name;
+    // 3. Nom
+    if (this._nameEl) {
+      const name = this._config.name || attrs.friendly_name || 'Éclairage';
+      if (this._nameEl.textContent !== name) {
+        this._nameEl.textContent = name;
+      }
     }
 
-    // 5. Mise à jour du statut
-    if (this._statusEl && !this._isDragging) {
+    // 4. Label (statut textuel "Allumé • 80 % • 2700 K" ou "Éteint")
+    if (this._labelEl) {
       const statusText = formatLightStatus(entity);
-      if (this._statusEl.textContent !== statusText) {
-        this._statusEl.textContent = statusText;
-      }
-      const statusColor = isUnavail ? '#f59e0b' : isOn ? accentCol : '#94a3b8';
-      if (this._statusEl.style.color !== statusColor) {
-        this._statusEl.style.color = statusColor;
+      if (this._labelEl.textContent !== statusText) {
+        this._labelEl.textContent = statusText;
       }
     }
 
-    // 6. Mise à jour du Slider de Luminosité
-    const showSlider = this._config.show_slider !== false && dimmable;
-    if (this._sliderWrapperEl) {
-      this._sliderWrapperEl.style.display = showSlider ? 'flex' : 'none';
+    // 5. Sous-bouton 1 : Luminosité (%)
+    const showBrightness =
+      dimmable &&
+      this._config.show_brightness !== false &&
+      this._config.show_brightness_btn !== false;
 
-      if (showSlider && !this._isDragging) {
-        const pct = isOn ? currentPct : 0;
-        const widthStr = `${pct}%`;
-        const shadow = isOn ? `0 0 6px ${accentCol}88` : 'none';
-        const fillBg = isOn ? accentCol : 'rgba(255, 255, 255, 0.2)';
+    if (this._subBrightnessEl) {
+      this._subBrightnessEl.style.display = showBrightness ? 'grid' : 'none';
 
-        if (this._sliderFillEl) {
-          if (this._sliderFillEl.style.width !== widthStr) this._sliderFillEl.style.width = widthStr;
-          if (this._sliderFillEl.style.background !== fillBg) this._sliderFillEl.style.background = fillBg;
-          if (this._sliderFillEl.style.boxShadow !== shadow) this._sliderFillEl.style.boxShadow = shadow;
-        }
-
-        if (this._sliderThumbEl) {
-          if (this._sliderThumbEl.style.left !== widthStr) this._sliderThumbEl.style.left = widthStr;
-          if (this._sliderThumbEl.style.background !== fillBg) this._sliderThumbEl.style.background = fillBg;
-          if (this._sliderThumbEl.style.boxShadow !== shadow) this._sliderThumbEl.style.boxShadow = shadow;
-        }
-      }
-    }
-
-    // 7. Bouton Luminosité (%)
-    const showBrightnessBtn = this._config.show_brightness_btn !== false && dimmable;
-    if (this._btnBrightnessEl) {
-      this._btnBrightnessEl.style.display = showBrightnessBtn ? 'flex' : 'none';
-      if (showBrightnessBtn && this._btnBrightnessLabelEl) {
-        const label = isOn ? `${currentPct}%` : '%';
-        if (this._btnBrightnessLabelEl.textContent !== label) {
-          this._btnBrightnessLabelEl.textContent = label;
-        }
-      }
-    }
-
-    // 8. Bouton Température / Kelvin (K)
-    const showTempBtn = this._config.show_temp_btn !== false && colorTempSupported;
-    if (this._btnTempEl) {
-      this._btnTempEl.style.display = showTempBtn ? 'flex' : 'none';
-      if (showTempBtn && this._btnTempLabelEl) {
-        const label = isOn && currentKelvin ? formatKelvin(currentKelvin) : 'K';
-        if (this._btnTempLabelEl.textContent !== label) {
-          this._btnTempLabelEl.textContent = label;
-        }
-      }
-    }
-
-    // 9. Bouton Power (On/Off)
-    const showPowerBtn = this._config.show_power_btn !== false;
-    if (this._btnPowerEl) {
-      this._btnPowerEl.style.display = showPowerBtn ? 'flex' : 'none';
-      if (showPowerBtn) {
-        let pBg = 'rgba(255, 255, 255, 0.08)';
-        let pBorder = '1px solid rgba(255, 255, 255, 0.12)';
-        let pColor = '#94a3b8';
-        let pShadow = 'none';
+      if (showBrightness) {
+        let bBg = 'rgba(255, 255, 255, 0.04)';
+        let bBorder = '1px solid rgba(255, 255, 255, 0.08)';
+        let bIconCol = '#64748b';
+        let bLabelCol = 'rgba(220, 235, 240, 0.50)';
+        let bText = '—';
 
         if (isOn) {
-          pBg = `${accentCol}22`;
-          pBorder = `1px solid ${accentCol}55`;
-          pColor = accentCol;
-          pShadow = `0 0 8px ${accentCol}33`;
+          bBg = 'rgba(245, 158, 11, 0.16)';
+          bBorder = '1px solid rgba(245, 158, 11, 0.40)';
+          bIconCol = '#f59e0b';
+          bLabelCol = '#fef3c7';
+          bText = `${currentPct} %`;
         }
 
-        if (this._btnPowerEl.style.background !== pBg) this._btnPowerEl.style.background = pBg;
-        if (this._btnPowerEl.style.border !== pBorder) this._btnPowerEl.style.border = pBorder;
-        if (this._btnPowerEl.style.boxShadow !== pShadow) this._btnPowerEl.style.boxShadow = pShadow;
-        if (this._btnPowerIconEl && this._btnPowerIconEl.style.color !== pColor) {
-          this._btnPowerIconEl.style.color = pColor;
+        if (this._subBrightnessEl.style.background !== bBg) this._subBrightnessEl.style.background = bBg;
+        if (this._subBrightnessEl.style.border !== bBorder) this._subBrightnessEl.style.border = bBorder;
+        if (this._subBrightnessIconEl && this._subBrightnessIconEl.style.color !== bIconCol) {
+          this._subBrightnessIconEl.style.color = bIconCol;
+        }
+        if (this._subBrightnessLabelEl) {
+          if (this._subBrightnessLabelEl.style.color !== bLabelCol) this._subBrightnessLabelEl.style.color = bLabelCol;
+          if (this._subBrightnessLabelEl.textContent !== bText) this._subBrightnessLabelEl.textContent = bText;
+        }
+      }
+    }
+
+    // 6. Sous-bouton 2 : Température Kelvin (K)
+    const showKelvin =
+      colorTempSupported &&
+      this._config.show_kelvin !== false &&
+      this._config.show_temp_btn !== false;
+
+    if (this._subKelvinEl) {
+      this._subKelvinEl.style.display = showKelvin ? 'grid' : 'none';
+
+      if (showKelvin) {
+        let kBg = 'rgba(255, 255, 255, 0.04)';
+        let kBorder = '1px solid rgba(255, 255, 255, 0.08)';
+        let kIconCol = '#64748b';
+        let kLabelCol = 'rgba(220, 235, 240, 0.50)';
+        let kText = '—';
+
+        if (isOn) {
+          kBg = 'rgba(249, 115, 22, 0.16)';
+          kBorder = '1px solid rgba(249, 115, 22, 0.40)';
+          kIconCol = '#f97316';
+          kLabelCol = '#ffedd5';
+          kText = formatKelvinShort(currentKelvin);
+        }
+
+        if (this._subKelvinEl.style.background !== kBg) this._subKelvinEl.style.background = kBg;
+        if (this._subKelvinEl.style.border !== kBorder) this._subKelvinEl.style.border = kBorder;
+        if (this._subKelvinIconEl && this._subKelvinIconEl.style.color !== kIconCol) {
+          this._subKelvinIconEl.style.color = kIconCol;
+        }
+        if (this._subKelvinLabelEl) {
+          if (this._subKelvinLabelEl.style.color !== kLabelCol) this._subKelvinLabelEl.style.color = kLabelCol;
+          if (this._subKelvinLabelEl.textContent !== kText) this._subKelvinLabelEl.textContent = kText;
+        }
+      }
+    }
+
+    // 7. Sous-bouton 3 : Power Toggle
+    const showToggle =
+      this._config.show_toggle !== false &&
+      this._config.show_power_btn !== false;
+
+    if (this._subToggleEl) {
+      this._subToggleEl.style.display = showToggle ? 'flex' : 'none';
+
+      if (showToggle) {
+        // Si sub_toggle_entity est spécifié, vérifier son état propre
+        const toggleTargetId = this._config.sub_toggle_entity || id;
+        const toggleTargetEntity = this._hass.states[toggleTargetId];
+        const isToggleOn = toggleTargetEntity ? toggleTargetEntity.state === 'on' : isOn;
+
+        let tBg = 'rgba(255, 255, 255, 0.05)';
+        let tBorder = '1px solid rgba(255, 255, 255, 0.10)';
+        let tShadow = 'none';
+        let tIconCol = '#64748b';
+
+        if (isToggleOn) {
+          tBg = `${accentCol}26`;
+          tBorder = `1px solid ${accentCol}66`;
+          tShadow = `0 0 10px ${accentCol}40`;
+          tIconCol = accentCol;
+        }
+
+        if (this._subToggleEl.style.background !== tBg) this._subToggleEl.style.background = tBg;
+        if (this._subToggleEl.style.border !== tBorder) this._subToggleEl.style.border = tBorder;
+        if (this._subToggleEl.style.boxShadow !== tShadow) this._subToggleEl.style.boxShadow = tShadow;
+        if (this._subToggleIconEl && this._subToggleIconEl.style.color !== tIconCol) {
+          this._subToggleIconEl.style.color = tIconCol;
         }
       }
     }

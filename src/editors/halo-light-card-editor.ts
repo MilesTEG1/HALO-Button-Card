@@ -1,15 +1,16 @@
 /**
  * ==============================================================================
  * 📌 Nom du fichier : src/editors/halo-light-card-editor.ts
- * 📝 Description   : Éditeur d'interface graphique visuel pour custom:halo-light-card
+ * 📝 Description   : Éditeur visuel pour custom:halo-light-card
  *                    Propulsé par le composant natif Home Assistant <ha-form>.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.0.0
+ * 📦 Version      : 1.1.0
  * 📅 Date         : 2026-10-29
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.1.0 (2026-10-29) : Alignement des sélecteurs sur les sous-boutons HOLM.
  *   - 💡 v1.0.0 (2026-10-29) : Création initiale de halo-light-card-editor.
  * ==============================================================================
  */
@@ -36,13 +37,18 @@ const SCHEMA = [
     selector: { icon: {} }
   },
   {
+    name: 'sub_toggle_entity',
+    label: 'Entité dédiée pour le bouton Power (optionnel)',
+    selector: { entity: {} }
+  },
+  {
     name: 'use_light_color',
     label: 'Teinter la tuile avec la couleur réelle de l’ampoule (RGB / Kelvin)',
     selector: { boolean: {} }
   },
   {
     name: 'theme_entity',
-    label: 'Entité sélecteur de thème (optionnel)',
+    label: 'Entité sélecteur de thème (défaut : input_select.couleur_theme_eclairages)',
     selector: { entity: { domain: 'input_select' } }
   },
   {
@@ -51,12 +57,12 @@ const SCHEMA = [
     schema: [
       {
         name: 'color_on',
-        label: 'Couleur Allumé (optionnel)',
+        label: 'Couleur Allumé personnalisée',
         selector: { color_rgb: {} }
       },
       {
         name: 'color_off',
-        label: 'Couleur Éteint (optionnel)',
+        label: 'Couleur Éteint personnalisée',
         selector: { color_rgb: {} }
       }
     ]
@@ -66,23 +72,18 @@ const SCHEMA = [
     name: '',
     schema: [
       {
-        name: 'show_slider',
-        label: 'Afficher la jauge de luminosité',
+        name: 'show_brightness',
+        label: 'Sous-bouton Luminosité (%)',
         selector: { boolean: {} }
       },
       {
-        name: 'show_brightness_btn',
-        label: 'Bouton cycle luminosité (%)',
+        name: 'show_kelvin',
+        label: 'Sous-bouton Température (K)',
         selector: { boolean: {} }
       },
       {
-        name: 'show_temp_btn',
-        label: 'Bouton cycle température (K)',
-        selector: { boolean: {} }
-      },
-      {
-        name: 'show_power_btn',
-        label: 'Bouton Power (On/Off)',
+        name: 'show_toggle',
+        label: 'Sous-bouton Power (On/Off)',
         selector: { boolean: {} }
       }
     ]
@@ -95,11 +96,10 @@ export class HaloLightCardEditor extends HTMLElement {
 
   public setConfig(config: HaloLightCardConfig) {
     this._config = {
-      use_light_color: true,
-      show_slider: true,
-      show_brightness_btn: true,
-      show_temp_btn: true,
-      show_power_btn: true,
+      use_light_color: false,
+      show_brightness: true,
+      show_kelvin: true,
+      show_toggle: true,
       ...config
     };
     this._render();
@@ -158,13 +158,13 @@ export class HaloLightCardEditor extends HTMLElement {
       form = this.querySelector('#form') as any;
       if (form) {
         form.schema = SCHEMA;
-        form.data = this._formData();
-        if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
       }
-    } else {
+    }
+
+    if (form) {
+      form.hass = this._hass;
       form.data = this._formData();
-      if (this._hass) form.hass = this._hass;
     }
   }
 }

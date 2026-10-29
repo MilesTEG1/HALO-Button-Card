@@ -58,7 +58,7 @@ window.customCards.push({
 window.customCards.push({
   type: 'halo-light-card',
   name: 'HALO Light Card',
-  description: 'Turnkey unified lighting card with Liquid Glass slider, dynamic halo and micro-controls.',
+  description: 'Turnkey unified lighting tile with HOLM glass styling, dynamic halo, brightness and kelvin sub-buttons.',
   preview: true
 });
 
