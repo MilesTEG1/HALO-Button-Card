@@ -2,15 +2,16 @@
  * ==============================================================================
  * 📌 Nom du fichier : src/core/light-helper.ts
  * 📝 Description   : Moteur d'aide et logique métier pour custom:halo-light-card
- *                    (capacités de l'entité, conversion kelvin/rgb, cycles rapides,
- *                    calculs d'états et résolution des styles Liquid Glass).
+ *                    Reproduit fidèlement les spécifications, calculs et styles
+ *                    de la référence tuile_avec_sous_boutons (dashboard-eclairage/lights).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.0.0
+ * 📦 Version      : 1.1.0
  * 📅 Date         : 2026-10-29
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.1.0 (2026-10-29) : Alignement 1:1 strict avec tuile_avec_sous_boutons.
  *   - 💡 v1.0.0 (2026-10-29) : Création initiale du moteur light-helper.
  * ==============================================================================
  */
@@ -30,9 +31,8 @@ export function isDimmable(entity: HassEntity | undefined): boolean {
     }
     return modes.length > 0;
   }
-  // Fallback rétrocompatible HA : SUPPORT_BRIGHTNESS = 1
   const features = entity.attributes.supported_features || 0;
-  return (features & 1) !== 0;
+  return (features & 1) !== 0 || entity.attributes.brightness !== undefined;
 }
 
 /**
@@ -44,9 +44,8 @@ export function supportsColorTemp(entity: HassEntity | undefined): boolean {
   if (Array.isArray(modes)) {
     return modes.includes('color_temp');
   }
-  // Fallback rétrocompatible HA : SUPPORT_COLOR_TEMP = 2
   const features = entity.attributes.supported_features || 0;
-  return (features & 2) !== 0;
+  return (features & 2) !== 0 || entity.attributes.color_temp_kelvin !== undefined || entity.attributes.color_temp !== undefined;
 }
 
 /**
@@ -58,7 +57,6 @@ export function supportsColor(entity: HassEntity | undefined): boolean {
   if (Array.isArray(modes)) {
     return modes.some(m => ['hs', 'rgb', 'rgbw', 'rgbww', 'xy'].includes(m));
   }
-  // Fallback rétrocompatible HA : SUPPORT_COLOR = 16
   const features = entity.attributes.supported_features || 0;
   return (features & 16) !== 0;
 }
@@ -92,13 +90,11 @@ export function getKelvin(entity: HassEntity | undefined): number | undefined {
 
 /**
  * Convertit une température Kelvin (1000K-40000K) en couleur RGB [r, g, b].
- * Implémentation standard de l'algorithme de Tanner Helland.
  */
 export function kelvinToRgb(kelvin: number): [number, number, number] {
   const temp = Math.max(1000, Math.min(40000, kelvin)) / 100;
   let r: number, g: number, b: number;
 
-  // Calcul du rouge
   if (temp <= 66) {
     r = 255;
   } else {
@@ -107,7 +103,6 @@ export function kelvinToRgb(kelvin: number): [number, number, number] {
     r = Math.max(0, Math.min(255, r));
   }
 
-  // Calcul du vert
   if (temp <= 66) {
     g = temp;
     g = 99.4708025861 * Math.log(g) - 161.1195681661;
@@ -118,7 +113,6 @@ export function kelvinToRgb(kelvin: number): [number, number, number] {
     g = Math.max(0, Math.min(255, g));
   }
 
-  // Calcul du bleu
   if (temp >= 66) {
     b = 255;
   } else if (temp <= 19) {
@@ -138,13 +132,11 @@ export function kelvinToRgb(kelvin: number): [number, number, number] {
 export function getLightActualRgb(entity: HassEntity | undefined): [number, number, number] | undefined {
   if (!entity || entity.state !== 'on' || !entity.attributes) return undefined;
 
-  // 1. Couleurs RGB directes de l'ampoule
   const rgb = entity.attributes.rgb_color;
   if (Array.isArray(rgb) && rgb.length === 3) {
     return [rgb[0], rgb[1], rgb[2]];
   }
 
-  // 2. Température Kelvin
   const kelvin = getKelvin(entity);
   if (kelvin != null && kelvin > 0) {
     return kelvinToRgb(kelvin);
@@ -154,62 +146,72 @@ export function getLightActualRgb(entity: HassEntity | undefined): [number, numb
 }
 
 /**
- * Calcule le prochain palier de luminosité pour le cycle rapide (30% -> 67% -> 100% -> 30%).
+ * Calcule le prochain palier de luminosité pour le cycle rapide :
+ * Alignement strict avec tuile_avec_sous_boutons :
+ * if (cur >= 90) return 30;
+ * if (cur >= 60) return 100;
+ * if (cur >= 25) return 67;
+ * return 100;
  */
-export function getNextBrightnessPct(currentPct: number): number {
-  if (currentPct < 45) {
-    return 67;
-  } else if (currentPct < 85) {
-    return 100;
-  } else {
-    return 30;
-  }
+export function getNextBrightnessPct(currentPct: number, isOn: boolean): number {
+  if (!isOn) return 100;
+  if (currentPct >= 90) return 30;
+  if (currentPct >= 60) return 100;
+  if (currentPct >= 25) return 67;
+  return 100;
 }
 
 /**
- * Calcule le prochain palier de température Kelvin pour le cycle rapide (2700K -> 4000K -> 5500K -> 2700K).
+ * Calcule le prochain palier de température Kelvin pour le cycle rapide :
+ * Alignement strict avec tuile_avec_sous_boutons :
+ * if (cur >= 4500) return 2200;
+ * if (cur >= 3000) return 5000;
+ * if (cur >= 2400) return 3500;
+ * return 2700;
  */
-export function getNextKelvin(currentKelvin?: number): number {
-  if (!currentKelvin || currentKelvin < 3300) {
-    return 4000;
-  } else if (currentKelvin < 4800) {
-    return 5500;
-  } else {
-    return 2700;
-  }
+export function getNextKelvin(currentKelvin: number | undefined, isOn: boolean): number {
+  if (!isOn) return 2700;
+  const cur = currentKelvin || 2700;
+  if (cur >= 4500) return 2200;
+  if (cur >= 3000) return 5000;
+  if (cur >= 2400) return 3500;
+  return 2700;
 }
 
 /**
- * Formate un nombre de Kelvins en libellé court lisible (ex. "2.7k", "4k", "5.5k").
+ * Formate un nombre de Kelvins en libellé court pour le sous-bouton :
+ * Math.round(Number(ct) / 100) / 10 + 'k' -> e.g. "2.7k", "3.5k", "5k", "2.2k"
  */
-export function formatKelvin(kelvin: number): string {
-  if (kelvin >= 1000) {
-    const k = (kelvin / 1000).toFixed(1).replace('.0', '');
-    return `${k}k`;
-  }
-  return `${kelvin}K`;
+export function formatKelvinShort(kelvin: number | undefined): string {
+  if (kelvin == null) return '—';
+  return Math.round(Number(kelvin) / 100) / 10 + 'k';
 }
 
 /**
- * Génère le statut textuel dynamique de la lumière.
+ * Génère le statut textuel dynamique de la lumière :
+ * Alignement strict avec tuile_avec_sous_boutons :
+ * - 'Indisponible' si unavailable
+ * - 'Inconnu' si unknown
+ * - 'Éteint' si pas on
+ * - 'Allumé [• X %] [• Y K]' si on
  */
 export function formatLightStatus(entity: HassEntity | undefined): string {
-  if (!entity) return 'Indisponible';
+  if (!entity) return '—';
   const st = entity.state;
-  if (st === 'unavailable' || st === 'unknown') return 'Indisponible';
+  if (st === 'unavailable') return 'Indisponible';
+  if (st === 'unknown') return 'Inconnu';
   if (st !== 'on') return 'Éteint';
 
   const parts: string[] = ['Allumé'];
-  const dimmable = isDimmable(entity);
-
-  if (dimmable) {
-    const pct = getBrightnessPct(entity);
+  const b = entity.attributes?.brightness;
+  if (b != null) {
+    const pct = Math.round((Number(b) / 255) * 100);
     parts.push(`${pct} %`);
   }
 
-  const kelvin = getKelvin(entity);
-  if (kelvin != null) {
-    parts.push(`${kelvin} K`);
+  const k = entity.attributes?.color_temp_kelvin;
+  if (k != null) {
+    parts.push(`${k} K`);
   }
 
   return parts.join(' • ');
@@ -217,7 +219,7 @@ export function formatLightStatus(entity: HassEntity | undefined): string {
 
 /**
  * Résout la couleur d'accentuation dynamique de la tuile selon la configuration,
- * l'état réel de l'ampoule et le thème HOLM.
+ * l'état réel de l'ampoule et le sélecteur de thème HOLM.
  */
 export function getLightAccentColor(
   hass: HomeAssistant,
@@ -236,21 +238,21 @@ export function getLightAccentColor(
     return '#64748b';
   }
 
-  // Si l'ampoule est allumée :
-  // 1. Vérifier si l'utilisateur souhaite la couleur réelle de l'ampoule (défaut : true)
-  if (config.use_light_color !== false) {
+  // Si allumé :
+  // 1. Teinte avec la couleur réelle si use_light_color est true (et disponible)
+  if (config.use_light_color === true) {
     const realRgb = getLightActualRgb(entity);
     if (realRgb) {
       return rgbToHex(realRgb);
     }
   }
 
-  // 2. Couleur explicite configurée
+  // 2. Couleur fixe si configurée
   if (config.color_on) {
     return toHexColor(config.color_on, '#26c6da');
   }
 
-  // 3. Entité de thème spécifique ou fallback thème d'éclairages HOLM
+  // 3. Sélecteur de thème HOLM
   return resolveThemeColor(
     hass,
     undefined,
@@ -260,7 +262,8 @@ export function getLightAccentColor(
 }
 
 /**
- * Génère les styles CSS Liquid Glass pour le corps de la carte selon l'état de la lumière.
+ * Génère les styles CSS pour le conteneur ha-card :
+ * Alignement strict 1:1 avec tuile_avec_sous_boutons.
  */
 export function getLightCardStyles(
   accentCol: string,
@@ -273,24 +276,24 @@ export function getLightCardStyles(
 } {
   if (isUnavail) {
     return {
-      background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))',
-      border: '1.5px solid #f59e0b',
-      boxShadow: '0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)'
+      background: 'linear-gradient(160deg, rgba(22, 32, 46, 0.72), rgba(12, 18, 26, 0.86))',
+      border: '1px solid rgba(245, 158, 11, 0.50)',
+      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 22px rgba(0, 0, 0, 0.40), 0 0 16px rgba(245, 158, 11, 0.30)'
     };
   }
 
   if (isOn) {
     return {
-      background: `linear-gradient(135deg, ${accentCol}22, rgba(20, 28, 38, 0.88))`,
-      border: `1.5px solid ${accentCol}`,
-      boxShadow: `0 0 18px ${accentCol}60, 0 0 6px ${accentCol}40, inset 0 1px 0 rgba(255, 255, 255, 0.22)`
+      background: 'linear-gradient(160deg, rgba(22, 34, 48, 0.90), rgba(12, 18, 28, 0.95))',
+      border: `1px solid ${accentCol}66`,
+      boxShadow: `inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 24px rgba(0, 0, 0, 0.40), 0 0 18px ${accentCol}33`
     };
   }
 
-  // État éteint : obsidian discret, bordure subtile, pas de néon excessif
+  // Éteint
   return {
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(15, 20, 28, 0.85))',
-    border: '1.5px solid rgba(255, 255, 255, 0.08)',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+    background: 'linear-gradient(160deg, rgba(22, 32, 46, 0.72), rgba(12, 18, 26, 0.86))',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 22px rgba(0, 0, 0, 0.40), 0 0 16px rgba(148, 163, 184, 0.16)'
   };
 }

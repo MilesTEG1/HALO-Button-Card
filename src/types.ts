@@ -70,7 +70,10 @@ export interface HaloLightCardConfig {
   color_off?: string | [number, number, number];
   theme_entity?: string;
   use_light_color?: boolean;
-  show_slider?: boolean;
+  sub_toggle_entity?: string;
+  show_brightness?: boolean;
+  show_kelvin?: boolean;
+  show_toggle?: boolean;
   show_brightness_btn?: boolean;
   show_temp_btn?: boolean;
   show_power_btn?: boolean;
