@@ -30,6 +30,7 @@ Unlike complex multi-template setups requiring 50+ lines of YAML per tile, HALO 
 - 🧊 **Liquid Glass Aesthetic**: Translucent frosted backdrop blur (`16px saturate(180%)`), deep obsidian gradients, and delicate specular borders.
 - 🌈 **Ambient Glowing Halo**: Dynamic 3-stage colored glow that actively reflects device states.
 - 🪟 **Smart Cover Control (`halo-cover-card`)**: Built-in NodOn/Zigbee asynchronous movement algorithm with accurate travel estimations and responsive micro-controls.
+- 💡 **Smart Lighting Control (`halo-light-card`)**: Turnkey lighting tile with fluid Liquid Glass brightness slider, real-time RGB/Kelvin halo tinting, and adaptive micro-buttons.
 - 📑 **Neon Section Dividers (`halo-separator-card`)**: Sleek title and icon section divider with a continuous neon accent line.
 - 🎨 **Full Visual No-YAML Editor**: Intuitive card configuration powered by Home Assistant's native `<ha-form>`, featuring entity pickers, MDI icon search, and a complete **2D RGB Color Wheel**.
 - ⚡ **Zero-Flicker Persistent DOM**: High-performance architecture ensuring 100% click reliability and instantaneous touch response.
@@ -116,7 +117,37 @@ color_moving: '#f59e0b'
 
 ---
 
-### 2. `custom:halo-separator-card`
+### 2. `custom:halo-light-card`
+
+Unified turnkey lighting tile with real-time brightness slider, live Kelvin / RGB color detection, and adaptive micro-controls.
+
+```yaml
+type: custom:halo-light-card
+entity: light.living_room_ceiling
+name: Living Room Ceiling
+use_light_color: true
+show_slider: true
+```
+
+#### Supported Configuration Options:
+
+| Field | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `entity` | `string` | **Required** | Target `light` entity or `light` group. |
+| `name` | `string` | *friendly_name* | Custom card display label. |
+| `icon` | `string` | *auto* | Custom MDI icon (`mdi:lightbulb` / `mdi:lightbulb-outline`). |
+| `use_light_color` | `boolean` | `true` | Dynamically tints the halo and accents with the bulb's real RGB or Kelvin color. |
+| `color_on` | `string` | *theme* | Halo & accent color when turned on (if `use_light_color` is false). |
+| `color_off` | `string` | `#64748b` | Halo & accent color when turned off. |
+| `theme_entity` | `string` | *auto* | Optional `input_select` entity driving view/dashboard colors. |
+| `show_slider` | `boolean` | `true` | Shows interactive brightness slider (if dimmable). |
+| `show_brightness_btn` | `boolean` | `true` | Shows rapid brightness cycle micro-button (30% -> 67% -> 100%). |
+| `show_temp_btn` | `boolean` | `true` | Shows rapid Kelvin temperature cycle micro-button (2700K -> 4000K -> 5500K). |
+| `show_power_btn` | `boolean` | `true` | Shows instant Power On/Off micro-button. |
+
+---
+
+### 3. `custom:halo-separator-card`
 
 Replaces complex custom template dividers with a sleek native Web Component.
 

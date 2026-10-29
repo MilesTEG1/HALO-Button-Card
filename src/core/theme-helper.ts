@@ -79,7 +79,7 @@ export function resolveThemeColor(
   themeEntity?: string,
   fallback: string = '#26c6da'
 ): string {
-  if (explicitColor) {
+  if (explicitColor && typeof explicitColor === 'string' && explicitColor.trim() !== '') {
     return toHexColor(explicitColor, fallback);
   }
   const states = hass?.states || {};
@@ -89,10 +89,10 @@ export function resolveThemeColor(
     if (val.startsWith('#')) return val;
   }
   const commonEntities = [
+    'input_select.couleur_theme_eclairages',
+    'input_select.couleur_theme_eclairage',
     'input_select.couleur_theme_ouvertures',
     'input_select.couleur_theme_chauffage',
-    'input_select.couleur_theme_eclairage',
-    'input_select.couleur_theme_eclairages',
     'input_select.couleur_theme_global'
   ];
   for (const ent of commonEntities) {
