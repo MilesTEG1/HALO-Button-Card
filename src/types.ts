@@ -1,6 +1,17 @@
 /**
- * HALO Button Card — TypeScript Type Definitions
- * (c) 2026 MilesTEG1 — MIT License
+ * ==============================================================================
+ * 📌 Nom du fichier : src/types.ts
+ * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
+ * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+ * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+ * 📦 Version      : 1.1.0
+ * 📅 Date         : 2026-10-29
+ * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+ * ==============================================================================
+ * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.1.0 (2026-10-29) : Ajout du type HaloLightCardConfig pour custom:halo-light-card.
+ *   - 🆕 v1.0.0 (2026-10-29) : Création initiale des types cover et separator.
+ * ==============================================================================
  */
 
 export interface HomeAssistant {
@@ -21,6 +32,16 @@ export interface HassEntity {
     entity_id?: string[];
     group_entities?: string[];
     device_class?: string;
+    supported_color_modes?: string[];
+    supported_features?: number;
+    brightness?: number;
+    color_temp_kelvin?: number;
+    color_temp?: number;
+    min_color_temp_kelvin?: number;
+    max_color_temp_kelvin?: number;
+    rgb_color?: [number, number, number];
+    hs_color?: [number, number];
+    xy_color?: [number, number];
     [key: string]: any;
   };
   last_updated?: string;
@@ -38,6 +59,23 @@ export interface HaloCoverCardConfig {
   color_moving?: string | [number, number, number];
   show_slider?: boolean;
   tap_action?: Record<string, any>;
+}
+
+export interface HaloLightCardConfig {
+  type: string;
+  entity: string;
+  name?: string;
+  icon?: string;
+  color_on?: string | [number, number, number];
+  color_off?: string | [number, number, number];
+  theme_entity?: string;
+  use_light_color?: boolean;
+  show_slider?: boolean;
+  show_brightness_btn?: boolean;
+  show_temp_btn?: boolean;
+  show_power_btn?: boolean;
+  tap_action?: Record<string, any>;
+  hold_action?: Record<string, any>;
 }
 
 export interface HaloSeparatorCardConfig {

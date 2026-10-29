@@ -1,15 +1,32 @@
 /**
- * HALO Button Card — Entry Point
- * (c) 2026 MilesTEG1 — MIT License
+ * ==============================================================================
+ * 📌 Nom du fichier : src/halo-button-card.ts
+ * 📝 Description   : Point d'entrée principal de la suite HALO Button Card.
+ *                    Déclaration et enregistrement des Web Components Lovelace,
+ *                    enregistrement dans le catalogue Home Assistant (window.customCards)
+ *                    et exportation des composants et moteurs d'aide.
+ * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+ * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+ * 📦 Version      : 1.1.0
+ * 📅 Date         : 2026-10-29
+ * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+ * ==============================================================================
+ * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.1.0 (2026-10-29) : Intégration de custom:halo-light-card et custom:halo-light-card-editor.
+ *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
+ * ==============================================================================
  */
 
 import { HaloCoverCard } from './components/halo-cover-card';
 import { HaloSeparatorCard } from './components/halo-separator-card';
+import { HaloLightCard } from './components/halo-light-card';
 import { HaloCoverCardEditor } from './editors/halo-cover-card-editor';
 import { HaloSeparatorCardEditor } from './editors/halo-separator-card-editor';
+import { HaloLightCardEditor } from './editors/halo-light-card-editor';
 import { voletHelperInstance } from './core/volet-helper';
+import * as lightHelper from './core/light-helper';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -39,6 +56,13 @@ window.customCards.push({
 });
 
 window.customCards.push({
+  type: 'halo-light-card',
+  name: 'HALO Light Card',
+  description: 'Turnkey unified lighting card with Liquid Glass slider, dynamic halo and micro-controls.',
+  preview: true
+});
+
+window.customCards.push({
   type: 'halo-separator-card',
   name: 'HALO Separator Card',
   description: 'Sleek section divider with neon gradient line and HOLM styling.',
@@ -54,6 +78,14 @@ if (!customElements.get('halo-cover-card-editor')) {
   customElements.define('halo-cover-card-editor', HaloCoverCardEditor);
 }
 
+if (!customElements.get('halo-light-card')) {
+  customElements.define('halo-light-card', HaloLightCard);
+}
+
+if (!customElements.get('halo-light-card-editor')) {
+  customElements.define('halo-light-card-editor', HaloLightCardEditor);
+}
+
 if (!customElements.get('halo-separator-card')) {
   customElements.define('halo-separator-card', HaloSeparatorCard);
 }
@@ -66,7 +98,10 @@ if (!customElements.get('halo-separator-card-editor')) {
 export {
   HaloCoverCard,
   HaloCoverCardEditor,
+  HaloLightCard,
+  HaloLightCardEditor,
   HaloSeparatorCard,
   HaloSeparatorCardEditor,
-  voletHelperInstance
+  voletHelperInstance,
+  lightHelper
 };
