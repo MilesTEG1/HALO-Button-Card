@@ -8,11 +8,14 @@
  *                    Persistent DOM, zéro scintillement, réactivité instantanée.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.1.0
+ * 📦 Version      : 1.1.1
  * 📅 Date         : 2026-10-29
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.1.1 (2026-10-29) : Hauteur de carte calibrée à 64px constants (padding
+ *                              9px 12px) et centrage vertical absolu des icônes
+ *                              des sous-boutons (luminosité, kelvin, power toggle).
  *   - 💡 v1.1.0 (2026-10-29) : Alignement 1:1 strict avec tuile_avec_sous_boutons
  *                              (layout grid 44px 1fr auto auto auto, sous-boutons
  *                              sub_brightness, sub_kelvin, sub_toggle).
@@ -272,8 +275,9 @@ export class HaloLightCard extends HTMLElement {
           align-items: center;
           gap: 0 10px;
           border-radius: 16px;
-          padding: 10px 12px;
-          min-height: 66px;
+          padding: 9px 12px;
+          height: 64px;
+          min-height: 64px;
           box-sizing: border-box;
           backdrop-filter: blur(20px) saturate(180%);
           -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -372,6 +376,7 @@ export class HaloLightCard extends HTMLElement {
           transition: all 0.25s ease;
           outline: none;
           user-select: none;
+          line-height: 1;
         }
         .sub-btn:hover {
           filter: brightness(1.12);
@@ -385,22 +390,34 @@ export class HaloLightCard extends HTMLElement {
         .sub-brightness {
           min-width: 48px;
           padding: 0 6px;
-          display: inline-flex;
+          display: inline-grid;
+          grid-template-areas: "i l";
+          grid-template-columns: 14px auto;
           align-items: center;
           justify-content: center;
-          gap: 4px;
+          gap: 0 4px;
           box-shadow: none;
         }
         .sub-brightness ha-icon {
+          grid-area: i;
           --mdc-icon-size: 14px;
           width: 14px;
           height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 0;
+          margin: auto;
           pointer-events: none;
           transition: color 0.25s ease;
         }
         .sub-brightness span {
+          grid-area: l;
           font-size: 11px;
           font-weight: 600;
+          line-height: 1;
+          display: flex;
+          align-items: center;
           pointer-events: none;
           white-space: nowrap;
           transition: color 0.25s ease;
@@ -410,22 +427,34 @@ export class HaloLightCard extends HTMLElement {
         .sub-kelvin {
           min-width: 52px;
           padding: 0 6px;
-          display: inline-flex;
+          display: inline-grid;
+          grid-template-areas: "i l";
+          grid-template-columns: 14px auto;
           align-items: center;
           justify-content: center;
-          gap: 4px;
+          gap: 0 4px;
           box-shadow: none;
         }
         .sub-kelvin ha-icon {
+          grid-area: i;
           --mdc-icon-size: 14px;
           width: 14px;
           height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 0;
+          margin: auto;
           pointer-events: none;
           transition: color 0.25s ease;
         }
         .sub-kelvin span {
+          grid-area: l;
           font-size: 11px;
           font-weight: 600;
+          line-height: 1;
+          display: flex;
+          align-items: center;
           pointer-events: none;
           white-space: nowrap;
           transition: color 0.25s ease;
@@ -436,7 +465,7 @@ export class HaloLightCard extends HTMLElement {
           width: 36px;
           min-width: 36px;
           padding: 0;
-          display: inline-flex;
+          display: flex;
           align-items: center;
           justify-content: center;
         }
@@ -444,6 +473,11 @@ export class HaloLightCard extends HTMLElement {
           --mdc-icon-size: 18px;
           width: 18px;
           height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 0;
+          margin: auto;
           pointer-events: none;
           transition: color 0.25s ease;
         }
@@ -629,7 +663,7 @@ export class HaloLightCard extends HTMLElement {
       this._config.show_brightness_btn !== false;
 
     if (this._subBrightnessEl) {
-      this._subBrightnessEl.style.display = showBrightness ? 'inline-flex' : 'none';
+      this._subBrightnessEl.style.display = showBrightness ? 'inline-grid' : 'none';
 
       if (showBrightness) {
         let bBg = 'rgba(255, 255, 255, 0.04)';
@@ -665,7 +699,7 @@ export class HaloLightCard extends HTMLElement {
       this._config.show_temp_btn !== false;
 
     if (this._subKelvinEl) {
-      this._subKelvinEl.style.display = showKelvin ? 'inline-flex' : 'none';
+      this._subKelvinEl.style.display = showKelvin ? 'inline-grid' : 'none';
 
       if (showKelvin) {
         let kBg = 'rgba(255, 255, 255, 0.04)';
@@ -700,7 +734,7 @@ export class HaloLightCard extends HTMLElement {
       this._config.show_power_btn !== false;
 
     if (this._subToggleEl) {
-      this._subToggleEl.style.display = showToggle ? 'inline-flex' : 'none';
+      this._subToggleEl.style.display = showToggle ? 'flex' : 'none';
 
       if (showToggle) {
         // Si sub_toggle_entity est spécifié, vérifier son état propre
