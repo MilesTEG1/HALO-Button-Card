@@ -30,6 +30,7 @@ Contrairement aux configurations lourdes basées sur de multiples modèles YAML 
 - 🧊 **Esthétique Liquid Glass** : Effet de flou translucide en arrière-plan (`16px saturate(180%)`), dégradés sombres d'obsidienne et bordures spéculaires discrètes.
 - 🌈 **Halo Lumineux Dynamique** : Halo coloré en trois couches réagissant instantanément aux changements d'état physique des entités.
 - 🪟 **Pilote de Volets Intelligent (`halo-cover-card`)** : Algorithme asynchrone intégré pour micromodules Zigbee (NodOn, etc.) assurant l'estimation de course en continu et des micro-boutons de commande fiables.
+- 💡 **Contrôle d'Éclairage Intuitif (`halo-light-card`)** : Tuile d'éclairage unifiée avec slider de luminosité Liquid Glass, halo teinté selon la couleur réelle de l'ampoule (RGB / Kelvin) et micro-boutons réactifs.
 - 📑 **Séparateurs de Sections Néon (`halo-separator-card`)** : Séparateur visuel élégant avec icône, titre givré et ligne néon dégradée continue.
 - 🎨 **Éditeur Graphique Complet (Zéro YAML)** : Formulaire visuel officiel Home Assistant (`<ha-form>`) avec sélecteur d'entités, recherche d'icônes MDI et **Roue Chromatique 2D avec réglage RVB et code Hexadécimal**.
 - ⚡ **Architecture en DOM Persistant** : Zéro clignotement lors des rafraîchissements et réactivité tactile garantie à 100 %.
@@ -115,7 +116,37 @@ color_moving: '#f59e0b'
 
 ---
 
-### 2. `custom:halo-separator-card`
+### 2. `custom:halo-light-card`
+
+Tuile d'éclairage unifiée clé en main avec jauge de luminosité en temps réel, détection de la couleur réelle de l'ampoule (RGB / Kelvin) et micro-commandes adaptatives.
+
+```yaml
+type: custom:halo-light-card
+entity: light.plafonnier_salon
+name: Plafonnier Salon
+use_light_color: true
+show_slider: true
+```
+
+#### Options de Configuration Disponibles :
+
+| Propriété | Type | Défaut | Description |
+| :--- | :---: | :---: | :--- |
+| `entity` | `string` | **Obligatoire** | Entité lumière (`light.*`) ou groupe d'éclairages. |
+| `name` | `string` | *friendly_name* | Nom d'affichage personnalisé. |
+| `icon` | `string` | *auto* | Icône MDI personnalisée (`mdi:lightbulb` / `mdi:lightbulb-outline`). |
+| `use_light_color` | `boolean` | `true` | Teinte dynamiquement le halo et les accents avec la couleur réelle RGB ou Kelvin émise. |
+| `color_on` | `string` | *thème* | Couleur de la tuile allumée (si `use_light_color` est désactivé). |
+| `color_off` | `string` | `#64748b` | Couleur de la tuile éteinte. |
+| `theme_entity` | `string` | *auto* | Entité optionnelle `input_select` pilotant la couleur de vue/thème. |
+| `show_slider` | `boolean` | `true` | Affiche la jauge de luminosité interactive (si dimmable). |
+| `show_brightness_btn` | `boolean` | `true` | Affiche le micro-bouton de cycle rapide de luminosité (30% -> 67% -> 100%). |
+| `show_temp_btn` | `boolean` | `true` | Affiche le micro-bouton de cycle rapide de température Kelvin (2700K -> 4000K -> 5500K). |
+| `show_power_btn` | `boolean` | `true` | Affiche le micro-bouton instantané Marche / Arrêt. |
+
+---
+
+### 3. `custom:halo-separator-card`
 
 Remplace avantageusement les anciens modèles YAML de séparation par un composant Web natif léger.
 
