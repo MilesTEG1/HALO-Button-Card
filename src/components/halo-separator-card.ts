@@ -168,7 +168,7 @@ export class HaloSeparatorCard extends HTMLElement {
     const col = resolveThemeColor(
       this._hass,
       this._config.color,
-      this._config.theme_entity,
+      this._config.theme_entity || 'input_select.couleur_theme_eclairages',
       '#26c6da'
     );
 
