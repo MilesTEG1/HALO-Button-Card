@@ -8,11 +8,13 @@
  *                    alignement vertical, badges/icônes, halos et actions tactiles).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.1
+ * 📦 Version      : 1.3.2
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.3.2 (2026-10-30) : Calibrage précis du badge court (max 2-3 caractères,
+ *                              ajustement dynamique de la taille de police et troncature stricte).
  *   - 💡 v1.3.1 (2026-10-30) : Séparation stricte du mode séparateur pur (collapsible: false)
  *                              et accordéon actif (collapsible: true). Masquage total
  *                              du volet et du bouton toggle si l'accordéon n'est pas activé.
@@ -582,7 +584,14 @@ export class HaloSeparatorCard extends HTMLElement {
 
         let badgeContent = '';
         if (it.badge) {
-          badgeContent = `<span class="legend-badge-text" style="color: ${itemCol};">${it.badge}</span>`;
+          const badgeText = String(it.badge).trim().slice(0, 3);
+          let badgeFontSize = '11px';
+          if (badgeText.length >= 3) {
+            badgeFontSize = '9.5px';
+          } else if (badgeText.length === 2) {
+            badgeFontSize = '10.5px';
+          }
+          badgeContent = `<span class="legend-badge-text" style="color: ${itemCol}; font-size: ${badgeFontSize};">${badgeText}</span>`;
         } else if (it.icon) {
           badgeContent = `<ha-icon icon="${it.icon}" style="color: ${itemCol};"></ha-icon>`;
         } else {
