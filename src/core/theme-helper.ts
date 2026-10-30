@@ -66,9 +66,23 @@ export function toHexColor(color: any, fallback: string): string {
   if (!color) return fallback;
   if (Array.isArray(color)) return rgbToHex(color);
   if (typeof color === 'string') {
-    if (HOLM_PALETTE[color]) return HOLM_PALETTE[color];
-    if (color.startsWith('#')) return color;
-    if (color.startsWith('rgb')) return color;
+    const trimmed = color.trim();
+    if (HOLM_PALETTE[trimmed]) return HOLM_PALETTE[trimmed];
+    if (trimmed.startsWith('#')) {
+      const clean = trimmed.replace('#', '');
+      if (clean.length === 3) {
+        return '#' + clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
+      }
+      if (clean.length >= 6) {
+        return '#' + clean.substring(0, 6);
+      }
+    }
+    if (trimmed.startsWith('rgb')) {
+      const match = trimmed.match(/\d+/g);
+      if (match && match.length >= 3) {
+        return rgbToHex([parseInt(match[0], 10), parseInt(match[1], 10), parseInt(match[2], 10)]);
+      }
+    }
   }
   return fallback;
 }
