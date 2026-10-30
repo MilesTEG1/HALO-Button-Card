@@ -268,16 +268,20 @@ export function getLightAccentColor(
 export function getLightCardStyles(
   accentCol: string,
   isOn: boolean,
-  isUnavail: boolean
+  isUnavail: boolean,
+  borderWidth?: number
 ): {
   background: string;
   border: string;
   boxShadow: string;
 } {
+  const bw = (typeof borderWidth === 'number' && !isNaN(borderWidth)) ? borderWidth : 1.5;
+  const borderStr = (color: string) => bw > 0 ? `${bw}px solid ${color}` : 'none';
+
   if (isUnavail) {
     return {
       background: 'linear-gradient(160deg, rgba(22, 32, 46, 0.72), rgba(12, 18, 26, 0.86))',
-      border: '1px solid rgba(245, 158, 11, 0.50)',
+      border: borderStr('rgba(245, 158, 11, 0.50)'),
       boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 22px rgba(0, 0, 0, 0.40), 0 0 16px rgba(245, 158, 11, 0.30)'
     };
   }
@@ -285,7 +289,7 @@ export function getLightCardStyles(
   if (isOn) {
     return {
       background: 'linear-gradient(160deg, rgba(22, 34, 48, 0.90), rgba(12, 18, 28, 0.95))',
-      border: `1px solid ${accentCol}55`,
+      border: borderStr(accentCol),
       boxShadow: `inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 6px 20px rgba(0, 0, 0, 0.38), 0 0 14px ${accentCol}26`
     };
   }
@@ -293,7 +297,7 @@ export function getLightCardStyles(
   // Éteint : compact, sobre et discret, sans halo bleuté parasite
   return {
     background: 'linear-gradient(160deg, rgba(22, 32, 46, 0.72), rgba(12, 18, 26, 0.86))',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    border: borderStr('rgba(255, 255, 255, 0.08)'),
     boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 16px rgba(0, 0, 0, 0.35)'
   };
 }
