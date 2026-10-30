@@ -2,6 +2,970 @@ var HaloButtonCard = (function (exports) {
     'use strict';
 
     /**
+     * HALO Button Card — Theme & Styling Engine
+     * (c) 2026 MilesTEG1 — MIT License
+     */
+    const HOLM_PALETTE = {
+        'Cyan HOLM': '#26c6da',
+        'Bleu Céleste': '#38bdf8',
+        'Saphir Océan': '#2f86ff',
+        'Menthe Givrée': '#00e5a3',
+        'Émeraude': '#10b981',
+        'Vert Lime': '#84cc16',
+        'Jaune Soleil': '#facc15',
+        'Ambre Doré': '#f59e0b',
+        'Orange Flamme': '#ff5a1f',
+        'Corail Pêche': '#fb923c',
+        'Rose Rubis': '#f43f5e',
+        'Rose Bonbon': '#f472b6',
+        'Fuchsia Néon': '#d946ef',
+        'Améthyste': '#a855f7',
+        'Violet Nuit': '#8b5cf6',
+        'Blanc Glace': '#e2e8f0'
+    };
+    function hexToRgb(hex) {
+        if (!hex || typeof hex !== 'string')
+            return undefined;
+        if (HOLM_PALETTE[hex]) {
+            hex = HOLM_PALETTE[hex];
+        }
+        const clean = hex.replace('#', '').trim();
+        if (clean.length === 3) {
+            const r = parseInt(clean[0] + clean[0], 16);
+            const g = parseInt(clean[1] + clean[1], 16);
+            const b = parseInt(clean[2] + clean[2], 16);
+            return [r, g, b];
+        }
+        if (clean.length === 6 || clean.length === 8) {
+            const r = parseInt(clean.substring(0, 2), 16);
+            const g = parseInt(clean.substring(2, 4), 16);
+            const b = parseInt(clean.substring(4, 6), 16);
+            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+                return [r, g, b];
+            }
+        }
+        return undefined;
+    }
+    function rgbToHex(rgb) {
+        if (!Array.isArray(rgb) || rgb.length < 3)
+            return '#26c6da';
+        const r = Math.max(0, Math.min(255, Math.round(rgb[0])));
+        const g = Math.max(0, Math.min(255, Math.round(rgb[1])));
+        const b = Math.max(0, Math.min(255, Math.round(rgb[2])));
+        return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+    function toHexColor(color, fallback) {
+        if (!color)
+            return fallback;
+        if (Array.isArray(color))
+            return rgbToHex(color);
+        if (typeof color === 'string') {
+            if (HOLM_PALETTE[color])
+                return HOLM_PALETTE[color];
+            if (color.startsWith('#'))
+                return color;
+            if (color.startsWith('rgb'))
+                return color;
+        }
+        return fallback;
+    }
+    function resolveThemeColor(hass, explicitColor, themeEntity, fallback = '#26c6da') {
+        if (explicitColor && typeof explicitColor === 'string' && explicitColor.trim() !== '') {
+            return toHexColor(explicitColor, fallback);
+        }
+        const states = hass?.states || {};
+        if (themeEntity && states[themeEntity]?.state) {
+            const val = states[themeEntity].state;
+            if (HOLM_PALETTE[val])
+                return HOLM_PALETTE[val];
+            if (val.startsWith('#'))
+                return val;
+        }
+        const commonEntities = [
+            'input_select.couleur_theme_eclairages',
+            'input_select.couleur_theme_eclairage',
+            'input_select.couleur_theme_ouvertures',
+            'input_select.couleur_theme_chauffage',
+            'input_select.couleur_theme_global'
+        ];
+        for (const ent of commonEntities) {
+            const st = states[ent]?.state;
+            if (st && HOLM_PALETTE[st])
+                return HOLM_PALETTE[st];
+        }
+        return fallback;
+    }
+    function getCoverColors(hass, config) {
+        const states = hass?.states || {};
+        return {
+            closed: toHexColor(config?.color_closed, states['input_text.couleur_volet_ferme']?.state || '#FFB69C'),
+            open: toHexColor(config?.color_open, states['input_text.couleur_volet_ouvert']?.state || '#96E1FF'),
+            partial: toHexColor(config?.color_partial, states['input_text.couleur_volet_partiel']?.state || '#38bdf8'),
+            moving: toHexColor(config?.color_moving, states['input_text.couleur_volet_en_mouvement']?.state || '#f59e0b')
+        };
+    }
+    function getHaloCardStyles(accentCol, isUnavail, isMoving) {
+        if (isUnavail) {
+            return {
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))',
+                border: '1.5px solid #f59e0b',
+                boxShadow: '0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)'
+            };
+        }
+        if (isMoving) {
+            return {
+                background: `linear-gradient(135deg, ${accentCol}26, rgba(20, 28, 38, 0.90))`,
+                border: `1.5px solid ${accentCol}`,
+                boxShadow: `0 0 22px ${accentCol}77, 0 0 8px ${accentCol}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`
+            };
+        }
+        return {
+            background: `linear-gradient(135deg, ${accentCol}1A, rgba(20, 28, 38, 0.88))`,
+            border: `1.5px solid ${accentCol}`,
+            boxShadow: `0 0 18px ${accentCol}60, 0 0 6px ${accentCol}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`
+        };
+    }
+
+    var themeHelper = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        HOLM_PALETTE: HOLM_PALETTE,
+        getCoverColors: getCoverColors,
+        getHaloCardStyles: getHaloCardStyles,
+        hexToRgb: hexToRgb,
+        resolveThemeColor: resolveThemeColor,
+        rgbToHex: rgbToHex,
+        toHexColor: toHexColor
+    });
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/core/action-handler.ts
+     * 📝 Description   : Moteur universel de gestion des interactions tactiles et
+     *                    exécution des actions Home Assistant (tap, hold, double-tap,
+     *                    call-service, more-info, navigate, url, toggle, confirmation).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Création initiale du moteur d'actions universel HALO.
+     * ==============================================================================
+     */
+    function fireHaptic(type = 'light') {
+        const event = new CustomEvent('haptic', {
+            bubbles: true,
+            composed: true,
+            detail: type
+        });
+        window.dispatchEvent(event);
+    }
+    function fireEvent(node, type, detail) {
+        const event = new CustomEvent(type, {
+            bubbles: true,
+            composed: true,
+            detail: detail
+        });
+        node.dispatchEvent(event);
+    }
+    async function handleAction(node, hass, config, defaultEntityId) {
+        if (!config || !hass)
+            return;
+        const action = config.action || (config.service ? 'call-service' : (defaultEntityId ? 'more-info' : 'none'));
+        if (action === 'none')
+            return;
+        // Confirmation dialog
+        if (config.confirmation) {
+            const text = typeof config.confirmation === 'string'
+                ? config.confirmation
+                : (config.confirmation.text || 'Confirmer l\'action ?');
+            if (!window.confirm(text)) {
+                return;
+            }
+        }
+        fireHaptic('light');
+        switch (action) {
+            case 'call-service':
+            case 'perform-action': {
+                const fullService = config.service || config.perform_action;
+                if (!fullService)
+                    return;
+                const [domain, service] = fullService.split('.');
+                const serviceData = {
+                    ...(config.data || config.service_data || {})
+                };
+                if (config.target) {
+                    Object.assign(serviceData, config.target);
+                }
+                else if (!serviceData.entity_id && (config.entity || defaultEntityId)) {
+                    serviceData.entity_id = config.entity || defaultEntityId;
+                }
+                await hass.callService(domain, service, serviceData);
+                break;
+            }
+            case 'toggle': {
+                const targetEntity = config.entity || defaultEntityId;
+                if (!targetEntity)
+                    return;
+                const domain = targetEntity.split('.')[0] || 'homeassistant';
+                await hass.callService(domain, 'toggle', { entity_id: targetEntity });
+                break;
+            }
+            case 'more-info': {
+                const targetEntity = config.entity || defaultEntityId;
+                if (!targetEntity)
+                    return;
+                fireEvent(node, 'hass-more-info', { entityId: targetEntity });
+                break;
+            }
+            case 'navigate': {
+                const path = config.navigation_path;
+                if (!path)
+                    return;
+                window.history.pushState(null, '', path);
+                const navEvent = new CustomEvent('location-changed', {
+                    bubbles: true,
+                    composed: true
+                });
+                window.dispatchEvent(navEvent);
+                break;
+            }
+            case 'url': {
+                const url = config.url_path;
+                if (!url)
+                    return;
+                window.open(url, '_blank');
+                break;
+            }
+            default:
+                console.warn('[HALO ActionHandler] Action non prise en charge :', action);
+        }
+    }
+    function bindTouchActions(el, handlers, holdDurationMs = 500, doubleTapThresholdMs = 280) {
+        let holdTimer = null;
+        let isHold = false;
+        let lastTapTime = 0;
+        let touchStartPos = { x: 0, y: 0 };
+        let hasMoved = false;
+        const onPointerDown = (e) => {
+            // Ne gérer que le clic principal gauche ou tactile
+            if (e.button !== 0)
+                return;
+            touchStartPos = { x: e.clientX, y: e.clientY };
+            hasMoved = false;
+            isHold = false;
+            if (handlers.onHold) {
+                holdTimer = setTimeout(() => {
+                    isHold = true;
+                    fireHaptic('heavy');
+                    handlers.onHold?.();
+                }, holdDurationMs);
+            }
+        };
+        const onPointerMove = (e) => {
+            if (!holdTimer)
+                return;
+            const dx = Math.abs(e.clientX - touchStartPos.x);
+            const dy = Math.abs(e.clientY - touchStartPos.y);
+            if (dx > 10 || dy > 10) {
+                hasMoved = true;
+                clearTimeout(holdTimer);
+                holdTimer = null;
+            }
+        };
+        const onPointerUp = (e) => {
+            if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+            }
+            if (isHold || hasMoved) {
+                return;
+            }
+            const now = Date.now();
+            if (handlers.onDoubleTap && now - lastTapTime < doubleTapThresholdMs) {
+                lastTapTime = 0;
+                handlers.onDoubleTap();
+                return;
+            }
+            lastTapTime = now;
+            if (handlers.onTap) {
+                // S'il y a un handler de double tap, on peut attendre légèrement ou appeler onTap si pas de double-tap
+                if (handlers.onDoubleTap) {
+                    setTimeout(() => {
+                        if (Date.now() - lastTapTime >= doubleTapThresholdMs - 20 && lastTapTime !== 0) {
+                            handlers.onTap?.();
+                            lastTapTime = 0;
+                        }
+                    }, doubleTapThresholdMs);
+                }
+                else {
+                    handlers.onTap();
+                }
+            }
+        };
+        const onPointerCancel = () => {
+            if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+            }
+            isHold = false;
+        };
+        el.addEventListener('pointerdown', onPointerDown);
+        el.addEventListener('pointermove', onPointerMove);
+        el.addEventListener('pointerup', onPointerUp);
+        el.addEventListener('pointercancel', onPointerCancel);
+        // Return unbind callback
+        return () => {
+            el.removeEventListener('pointerdown', onPointerDown);
+            el.removeEventListener('pointermove', onPointerMove);
+            el.removeEventListener('pointerup', onPointerUp);
+            el.removeEventListener('pointercancel', onPointerCancel);
+        };
+    }
+
+    var actionHandler = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        bindTouchActions: bindTouchActions,
+        fireEvent: fireEvent,
+        fireHaptic: fireHaptic,
+        handleAction: handleAction
+    });
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-button-card.ts
+     * 📝 Description   : Composant Web custom:halo-button-card.
+     *                    Bouton multi-usage universel Liquid Glass avec halo spéculaire,
+     *                    mises en page horizontale/verticale, dissociation d'actions icône/carte,
+     *                    et support complet des sous-boutons interactifs.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Création initiale de halo-button-card polyvalente.
+     * ==============================================================================
+     */
+    class HaloButtonCard extends HTMLElement {
+        constructor() {
+            super();
+            // Persistent DOM references
+            this._cardEl = null;
+            this._iconBtnEl = null;
+            this._iconEl = null;
+            this._textColEl = null;
+            this._titleEl = null;
+            this._subtitleEl = null;
+            this._subButtonsContainerEl = null;
+            this._subButtonEls = [];
+            // Cleanup touch bindings
+            this._unbindCardTouch = null;
+            this._unbindIconTouch = null;
+            this._unbindSubTouch = [];
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        static getConfigElement() {
+            return document.createElement('halo-button-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                name: 'Bouton HALO',
+                label: 'Description du bouton',
+                icon: 'mdi:gesture-tap-button',
+                layout: 'horizontal',
+                color: 'Cyan HOLM',
+                tap_action: {
+                    action: 'toggle'
+                }
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-button-card');
+            }
+            this._config = {
+                layout: 'horizontal',
+                text_align: config.layout === 'vertical' ? 'center' : 'left',
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            if (!this._cardEl) {
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            return this._config?.layout === 'vertical' ? 2 : 1;
+        }
+        disconnectedCallback() {
+            this._cleanupBindings();
+        }
+        _cleanupBindings() {
+            if (this._unbindCardTouch) {
+                this._unbindCardTouch();
+                this._unbindCardTouch = null;
+            }
+            if (this._unbindIconTouch) {
+                this._unbindIconTouch();
+                this._unbindIconTouch = null;
+            }
+            this._unbindSubTouch.forEach(fn => fn());
+            this._unbindSubTouch = [];
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            // Entité principale
+            if (this._config.entity) {
+                if (oldHass.states[this._config.entity] !== newHass.states[this._config.entity]) {
+                    return true;
+                }
+            }
+            // Entité de thème
+            if (this._config.theme_entity) {
+                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
+                    return true;
+                }
+            }
+            // Sous-boutons entités
+            if (this._config.sub_buttons) {
+                for (const sb of this._config.sub_buttons) {
+                    if (sb.entity && oldHass.states[sb.entity] !== newHass.states[sb.entity]) {
+                        return true;
+                    }
+                }
+            }
+            // Thèmes globaux HOLM
+            const commonThemeEntities = [
+                'input_select.couleur_theme_eclairages',
+                'input_select.couleur_theme_ouvertures',
+                'input_select.couleur_theme_chauffage',
+                'input_select.couleur_theme_global'
+            ];
+            for (const te of commonThemeEntities) {
+                if (oldHass.states[te] !== newHass.states[te])
+                    return true;
+            }
+            return false;
+        }
+        _getEffectiveColor() {
+            const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
+            if (explicit) {
+                return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#26c6da');
+            }
+            // Si entité liée (ex: light ou switch)
+            if (this._config.entity && this._hass?.states?.[this._config.entity]) {
+                const stateObj = this._hass.states[this._config.entity];
+                if (stateObj.state === 'off') {
+                    return '#94a3b8';
+                }
+            }
+            return resolveThemeColor(this._hass, undefined, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        ha-card {
+          position: relative;
+          display: flex;
+          box-sizing: border-box;
+          border-radius: 16px;
+          background: linear-gradient(160deg, rgba(20, 28, 38, 0.85), rgba(10, 15, 22, 0.92));
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease;
+          overflow: hidden;
+          cursor: pointer;
+        }
+        ha-card:active {
+          transform: scale(0.985);
+        }
+
+        /* Layout Horizontal */
+        ha-card.layout-horizontal {
+          flex-direction: row;
+          align-items: center;
+          padding: 12px 14px;
+          gap: 12px;
+          min-height: 64px;
+        }
+        ha-card.layout-horizontal .main-icon-btn {
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+          cursor: pointer;
+        }
+        ha-card.layout-horizontal .text-column {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+          gap: 2px;
+        }
+        ha-card.layout-horizontal .sub-buttons-container {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+
+        /* Layout Vertical */
+        ha-card.layout-vertical {
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 12px 8px 10px 8px;
+          gap: 6px;
+          text-align: center;
+          min-height: 84px;
+        }
+        ha-card.layout-vertical .main-icon-btn {
+          width: 42px;
+          height: 42px;
+          min-width: 42px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+          cursor: pointer;
+        }
+        ha-card.layout-vertical .text-column {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          gap: 2px;
+        }
+        ha-card.layout-vertical .sub-buttons-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          width: 100%;
+          margin-top: 4px;
+        }
+
+        /* Typography */
+        .title {
+          font-size: 14px;
+          font-weight: 600;
+          color: #e6f2f5;
+          line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: normal;
+          word-break: break-word;
+        }
+        ha-card.layout-vertical .title {
+          font-size: 12px;
+          text-align: center;
+        }
+        .subtitle {
+          font-size: 12px;
+          color: rgba(220, 235, 240, 0.60);
+          line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: normal;
+        }
+        ha-card.layout-vertical .subtitle {
+          font-size: 10.5px;
+          text-align: center;
+        }
+
+        /* Icon styling */
+        ha-icon {
+          --mdc-icon-size: 22px;
+          width: 22px;
+          height: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.25s ease;
+        }
+
+        /* Sub-buttons */
+        .sub-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          height: 30px;
+          min-width: 30px;
+          padding: 0 6px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          box-sizing: border-box;
+          transition: all 0.2s ease;
+          cursor: pointer;
+        }
+        .sub-btn:hover {
+          filter: brightness(1.15);
+        }
+        .sub-btn:active {
+          transform: scale(0.94);
+        }
+        .sub-btn ha-icon {
+          --mdc-icon-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      </style>
+      <ha-card id="card">
+        <div class="main-icon-btn" id="icon-btn">
+          <ha-icon id="main-icon"></ha-icon>
+        </div>
+        <div class="text-column" id="text-col">
+          <div class="title" id="title"></div>
+          <div class="subtitle" id="subtitle"></div>
+        </div>
+        <div class="sub-buttons-container" id="sub-buttons"></div>
+      </ha-card>
+    `;
+            this._cardEl = this._root.getElementById('card');
+            this._iconBtnEl = this._root.getElementById('icon-btn');
+            this._iconEl = this._root.getElementById('main-icon');
+            this._textColEl = this._root.getElementById('text-col');
+            this._titleEl = this._root.getElementById('title');
+            this._subtitleEl = this._root.getElementById('subtitle');
+            this._subButtonsContainerEl = this._root.getElementById('sub-buttons');
+        }
+        _render() {
+            if (!this._config)
+                return;
+            if (!this._cardEl) {
+                this._buildDom();
+            }
+            const color = this._getEffectiveColor();
+            const layout = this._config.layout || 'horizontal';
+            const isVertical = layout === 'vertical';
+            // Classes & Layout
+            this._cardEl.className = isVertical ? 'layout-vertical' : 'layout-horizontal';
+            // Card styling (Border & Glowing Specular Halo)
+            this._cardEl.style.borderColor = `${color}40`;
+            this._cardEl.style.boxShadow = `inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 14px ${color}26`;
+            // Icon button styling
+            if (this._iconBtnEl) {
+                this._iconBtnEl.style.background = `${color}1A`;
+                this._iconBtnEl.style.borderColor = `${color}40`;
+                this._iconBtnEl.style.border = `1px solid ${color}40`;
+                this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+            }
+            // Icon
+            let icon = this._config.icon;
+            if (!icon && this._config.entity && this._hass?.states?.[this._config.entity]) {
+                icon = this._hass.states[this._config.entity].attributes?.icon || 'mdi:gesture-tap-button';
+            }
+            if (!icon)
+                icon = 'mdi:gesture-tap-button';
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = color;
+            }
+            // Name / Title
+            let title = this._config.name || this._config.title;
+            if (!title && this._config.entity && this._hass?.states?.[this._config.entity]) {
+                title = this._hass.states[this._config.entity].attributes?.friendly_name || this._config.entity;
+            }
+            if (this._titleEl) {
+                this._titleEl.textContent = title || '';
+                this._titleEl.style.display = title ? 'block' : 'none';
+                if (this._config.text_align) {
+                    this._titleEl.style.textAlign = this._config.text_align;
+                }
+            }
+            // Subtitle / Label
+            const subtitle = this._config.label || this._config.subtitle;
+            if (this._subtitleEl) {
+                this._subtitleEl.textContent = subtitle || '';
+                this._subtitleEl.style.display = subtitle ? 'block' : 'none';
+                if (this._config.text_align) {
+                    this._subtitleEl.style.textAlign = this._config.text_align;
+                }
+            }
+            // Render Sub-buttons
+            this._renderSubButtons(color);
+            // Rebind touch gestures
+            this._bindInteractions();
+        }
+        _renderSubButtons(cardColor) {
+            if (!this._subButtonsContainerEl)
+                return;
+            const subButtons = this._config.sub_buttons;
+            if (!subButtons || subButtons.length === 0) {
+                this._subButtonsContainerEl.style.display = 'none';
+                this._subButtonsContainerEl.innerHTML = '';
+                this._subButtonEls = [];
+                return;
+            }
+            this._subButtonsContainerEl.style.display = 'flex';
+            this._subButtonsContainerEl.innerHTML = '';
+            this._subButtonEls = [];
+            subButtons.forEach((sb, idx) => {
+                const btnEl = document.createElement('div');
+                btnEl.className = 'sub-btn';
+                btnEl.setAttribute('data-index', String(idx));
+                const sbColor = sb.color ? toHexColor(sb.color, cardColor) : cardColor;
+                btnEl.style.background = `${sbColor}1A`;
+                btnEl.style.border = `1px solid ${sbColor}40`;
+                btnEl.style.boxShadow = `0 0 8px ${sbColor}26`;
+                btnEl.style.color = sbColor;
+                let contentHtml = '';
+                if (sb.icon) {
+                    contentHtml += `<ha-icon icon="${sb.icon}" style="color: ${sbColor};"></ha-icon>`;
+                }
+                const labelText = sb.badge || sb.name || sb.label;
+                if (labelText) {
+                    contentHtml += `<span>${labelText}</span>`;
+                }
+                btnEl.innerHTML = contentHtml;
+                this._subButtonsContainerEl.appendChild(btnEl);
+                this._subButtonEls.push(btnEl);
+            });
+        }
+        _bindInteractions() {
+            this._cleanupBindings();
+            // 1. Actions sur la carte globale
+            const cardTapAction = this._config.card_tap_action || this._config.tap_action;
+            const cardHoldAction = this._config.card_hold_action || this._config.hold_action;
+            const cardDoubleTapAction = this._config.card_double_tap_action || this._config.double_tap_action;
+            if (this._cardEl) {
+                this._unbindCardTouch = bindTouchActions(this._cardEl, {
+                    onTap: () => {
+                        handleAction(this, this._hass, cardTapAction, this._config.entity);
+                    },
+                    onHold: cardHoldAction ? () => {
+                        handleAction(this, this._hass, cardHoldAction, this._config.entity);
+                    } : undefined,
+                    onDoubleTap: cardDoubleTapAction ? () => {
+                        handleAction(this, this._hass, cardDoubleTapAction, this._config.entity);
+                    } : undefined
+                });
+            }
+            // 2. Actions dissociées sur l'icône principale
+            const iconTapAction = this._config.icon_tap_action;
+            const iconHoldAction = this._config.icon_hold_action;
+            const iconDoubleTapAction = this._config.icon_double_tap_action;
+            if (this._iconBtnEl && (iconTapAction || iconHoldAction || iconDoubleTapAction)) {
+                this._unbindIconTouch = bindTouchActions(this._iconBtnEl, {
+                    onTap: () => {
+                        if (iconTapAction) {
+                            handleAction(this, this._hass, iconTapAction, this._config.entity);
+                        }
+                        else {
+                            handleAction(this, this._hass, cardTapAction, this._config.entity);
+                        }
+                    },
+                    onHold: iconHoldAction ? () => {
+                        handleAction(this, this._hass, iconHoldAction, this._config.entity);
+                    } : undefined,
+                    onDoubleTap: iconDoubleTapAction ? () => {
+                        handleAction(this, this._hass, iconDoubleTapAction, this._config.entity);
+                    } : undefined
+                });
+                // Stop propagation pour ne pas déclencher le tap carte
+                this._iconBtnEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+                this._iconBtnEl.addEventListener('click', (e) => e.stopPropagation());
+            }
+            // 3. Actions sur les sous-boutons
+            if (this._config.sub_buttons && this._subButtonEls.length > 0) {
+                this._config.sub_buttons.forEach((sb, idx) => {
+                    const el = this._subButtonEls[idx];
+                    if (!el)
+                        return;
+                    el.addEventListener('pointerdown', (e) => e.stopPropagation());
+                    el.addEventListener('click', (e) => e.stopPropagation());
+                    const unbind = bindTouchActions(el, {
+                        onTap: () => {
+                            const act = sb.tap_action || { action: 'toggle', entity: sb.entity || this._config.entity };
+                            handleAction(this, this._hass, act, sb.entity || this._config.entity);
+                        },
+                        onHold: sb.hold_action ? () => {
+                            handleAction(this, this._hass, sb.hold_action, sb.entity || this._config.entity);
+                        } : undefined,
+                        onDoubleTap: sb.double_tap_action ? () => {
+                            handleAction(this, this._hass, sb.double_tap_action, sb.entity || this._config.entity);
+                        } : undefined
+                    });
+                    this._unbindSubTouch.push(unbind);
+                });
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-button-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-button-card
+     *                    utilisant le composant natif <ha-form> de Home Assistant.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-button-card.
+     * ==============================================================================
+     */
+    const SCHEMA$5 = [
+        {
+            name: 'name',
+            label: 'Titre principal',
+            selector: { text: {} }
+        },
+        {
+            name: 'label',
+            label: 'Sous-titre / Description',
+            selector: { text: {} }
+        },
+        {
+            name: 'icon',
+            label: 'Icône MDI',
+            selector: { icon: {} }
+        },
+        {
+            name: 'layout',
+            label: 'Disposition (Layout)',
+            selector: {
+                select: {
+                    options: [
+                        { value: 'horizontal', label: 'Horizontal (Carte large avec texte à droite)' },
+                        { value: 'vertical', label: 'Vertical (Carte compacte avec texte centré en dessous)' }
+                    ]
+                }
+            }
+        },
+        {
+            name: 'text_align',
+            label: 'Alignement du texte',
+            selector: {
+                select: {
+                    options: [
+                        { value: 'left', label: 'Gauche' },
+                        { value: 'center', label: 'Centré' },
+                        { value: 'right', label: 'Droite' }
+                    ]
+                }
+            }
+        },
+        {
+            name: 'entity',
+            label: 'Entité liée (optionnel)',
+            selector: { entity: {} }
+        },
+        {
+            name: 'color',
+            label: 'Couleur personnalisée (optionnel)',
+            selector: { color_rgb: {} }
+        },
+        {
+            name: 'theme_entity',
+            label: 'Entité sélecteur de thème (optionnel)',
+            selector: { entity: { domain: 'input_select' } }
+        }
+    ];
+    class HaloButtonCardEditor extends HTMLElement {
+        setConfig(config) {
+            this._config = {
+                layout: 'horizontal',
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            const form = this.querySelector('ha-form');
+            if (form) {
+                form.hass = hass;
+            }
+        }
+        _formData() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            if (data.color && typeof data.color === 'string') {
+                const rgb = hexToRgb(data.color);
+                if (rgb)
+                    data.color = rgb;
+            }
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const val = { ...ev.detail.value };
+            if (val.color && Array.isArray(val.color)) {
+                val.color = rgbToHex(val.color);
+            }
+            this._config = {
+                ...this._config,
+                ...val
+            };
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _render() {
+            if (!this._config)
+                return;
+            let form = this.querySelector('ha-form');
+            if (!form) {
+                this.innerHTML = `
+        <div style="padding: 8px 0;">
+          <ha-form id="form"></ha-form>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    form.schema = SCHEMA$5;
+                    form.data = this._formData();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+            }
+            else {
+                form.data = this._formData();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+        }
+    }
+
+    /**
      * HALO Button Card — Volet Helper Engine
      * Asynchronous position estimation and manual movement tracker
      * (c) 2026 MilesTEG1 — MIT License
@@ -265,131 +1229,6 @@ var HaloButtonCard = (function (exports) {
         }
     }
     const voletHelperInstance = new VoletHelper();
-
-    /**
-     * HALO Button Card — Theme & Styling Engine
-     * (c) 2026 MilesTEG1 — MIT License
-     */
-    const HOLM_PALETTE = {
-        'Cyan HOLM': '#26c6da',
-        'Bleu Céleste': '#38bdf8',
-        'Saphir Océan': '#2f86ff',
-        'Menthe Givrée': '#00e5a3',
-        'Émeraude': '#10b981',
-        'Vert Lime': '#84cc16',
-        'Jaune Soleil': '#facc15',
-        'Ambre Doré': '#f59e0b',
-        'Orange Flamme': '#ff5a1f',
-        'Corail Pêche': '#fb923c',
-        'Rose Rubis': '#f43f5e',
-        'Rose Bonbon': '#f472b6',
-        'Fuchsia Néon': '#d946ef',
-        'Améthyste': '#a855f7',
-        'Violet Nuit': '#8b5cf6',
-        'Blanc Glace': '#e2e8f0'
-    };
-    function hexToRgb(hex) {
-        if (!hex || typeof hex !== 'string')
-            return undefined;
-        if (HOLM_PALETTE[hex]) {
-            hex = HOLM_PALETTE[hex];
-        }
-        const clean = hex.replace('#', '').trim();
-        if (clean.length === 3) {
-            const r = parseInt(clean[0] + clean[0], 16);
-            const g = parseInt(clean[1] + clean[1], 16);
-            const b = parseInt(clean[2] + clean[2], 16);
-            return [r, g, b];
-        }
-        if (clean.length === 6 || clean.length === 8) {
-            const r = parseInt(clean.substring(0, 2), 16);
-            const g = parseInt(clean.substring(2, 4), 16);
-            const b = parseInt(clean.substring(4, 6), 16);
-            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-                return [r, g, b];
-            }
-        }
-        return undefined;
-    }
-    function rgbToHex(rgb) {
-        if (!Array.isArray(rgb) || rgb.length < 3)
-            return '#26c6da';
-        const r = Math.max(0, Math.min(255, Math.round(rgb[0])));
-        const g = Math.max(0, Math.min(255, Math.round(rgb[1])));
-        const b = Math.max(0, Math.min(255, Math.round(rgb[2])));
-        return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-    }
-    function toHexColor(color, fallback) {
-        if (!color)
-            return fallback;
-        if (Array.isArray(color))
-            return rgbToHex(color);
-        if (typeof color === 'string') {
-            if (HOLM_PALETTE[color])
-                return HOLM_PALETTE[color];
-            if (color.startsWith('#'))
-                return color;
-            if (color.startsWith('rgb'))
-                return color;
-        }
-        return fallback;
-    }
-    function resolveThemeColor(hass, explicitColor, themeEntity, fallback = '#26c6da') {
-        if (explicitColor && typeof explicitColor === 'string' && explicitColor.trim() !== '') {
-            return toHexColor(explicitColor, fallback);
-        }
-        const states = hass?.states || {};
-        if (themeEntity && states[themeEntity]?.state) {
-            const val = states[themeEntity].state;
-            if (HOLM_PALETTE[val])
-                return HOLM_PALETTE[val];
-            if (val.startsWith('#'))
-                return val;
-        }
-        const commonEntities = [
-            'input_select.couleur_theme_eclairages',
-            'input_select.couleur_theme_eclairage',
-            'input_select.couleur_theme_ouvertures',
-            'input_select.couleur_theme_chauffage',
-            'input_select.couleur_theme_global'
-        ];
-        for (const ent of commonEntities) {
-            const st = states[ent]?.state;
-            if (st && HOLM_PALETTE[st])
-                return HOLM_PALETTE[st];
-        }
-        return fallback;
-    }
-    function getCoverColors(hass, config) {
-        const states = hass?.states || {};
-        return {
-            closed: toHexColor(config?.color_closed, states['input_text.couleur_volet_ferme']?.state || '#FFB69C'),
-            open: toHexColor(config?.color_open, states['input_text.couleur_volet_ouvert']?.state || '#96E1FF'),
-            partial: toHexColor(config?.color_partial, states['input_text.couleur_volet_partiel']?.state || '#38bdf8'),
-            moving: toHexColor(config?.color_moving, states['input_text.couleur_volet_en_mouvement']?.state || '#f59e0b')
-        };
-    }
-    function getHaloCardStyles(accentCol, isUnavail, isMoving) {
-        if (isUnavail) {
-            return {
-                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))',
-                border: '1.5px solid #f59e0b',
-                boxShadow: '0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)'
-            };
-        }
-        if (isMoving) {
-            return {
-                background: `linear-gradient(135deg, ${accentCol}26, rgba(20, 28, 38, 0.90))`,
-                border: `1.5px solid ${accentCol}`,
-                boxShadow: `0 0 22px ${accentCol}77, 0 0 8px ${accentCol}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`
-            };
-        }
-        return {
-            background: `linear-gradient(135deg, ${accentCol}1A, rgba(20, 28, 38, 0.88))`,
-            border: `1.5px solid ${accentCol}`,
-            boxShadow: `0 0 18px ${accentCol}60, 0 0 6px ${accentCol}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`
-        };
-    }
 
     /**
      * HALO Button Card — Halo Cover Card Component
@@ -864,168 +1703,117 @@ var HaloButtonCard = (function (exports) {
     }
 
     /**
-     * HALO Button Card — Halo Separator Card Component
-     * Sleek section divider with neon gradient line and HOLM styling.
-     * High-performance persistent DOM architecture (zero flicker).
+     * HALO Button Card — Halo Cover Card UI Editor
+     * Visual GUI editor powered by native Home Assistant <ha-form>.
      * (c) 2026 MilesTEG1 — MIT License
      */
-    class HaloSeparatorCard extends HTMLElement {
-        constructor() {
-            super();
-            // Persistent DOM references
-            this._containerEl = null;
-            this._iconEl = null;
-            this._titleEl = null;
-            this._lineEl = null;
-            this._root = this.attachShadow({ mode: 'open' });
+    const COLOR_KEYS$1 = ['color_closed', 'color_open', 'color_partial', 'color_moving'];
+    const SCHEMA$4 = [
+        {
+            name: 'entity',
+            label: 'Entité Volet ou Groupe',
+            selector: { entity: { domain: 'cover' } }
+        },
+        {
+            name: 'name',
+            label: 'Nom personnalisé (optionnel)',
+            selector: { text: {} }
+        },
+        {
+            type: 'grid',
+            name: '',
+            schema: [
+                {
+                    name: 'color_closed',
+                    label: 'Couleur Fermé (optionnel)',
+                    selector: { color_rgb: {} }
+                },
+                {
+                    name: 'color_open',
+                    label: 'Couleur Ouvert (optionnel)',
+                    selector: { color_rgb: {} }
+                },
+                {
+                    name: 'color_partial',
+                    label: 'Couleur Partiel (optionnel)',
+                    selector: { color_rgb: {} }
+                },
+                {
+                    name: 'color_moving',
+                    label: 'Couleur En mouvement (optionnel)',
+                    selector: { color_rgb: {} }
+                }
+            ]
         }
-        static getConfigElement() {
-            return document.createElement('halo-separator-card-editor');
-        }
-        static getStubConfig() {
-            return {
-                name: 'Section',
-                icon: 'mdi:bookmark'
-            };
-        }
+    ];
+    class HaloCoverCardEditor extends HTMLElement {
         setConfig(config) {
-            if (!config) {
-                throw new Error('Invalid configuration');
-            }
-            this._config = config;
-            if (this._hass) {
-                this._render();
-            }
+            this._config = { ...config };
+            this._render();
         }
         set hass(hass) {
-            const oldHass = this._hass;
             this._hass = hass;
-            if (!this._containerEl) {
-                this._render();
-                return;
-            }
-            if (this._hasChanged(oldHass, hass)) {
-                this._render();
+            const form = this.querySelector('ha-form');
+            if (form) {
+                form.hass = hass;
             }
         }
-        getCardSize() {
-            return 1;
-        }
-        _hasChanged(oldHass, newHass) {
-            if (!oldHass || !newHass || !this._config)
-                return true;
-            // Check specific theme entity if bound
-            if (this._config.theme_entity) {
-                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
-                    return true;
+        _formData() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            for (const k of COLOR_KEYS$1) {
+                if (data[k] && typeof data[k] === 'string') {
+                    const rgb = hexToRgb(data[k]);
+                    if (rgb)
+                        data[k] = rgb;
                 }
             }
-            // Check standard global theme helpers
-            const themeEntities = [
-                'input_select.couleur_theme_ouvertures',
-                'input_select.couleur_theme_chauffage',
-                'input_select.couleur_theme_eclairage',
-                'input_select.couleur_theme_eclairages',
-                'input_select.couleur_theme_global'
-            ];
-            for (const te of themeEntities) {
-                if (oldHass.states[te] !== newHass.states[te])
-                    return true;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const val = { ...ev.detail.value };
+            for (const k of COLOR_KEYS$1) {
+                if (val[k] && Array.isArray(val[k])) {
+                    val[k] = rgbToHex(val[k]);
+                }
             }
-            return false;
-        }
-        _buildDom() {
-            this._root.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
-        .halo-separator {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 14px 0px 6px 0px;
-          width: 100%;
-          box-sizing: border-box;
-          user-select: none;
-        }
-        .halo-separator-icon {
-          width: 18px;
-          height: 18px;
-          min-width: 18px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transform: translateY(-2px);
-          flex-shrink: 0;
-        }
-        .halo-separator-icon ha-icon {
-          --mdc-icon-size: 18px;
-          width: 18px;
-          height: 18px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: color 0.3s ease;
-        }
-        .halo-separator-title {
-          color: #e6f2f5;
-          font-size: 14px;
-          font-weight: 600;
-          letter-spacing: -0.2px;
-          white-space: nowrap;
-          line-height: 1.2;
-          flex-shrink: 0;
-        }
-        .halo-separator-line {
-          flex: 1;
-          height: 2px;
-          min-height: 2px;
-          border-radius: 2px;
-          transition: background 0.3s ease;
-        }
-      </style>
-      <div class="halo-separator" id="container">
-        <div class="halo-separator-icon">
-          <ha-icon id="sep-icon"></ha-icon>
-        </div>
-        <span class="halo-separator-title" id="sep-title"></span>
-        <div class="halo-separator-line" id="sep-line"></div>
-      </div>
-    `;
-            this._containerEl = this._root.getElementById('container');
-            this._iconEl = this._root.getElementById('sep-icon');
-            this._titleEl = this._root.getElementById('sep-title');
-            this._lineEl = this._root.getElementById('sep-line');
+            this._config = {
+                ...this._config,
+                ...val
+            };
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
         }
         _render() {
             if (!this._config)
                 return;
-            if (!this._containerEl) {
-                this._buildDom();
-            }
-            const name = this._config.name || this._config.title || 'Section';
-            const icon = this._config.icon || 'mdi:bookmark';
-            const col = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
-            if (this._iconEl) {
-                if (this._iconEl.getAttribute('icon') !== icon) {
-                    this._iconEl.setAttribute('icon', icon);
+            let form = this.querySelector('ha-form');
+            if (!form) {
+                this.innerHTML = `
+        <div style="padding: 8px 0;">
+          <ha-form id="form"></ha-form>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    form.schema = SCHEMA$4;
+                    form.data = this._formData();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
                 }
-                if (this._iconEl.style.color !== col) {
-                    this._iconEl.style.color = col;
-                }
             }
-            if (this._titleEl && this._titleEl.textContent !== name) {
-                this._titleEl.textContent = name;
-            }
-            if (this._lineEl) {
-                const gradient = `linear-gradient(90deg, ${col} 0%, ${col}44 60%, transparent 100%)`;
-                if (this._lineEl.style.background !== gradient) {
-                    this._lineEl.style.background = gradient;
-                }
+            else {
+                form.data = this._formData();
+                if (this._hass)
+                    form.hass = this._hass;
             }
         }
     }
@@ -2027,217 +2815,6 @@ var HaloButtonCard = (function (exports) {
     }
 
     /**
-     * HALO Button Card — Halo Cover Card UI Editor
-     * Visual GUI editor powered by native Home Assistant <ha-form>.
-     * (c) 2026 MilesTEG1 — MIT License
-     */
-    const COLOR_KEYS$1 = ['color_closed', 'color_open', 'color_partial', 'color_moving'];
-    const SCHEMA$2 = [
-        {
-            name: 'entity',
-            label: 'Entité Volet ou Groupe',
-            selector: { entity: { domain: 'cover' } }
-        },
-        {
-            name: 'name',
-            label: 'Nom personnalisé (optionnel)',
-            selector: { text: {} }
-        },
-        {
-            type: 'grid',
-            name: '',
-            schema: [
-                {
-                    name: 'color_closed',
-                    label: 'Couleur Fermé (optionnel)',
-                    selector: { color_rgb: {} }
-                },
-                {
-                    name: 'color_open',
-                    label: 'Couleur Ouvert (optionnel)',
-                    selector: { color_rgb: {} }
-                },
-                {
-                    name: 'color_partial',
-                    label: 'Couleur Partiel (optionnel)',
-                    selector: { color_rgb: {} }
-                },
-                {
-                    name: 'color_moving',
-                    label: 'Couleur En mouvement (optionnel)',
-                    selector: { color_rgb: {} }
-                }
-            ]
-        }
-    ];
-    class HaloCoverCardEditor extends HTMLElement {
-        setConfig(config) {
-            this._config = { ...config };
-            this._render();
-        }
-        set hass(hass) {
-            this._hass = hass;
-            const form = this.querySelector('ha-form');
-            if (form) {
-                form.hass = hass;
-            }
-        }
-        _formData() {
-            if (!this._config)
-                return {};
-            const data = { ...this._config };
-            for (const k of COLOR_KEYS$1) {
-                if (data[k] && typeof data[k] === 'string') {
-                    const rgb = hexToRgb(data[k]);
-                    if (rgb)
-                        data[k] = rgb;
-                }
-            }
-            return data;
-        }
-        _valueChanged(ev) {
-            if (!this._config || !ev.detail.value)
-                return;
-            const val = { ...ev.detail.value };
-            for (const k of COLOR_KEYS$1) {
-                if (val[k] && Array.isArray(val[k])) {
-                    val[k] = rgbToHex(val[k]);
-                }
-            }
-            this._config = {
-                ...this._config,
-                ...val
-            };
-            const event = new CustomEvent('config-changed', {
-                detail: { config: this._config },
-                bubbles: true,
-                composed: true
-            });
-            this.dispatchEvent(event);
-        }
-        _render() {
-            if (!this._config)
-                return;
-            let form = this.querySelector('ha-form');
-            if (!form) {
-                this.innerHTML = `
-        <div style="padding: 8px 0;">
-          <ha-form id="form"></ha-form>
-        </div>
-      `;
-                form = this.querySelector('#form');
-                if (form) {
-                    form.schema = SCHEMA$2;
-                    form.data = this._formData();
-                    if (this._hass)
-                        form.hass = this._hass;
-                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
-                }
-            }
-            else {
-                form.data = this._formData();
-                if (this._hass)
-                    form.hass = this._hass;
-            }
-        }
-    }
-
-    /**
-     * HALO Button Card — Halo Separator Card UI Editor
-     * Visual GUI editor powered by native Home Assistant <ha-form>.
-     * (c) 2026 MilesTEG1 — MIT License
-     */
-    const SCHEMA$1 = [
-        {
-            name: 'name',
-            label: 'Titre de la section',
-            selector: { text: {} }
-        },
-        {
-            name: 'icon',
-            label: 'Icône',
-            selector: { icon: {} }
-        },
-        {
-            name: 'color',
-            label: 'Couleur personnalisée (optionnel)',
-            selector: { color_rgb: {} }
-        },
-        {
-            name: 'theme_entity',
-            label: 'Entité sélecteur de thème (optionnel)',
-            selector: { entity: { domain: 'input_select' } }
-        }
-    ];
-    class HaloSeparatorCardEditor extends HTMLElement {
-        setConfig(config) {
-            this._config = { ...config };
-            this._render();
-        }
-        set hass(hass) {
-            this._hass = hass;
-            const form = this.querySelector('ha-form');
-            if (form) {
-                form.hass = hass;
-            }
-        }
-        _formData() {
-            if (!this._config)
-                return {};
-            const data = { ...this._config };
-            if (data.color && typeof data.color === 'string') {
-                const rgb = hexToRgb(data.color);
-                if (rgb)
-                    data.color = rgb;
-            }
-            return data;
-        }
-        _valueChanged(ev) {
-            if (!this._config || !ev.detail.value)
-                return;
-            const val = { ...ev.detail.value };
-            if (val.color && Array.isArray(val.color)) {
-                val.color = rgbToHex(val.color);
-            }
-            this._config = {
-                ...this._config,
-                ...val
-            };
-            const event = new CustomEvent('config-changed', {
-                detail: { config: this._config },
-                bubbles: true,
-                composed: true
-            });
-            this.dispatchEvent(event);
-        }
-        _render() {
-            if (!this._config)
-                return;
-            let form = this.querySelector('ha-form');
-            if (!form) {
-                this.innerHTML = `
-        <div style="padding: 8px 0;">
-          <ha-form id="form"></ha-form>
-        </div>
-      `;
-                form = this.querySelector('#form');
-                if (form) {
-                    form.schema = SCHEMA$1;
-                    form.data = this._formData();
-                    if (this._hass)
-                        form.hass = this._hass;
-                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
-                }
-            }
-            else {
-                form.data = this._formData();
-                if (this._hass)
-                    form.hass = this._hass;
-            }
-        }
-    }
-
-    /**
      * ==============================================================================
      * 📌 Nom du fichier : src/editors/halo-light-card-editor.ts
      * 📝 Description   : Éditeur visuel pour custom:halo-light-card
@@ -2254,7 +2831,7 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      */
     const COLOR_KEYS = ['color_on', 'color_off'];
-    const SCHEMA = [
+    const SCHEMA$3 = [
         {
             name: 'entity',
             label: 'Entité Lumière ou Groupe d’éclairages',
@@ -2386,13 +2963,1520 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA;
+                    form.schema = SCHEMA$3;
                     form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
                 }
             }
             if (form) {
                 form.hass = this._hass;
                 form.data = this._formData();
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-separator-card.ts
+     * 📝 Description   : Composant Web custom:halo-separator-card.
+     *                    Séparateur de section élégant avec ligne dégradée néon,
+     *                    bouton escamotable (Masquer / Afficher) et volet accordéon
+     *                    de légende intégré (zéro helper externe requis).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Évolution accordéon intégrée (volet repliable avec
+     *                              transition CSS fluide, bouton pill Masquer/Afficher
+     *                              et grille 2x2 du Guide des Boutons intégrée).
+     *   - 💡 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
+     * ==============================================================================
+     */
+    class HaloSeparatorCard extends HTMLElement {
+        constructor() {
+            super();
+            // Internal state
+            this._isExpanded = true;
+            // Persistent DOM references
+            this._containerEl = null;
+            this._headerEl = null;
+            this._iconEl = null;
+            this._titleEl = null;
+            this._lineEl = null;
+            this._toggleBtnEl = null;
+            this._toggleLabelEl = null;
+            this._toggleIconEl = null;
+            this._accordionEl = null;
+            this._legendGridEl = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        static getConfigElement() {
+            return document.createElement('halo-separator-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                name: 'Légende & Guide des Boutons',
+                icon: 'mdi:book-open-variant',
+                collapsible: true
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-separator-card');
+            }
+            this._config = {
+                label_on: 'Masquer',
+                label_off: 'Afficher',
+                ...config
+            };
+            if (config.initial_collapsed) {
+                this._isExpanded = false;
+            }
+            else if (config.expanded !== undefined) {
+                this._isExpanded = config.expanded;
+            }
+            if (this._hass) {
+                this._render();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            if (!this._containerEl) {
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            return this._isExpanded && this._isCollapsible() ? 2 : 1;
+        }
+        _isCollapsible() {
+            return Boolean(this._config?.collapsible ||
+                this._config?.legend_items ||
+                this._config?.toggle_entity);
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            // Entité de toggle externe synchronisée
+            if (this._config.toggle_entity) {
+                if (oldHass.states[this._config.toggle_entity] !== newHass.states[this._config.toggle_entity]) {
+                    return true;
+                }
+            }
+            // Entité de thème
+            if (this._config.theme_entity) {
+                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
+                    return true;
+                }
+            }
+            // Thèmes globaux
+            const themeEntities = [
+                'input_select.couleur_theme_eclairages',
+                'input_select.couleur_theme_ouvertures',
+                'input_select.couleur_theme_chauffage',
+                'input_select.couleur_theme_global'
+            ];
+            for (const te of themeEntities) {
+                if (oldHass.states[te] !== newHass.states[te])
+                    return true;
+            }
+            return false;
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .halo-separator-wrapper {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 14px 0px 6px 0px;
+        }
+        .halo-separator-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .halo-separator-icon {
+          width: 18px;
+          height: 18px;
+          min-width: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: translateY(-2px);
+          flex-shrink: 0;
+        }
+        .halo-separator-icon ha-icon {
+          --mdc-icon-size: 18px;
+          width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.3s ease;
+        }
+        .halo-separator-title {
+          color: #e6f2f5;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: -0.2px;
+          white-space: nowrap;
+          line-height: 1.2;
+          flex-shrink: 0;
+        }
+        .halo-separator-line {
+          flex: 1;
+          height: 2px;
+          min-height: 2px;
+          border-radius: 2px;
+          transition: background 0.3s ease;
+        }
+
+        /* Bouton Pill Toggle */
+        .halo-toggle-btn {
+          display: none;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 8px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          line-height: 14px;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all 0.25s ease;
+        }
+        .halo-toggle-btn:hover {
+          filter: brightness(1.2);
+        }
+        .halo-toggle-btn:active {
+          transform: scale(0.95);
+        }
+        .halo-toggle-btn ha-icon {
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: -1px;
+        }
+
+        /* Volet Accordéon */
+        .halo-accordion-drawer {
+          max-height: 0;
+          opacity: 0;
+          overflow: hidden;
+          margin-top: 0;
+          transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                      opacity 0.3s ease,
+                      margin-top 0.3s ease;
+          pointer-events: none;
+        }
+        .halo-accordion-drawer.expanded {
+          max-height: 600px;
+          opacity: 1;
+          margin-top: 10px;
+          overflow: visible;
+          pointer-events: auto;
+        }
+
+        .halo-legend-card {
+          border-radius: 14px;
+          padding: 12px 14px;
+          background: linear-gradient(160deg, rgba(20, 28, 38, 0.70), rgba(10, 15, 22, 0.85));
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 16px rgba(0, 0, 0, 0.25);
+          backdrop-filter: blur(16px) saturate(180%);
+          -webkit-backdrop-filter: blur(16px) saturate(180%);
+          box-sizing: border-box;
+          width: 100%;
+        }
+
+        .legend-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px 16px;
+          font-size: 11px;
+          width: 100%;
+          box-sizing: border-box;
+          text-align: left;
+        }
+
+        .legend-item {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 8px;
+        }
+        .legend-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          min-width: 24px;
+          border-radius: 6px;
+          flex-shrink: 0;
+        }
+        .legend-badge ha-icon {
+          --mdc-icon-size: 15px;
+          width: 15px;
+          height: 15px;
+        }
+        .legend-badge-text {
+          font-weight: bold;
+          font-size: 11px;
+        }
+        .legend-text {
+          color: #e6f2f5;
+          line-height: 1.2;
+          font-size: 11.5px;
+        }
+        .legend-text b {
+          font-weight: 600;
+        }
+      </style>
+      <div class="halo-separator-wrapper" id="container">
+        <div class="halo-separator-header" id="header">
+          <div class="halo-separator-icon">
+            <ha-icon id="sep-icon"></ha-icon>
+          </div>
+          <span class="halo-separator-title" id="sep-title"></span>
+          <div class="halo-separator-line" id="sep-line"></div>
+          <div class="halo-toggle-btn" id="toggle-btn">
+            <span id="toggle-label">Masquer</span>
+            <ha-icon id="toggle-icon" icon="mdi:chevron-up"></ha-icon>
+          </div>
+        </div>
+
+        <div class="halo-accordion-drawer" id="accordion-drawer">
+          <div class="halo-legend-card">
+            <div class="legend-grid" id="legend-grid"></div>
+          </div>
+        </div>
+      </div>
+    `;
+            this._containerEl = this._root.getElementById('container');
+            this._headerEl = this._root.getElementById('header');
+            this._iconEl = this._root.getElementById('sep-icon');
+            this._titleEl = this._root.getElementById('sep-title');
+            this._lineEl = this._root.getElementById('sep-line');
+            this._toggleBtnEl = this._root.getElementById('toggle-btn');
+            this._toggleLabelEl = this._root.getElementById('toggle-label');
+            this._toggleIconEl = this._root.getElementById('toggle-icon');
+            this._accordionEl = this._root.getElementById('accordion-drawer');
+            this._legendGridEl = this._root.getElementById('legend-grid');
+            if (this._toggleBtnEl) {
+                this._toggleBtnEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._handleToggle();
+                });
+            }
+        }
+        _handleToggle() {
+            this._isExpanded = !this._isExpanded;
+            fireHaptic('light');
+            // Synchronisation si toggle_entity configurée
+            if (this._config.toggle_entity && this._hass) {
+                const ent = this._config.toggle_entity;
+                const domain = ent.split('.')[0] || 'input_boolean';
+                this._hass.callService(domain, 'toggle', { entity_id: ent });
+            }
+            this._render();
+        }
+        _getDefaultLegendItems(accentColor) {
+            return [
+                {
+                    icon: 'mdi:lightbulb',
+                    label: 'Icône gauche',
+                    desc: ' : On / Off',
+                    color: accentColor
+                },
+                {
+                    badge: '%',
+                    label: 'Badge %',
+                    desc: ' : 30 / 67 / 100%',
+                    color: '#f59e0b'
+                },
+                {
+                    icon: 'mdi:thermometer',
+                    label: 'Badge K',
+                    desc: ' : Chaud / Froid',
+                    color: '#f97316'
+                },
+                {
+                    icon: 'mdi:gesture-tap',
+                    label: 'Nom tuile',
+                    desc: ' : Détails lampe',
+                    color: '#e6f2f5'
+                }
+            ];
+        }
+        _render() {
+            if (!this._config)
+                return;
+            if (!this._containerEl) {
+                this._buildDom();
+            }
+            const name = this._config.name || this._config.title || 'Section';
+            const icon = this._config.icon || 'mdi:bookmark';
+            const col = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
+            // Synchroniser l'état d'expansion si lié à toggle_entity
+            if (this._config.toggle_entity && this._hass?.states?.[this._config.toggle_entity]) {
+                const extState = this._hass.states[this._config.toggle_entity].state;
+                this._isExpanded = (extState === 'on');
+            }
+            // Icône principale
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = col;
+            }
+            // Titre
+            if (this._titleEl && this._titleEl.textContent !== name) {
+                this._titleEl.textContent = name;
+            }
+            // Ligne dégradée
+            if (this._lineEl) {
+                const gradient = `linear-gradient(90deg, ${col} 0%, ${col}44 60%, transparent 100%)`;
+                if (this._lineEl.style.background !== gradient) {
+                    this._lineEl.style.background = gradient;
+                }
+            }
+            // Gestion Accordéon & Bouton Pill
+            const isCollapsible = this._isCollapsible();
+            if (this._toggleBtnEl) {
+                if (isCollapsible) {
+                    this._toggleBtnEl.style.display = 'inline-flex';
+                    this._toggleBtnEl.style.background = this._isExpanded ? `${col}26` : 'rgba(255, 255, 255, 0.05)';
+                    this._toggleBtnEl.style.border = this._isExpanded ? `1px solid ${col}66` : '1px solid rgba(255, 255, 255, 0.10)';
+                    this._toggleBtnEl.style.boxShadow = this._isExpanded ? `0 0 8px ${col}40` : 'none';
+                    this._toggleBtnEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
+                    const labelText = this._isExpanded
+                        ? (this._config.label_on || 'Masquer')
+                        : (this._config.label_off || 'Afficher');
+                    if (this._toggleLabelEl)
+                        this._toggleLabelEl.textContent = labelText;
+                    const chevronIcon = this._isExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down';
+                    if (this._toggleIconEl) {
+                        if (this._toggleIconEl.getAttribute('icon') !== chevronIcon) {
+                            this._toggleIconEl.setAttribute('icon', chevronIcon);
+                        }
+                        this._toggleIconEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
+                    }
+                }
+                else {
+                    this._toggleBtnEl.style.display = 'none';
+                }
+            }
+            // Tiroir Accordéon
+            if (this._accordionEl) {
+                if (isCollapsible && this._isExpanded) {
+                    this._accordionEl.className = 'halo-accordion-drawer expanded';
+                }
+                else {
+                    this._accordionEl.className = 'halo-accordion-drawer';
+                }
+            }
+            // Rendu des items de légende
+            if (isCollapsible && this._legendGridEl) {
+                let items = [];
+                if (Array.isArray(this._config.legend_items)) {
+                    items = this._config.legend_items;
+                }
+                else {
+                    items = this._getDefaultLegendItems(col);
+                }
+                this._legendGridEl.innerHTML = '';
+                items.forEach(it => {
+                    const itemCol = it.color ? toHexColor(it.color, col) : col;
+                    const div = document.createElement('div');
+                    div.className = 'legend-item';
+                    let badgeContent = '';
+                    if (it.badge) {
+                        badgeContent = `<span class="legend-badge-text" style="color: ${itemCol};">${it.badge}</span>`;
+                    }
+                    else if (it.icon) {
+                        badgeContent = `<ha-icon icon="${it.icon}" style="color: ${itemCol};"></ha-icon>`;
+                    }
+                    div.innerHTML = `
+          <span class="legend-badge" style="background: ${itemCol}26;">
+            ${badgeContent}
+          </span>
+          <span class="legend-text">
+            <b>${it.label}</b>${it.desc || ''}
+          </span>
+        `;
+                    this._legendGridEl.appendChild(div);
+                });
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-separator-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-separator-card
+     *                    avec support des options accordéon / volet légende.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Ajout des contrôles accordéon (collapsible, labels, toggle_entity).
+     *   - 💡 v1.0.0 (2026-10-29) : Création initiale de l'éditeur séparateur.
+     * ==============================================================================
+     */
+    const SCHEMA$2 = [
+        {
+            name: 'name',
+            label: 'Titre de la section',
+            selector: { text: {} }
+        },
+        {
+            name: 'icon',
+            label: 'Icône MDI',
+            selector: { icon: {} }
+        },
+        {
+            name: 'collapsible',
+            label: 'Activer le volet accordéon escamotable',
+            selector: { boolean: {} }
+        },
+        {
+            name: 'initial_collapsed',
+            label: 'Initialement replié / masqué',
+            selector: { boolean: {} }
+        },
+        {
+            name: 'label_on',
+            label: 'Libellé bouton quand ouvert (ex: Masquer)',
+            selector: { text: {} }
+        },
+        {
+            name: 'label_off',
+            label: 'Libellé bouton quand fermé (ex: Afficher)',
+            selector: { text: {} }
+        },
+        {
+            name: 'toggle_entity',
+            label: 'Entité externe synchronisée (optionnel)',
+            selector: { entity: { domain: 'input_boolean' } }
+        },
+        {
+            name: 'color',
+            label: 'Couleur personnalisée (optionnel)',
+            selector: { color_rgb: {} }
+        },
+        {
+            name: 'theme_entity',
+            label: 'Entité sélecteur de thème (optionnel)',
+            selector: { entity: { domain: 'input_select' } }
+        }
+    ];
+    class HaloSeparatorCardEditor extends HTMLElement {
+        setConfig(config) {
+            this._config = { ...config };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            const form = this.querySelector('ha-form');
+            if (form) {
+                form.hass = hass;
+            }
+        }
+        _formData() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            if (data.color && typeof data.color === 'string') {
+                const rgb = hexToRgb(data.color);
+                if (rgb)
+                    data.color = rgb;
+            }
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const val = { ...ev.detail.value };
+            if (val.color && Array.isArray(val.color)) {
+                val.color = rgbToHex(val.color);
+            }
+            this._config = {
+                ...this._config,
+                ...val
+            };
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _render() {
+            if (!this._config)
+                return;
+            let form = this.querySelector('ha-form');
+            if (!form) {
+                this.innerHTML = `
+        <div style="padding: 8px 0;">
+          <ha-form id="form"></ha-form>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    form.schema = SCHEMA$2;
+                    form.data = this._formData();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+            }
+            else {
+                form.data = this._formData();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-cover-color-card.ts
+     * 📝 Description   : Composant Web custom:halo-cover-color-card.
+     *                    Carte de personnalisation des couleurs d'états des volets (2x2),
+     *                    avec en-tête séparateur, pastilles lumineuses, codes hexadécimaux
+     *                    et sous-boutons d'icônes d'état (alignement pixel-perfect capture).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Création initiale de la carte cover color.
+     * ==============================================================================
+     */
+    const TILE_DEFINITIONS = [
+        {
+            key: 'closed',
+            defaultTitle: 'Volet Fermé',
+            defaultEntity: 'input_text.couleur_volet_ferme',
+            defaultHex: '#E2E8F0',
+            defaultIcon: 'mdi:window-shutter'
+        },
+        {
+            key: 'partial',
+            defaultTitle: 'Volet Partiel',
+            defaultEntity: 'input_text.couleur_volet_partiel',
+            defaultHex: '#38BDF8',
+            defaultIcon: 'mdi:window-shutter-open'
+        },
+        {
+            key: 'open',
+            defaultTitle: 'Volet Ouvert',
+            defaultEntity: 'input_text.couleur_volet_ouvert',
+            defaultHex: '#2F86FF',
+            defaultIcon: 'mdi:window-shutter-open'
+        },
+        {
+            key: 'moving',
+            defaultTitle: 'Mouvement',
+            defaultEntity: 'input_text.couleur_volet_en_mouvement',
+            defaultHex: '#F59E0B',
+            defaultIcon: 'mdi:swap-vertical'
+        }
+    ];
+    class HaloCoverColorCard extends HTMLElement {
+        constructor() {
+            super();
+            // Persistent DOM references
+            this._containerEl = null;
+            this._headerIconEl = null;
+            this._headerTitleEl = null;
+            this._headerLineEl = null;
+            this._tilesContainerEl = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        static getConfigElement() {
+            return document.createElement('halo-cover-color-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                title: "Couleurs d'États des Volets",
+                icon: 'mdi:window-shutter-cog'
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-cover-color-card');
+            }
+            this._config = {
+                title: "Couleurs d'États des Volets",
+                icon: 'mdi:window-shutter-cog',
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            if (!this._containerEl) {
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            return 3;
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            for (const def of TILE_DEFINITIONS) {
+                const entKey = `${def.key}_entity`;
+                const entityId = this._config[entKey] || def.defaultEntity;
+                if (oldHass.states[entityId] !== newHass.states[entityId]) {
+                    return true;
+                }
+            }
+            // Thème général
+            const commonThemeEntities = [
+                'input_select.couleur_theme_ouvertures',
+                'input_select.couleur_theme_eclairages',
+                'input_select.couleur_theme_global'
+            ];
+            for (const te of commonThemeEntities) {
+                if (oldHass.states[te] !== newHass.states[te])
+                    return true;
+            }
+            return false;
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          width: 100%;
+          box-sizing: border-box;
+          padding: 8px 0;
+        }
+
+        /* Header Separator */
+        .header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .header-icon {
+          width: 18px;
+          height: 18px;
+          min-width: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: translateY(-2px);
+          flex-shrink: 0;
+        }
+        .header-icon ha-icon {
+          --mdc-icon-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+        .header-title {
+          color: #e6f2f5;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: -0.2px;
+          white-space: nowrap;
+          line-height: 1.2;
+          flex-shrink: 0;
+        }
+        .header-line {
+          flex: 1;
+          height: 2px;
+          min-height: 2px;
+          border-radius: 2px;
+          transition: background 0.3s ease;
+        }
+
+        /* 2x2 Grid */
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px 12px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Single Color Tile */
+        .color-tile {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-radius: 12px;
+          padding: 8px 10px;
+          min-height: 48px;
+          box-sizing: border-box;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          overflow: hidden;
+        }
+        .color-tile:hover {
+          filter: brightness(1.08);
+        }
+        .color-tile:active {
+          transform: scale(0.97);
+        }
+
+        .tile-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+        .color-dot {
+          width: 22px;
+          height: 22px;
+          min-width: 22px;
+          border-radius: 50%;
+          border: 1.25px solid rgba(255, 255, 255, 0.40);
+          flex-shrink: 0;
+          display: inline-block;
+          transition: background 0.25s ease, box-shadow 0.25s ease;
+        }
+        .tile-texts {
+          display: flex;
+          flex-direction: column;
+          text-align: left;
+          min-width: 0;
+        }
+        .tile-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: #ffffff;
+          line-height: 1.2;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .tile-hex {
+          font-size: 11px;
+          font-weight: 600;
+          font-family: monospace;
+          letter-spacing: 0.5px;
+          line-height: 1.2;
+          margin-top: 1px;
+        }
+
+        .tile-sub-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          min-width: 28px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          flex-shrink: 0;
+        }
+        .tile-sub-btn ha-icon {
+          --mdc-icon-size: 16px;
+          width: 16px;
+          height: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      </style>
+      <div class="wrapper" id="container">
+        <div class="header">
+          <div class="header-icon">
+            <ha-icon id="header-icon"></ha-icon>
+          </div>
+          <span class="header-title" id="header-title"></span>
+          <div class="header-line" id="header-line"></div>
+        </div>
+
+        <div class="grid-container" id="tiles-container"></div>
+      </div>
+    `;
+            this._containerEl = this._root.getElementById('container');
+            this._headerIconEl = this._root.getElementById('header-icon');
+            this._headerTitleEl = this._root.getElementById('header-title');
+            this._headerLineEl = this._root.getElementById('header-line');
+            this._tilesContainerEl = this._root.getElementById('tiles-container');
+        }
+        _getTileHex(def) {
+            const entKey = `${def.key}_entity`;
+            const defKey = `${def.key}_default_color`;
+            const entityId = this._config[entKey] || def.defaultEntity;
+            const defaultColor = this._config[defKey] || def.defaultHex;
+            let hex = this._hass?.states?.[entityId]?.state || defaultColor;
+            if (typeof hex === 'string') {
+                hex = hex.trim();
+                if (!hex.startsWith('#'))
+                    hex = '#' + hex;
+                return hex;
+            }
+            return defaultColor;
+        }
+        _handleTileClick(def) {
+            const entKey = `${def.key}_entity`;
+            const entityId = this._config[entKey] || def.defaultEntity;
+            fireHaptic('light');
+            fireEvent(this, 'hass-more-info', { entityId });
+        }
+        _render() {
+            if (!this._config)
+                return;
+            if (!this._containerEl) {
+                this._buildDom();
+            }
+            const title = this._config.title || "Couleurs d'États des Volets";
+            const icon = this._config.icon || 'mdi:window-shutter-cog';
+            const headerColor = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity || 'input_select.couleur_theme_ouvertures', '#26c6da');
+            // Header
+            if (this._headerIconEl) {
+                if (this._headerIconEl.getAttribute('icon') !== icon) {
+                    this._headerIconEl.setAttribute('icon', icon);
+                }
+                this._headerIconEl.style.color = headerColor;
+            }
+            if (this._headerTitleEl) {
+                this._headerTitleEl.textContent = title;
+            }
+            if (this._headerLineEl) {
+                this._headerLineEl.style.background = `linear-gradient(90deg, ${headerColor} 0%, ${headerColor}44 60%, transparent 100%)`;
+            }
+            // Grid Tiles
+            if (this._tilesContainerEl) {
+                this._tilesContainerEl.innerHTML = '';
+                TILE_DEFINITIONS.forEach(def => {
+                    const titleKey = `${def.key}_name`;
+                    const iconKey = `${def.key}_icon`;
+                    const tileTitle = this._config[titleKey] || def.defaultTitle;
+                    const tileIcon = this._config[iconKey] || def.defaultIcon;
+                    const hex = this._getTileHex(def);
+                    const tileEl = document.createElement('div');
+                    tileEl.className = 'color-tile';
+                    tileEl.style.background = `linear-gradient(135deg, ${hex}26, rgba(15, 23, 36, 0.88))`;
+                    tileEl.style.border = `1.25px solid ${hex}`;
+                    tileEl.style.boxShadow = `0 0 14px ${hex}55, inset 0 1px 0 rgba(255, 255, 255, 0.15)`;
+                    tileEl.innerHTML = `
+          <div class="tile-left">
+            <span class="color-dot" style="background: ${hex}; box-shadow: 0 0 10px ${hex}88;"></span>
+            <div class="tile-texts">
+              <span class="tile-title">${tileTitle}</span>
+              <span class="tile-hex" style="color: ${hex};">${hex.toUpperCase()}</span>
+            </div>
+          </div>
+          <div class="tile-sub-btn">
+            <ha-icon icon="${tileIcon}" style="color: ${hex};"></ha-icon>
+          </div>
+        `;
+                    tileEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this._handleTileClick(def);
+                    });
+                    this._tilesContainerEl.appendChild(tileEl);
+                });
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-cover-color-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-cover-color-card.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-cover-color-card.
+     * ==============================================================================
+     */
+    const SCHEMA$1 = [
+        {
+            name: 'title',
+            label: "Titre de l'en-tête",
+            selector: { text: {} }
+        },
+        {
+            name: 'icon',
+            label: "Icône de l'en-tête",
+            selector: { icon: {} }
+        },
+        {
+            name: 'closed_entity',
+            label: 'Entité couleur volet fermé (défaut: input_text.couleur_volet_ferme)',
+            selector: { entity: { domain: 'input_text' } }
+        },
+        {
+            name: 'partial_entity',
+            label: 'Entité couleur volet partiel (défaut: input_text.couleur_volet_partiel)',
+            selector: { entity: { domain: 'input_text' } }
+        },
+        {
+            name: 'open_entity',
+            label: 'Entité couleur volet ouvert (défaut: input_text.couleur_volet_ouvert)',
+            selector: { entity: { domain: 'input_text' } }
+        },
+        {
+            name: 'moving_entity',
+            label: 'Entité couleur mouvement (défaut: input_text.couleur_volet_en_mouvement)',
+            selector: { entity: { domain: 'input_text' } }
+        },
+        {
+            name: 'theme_entity',
+            label: 'Entité sélecteur de thème pour en-tête (optionnel)',
+            selector: { entity: { domain: 'input_select' } }
+        }
+    ];
+    class HaloCoverColorCardEditor extends HTMLElement {
+        setConfig(config) {
+            this._config = { ...config };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            const form = this.querySelector('ha-form');
+            if (form) {
+                form.hass = hass;
+            }
+        }
+        _formData() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            if (data.color && typeof data.color === 'string') {
+                const rgb = hexToRgb(data.color);
+                if (rgb)
+                    data.color = rgb;
+            }
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const val = { ...ev.detail.value };
+            if (val.color && Array.isArray(val.color)) {
+                val.color = rgbToHex(val.color);
+            }
+            this._config = {
+                ...this._config,
+                ...val
+            };
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _render() {
+            if (!this._config)
+                return;
+            let form = this.querySelector('ha-form');
+            if (!form) {
+                this.innerHTML = `
+        <div style="padding: 8px 0;">
+          <ha-form id="form"></ha-form>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    form.schema = SCHEMA$1;
+                    form.data = this._formData();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+            }
+            else {
+                form.data = this._formData();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-palette-card.ts
+     * 📝 Description   : Composant Web custom:halo-palette-card.
+     *                    Sélecteur interactif de la palette officielle des 16 teintes HOLM
+     *                    (grille 2x8), avec pastilles lumineuses, bordures de focus,
+     *                    badges de sélection ✓ et synchronisation temps-réel input_select.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Création initiale de la carte nuancier HOLM 16 teintes.
+     * ==============================================================================
+     */
+    // Ordonnancement exact 2 colonnes x 8 lignes de la capture 22.00.20
+    const DEFAULT_PALETTE_ORDER = [
+        // Ligne 1
+        { name: 'Cyan HOLM', hex: '#26c6da' },
+        { name: 'Bleu Céleste', hex: '#38bdf8' },
+        // Ligne 2
+        { name: 'Saphir Océan', hex: '#2f86ff' },
+        { name: 'Menthe Givrée', hex: '#00e5a3' },
+        // Ligne 3
+        { name: 'Émeraude', hex: '#10b981' },
+        { name: 'Vert Lime', hex: '#84cc16' },
+        // Ligne 4
+        { name: 'Jaune Soleil', hex: '#facc15' },
+        { name: 'Ambre Doré', hex: '#f59e0b' },
+        // Ligne 5
+        { name: 'Orange Flamme', hex: '#ff5a1f' },
+        { name: 'Corail Pêche', hex: '#fb923c' },
+        // Ligne 6
+        { name: 'Rose Rubis', hex: '#f43f5e' },
+        { name: 'Rose Bonbon', hex: '#f472b6' },
+        // Ligne 7
+        { name: 'Fuchsia Néon', hex: '#d946ef' },
+        { name: 'Améthyste', hex: '#a855f7' },
+        // Ligne 8
+        { name: 'Violet Nuit', hex: '#8b5cf6' },
+        { name: 'Blanc Glace', hex: '#e2e8f0' }
+    ];
+    class HaloPaletteCard extends HTMLElement {
+        constructor() {
+            super();
+            // Persistent DOM references
+            this._containerEl = null;
+            this._headerEl = null;
+            this._headerIconEl = null;
+            this._headerTitleEl = null;
+            this._headerLineEl = null;
+            this._gridEl = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        static getConfigElement() {
+            return document.createElement('halo-palette-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                entity: 'input_select.couleur_theme_eclairages'
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-palette-card');
+            }
+            this._config = {
+                entity: 'input_select.couleur_theme_eclairages',
+                columns: 2,
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            if (!this._containerEl) {
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            return 6;
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            const entityId = this._config.entity || 'input_select.couleur_theme_eclairages';
+            return oldHass.states[entityId] !== newHass.states[entityId];
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          width: 100%;
+          box-sizing: border-box;
+          padding: 8px 0;
+        }
+
+        /* En-tête optionnel */
+        .header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .header-icon {
+          width: 18px;
+          height: 18px;
+          min-width: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: translateY(-2px);
+          flex-shrink: 0;
+        }
+        .header-icon ha-icon {
+          --mdc-icon-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+        .header-title {
+          color: #e6f2f5;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: -0.2px;
+          white-space: nowrap;
+          line-height: 1.2;
+          flex-shrink: 0;
+        }
+        .header-line {
+          flex: 1;
+          height: 2px;
+          min-height: 2px;
+          border-radius: 2px;
+          transition: background 0.3s ease;
+        }
+
+        /* Grille des pastilles */
+        .palette-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px 10px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Tuile pastille */
+        .palette-tile {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-radius: 12px;
+          padding: 8px 10px;
+          min-height: 48px;
+          box-sizing: border-box;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          overflow: hidden;
+        }
+        .palette-tile:hover {
+          filter: brightness(1.1);
+        }
+        .palette-tile:active {
+          transform: scale(0.97);
+        }
+
+        .tile-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+        .tile-dot {
+          width: 20px;
+          height: 20px;
+          min-width: 20px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          display: inline-block;
+          transition: box-shadow 0.25s ease;
+        }
+        .tile-texts {
+          display: flex;
+          flex-direction: column;
+          text-align: left;
+          min-width: 0;
+        }
+        .tile-name {
+          font-size: 13px;
+          font-weight: 600;
+          color: #e6f2f5;
+          line-height: 1.2;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .tile-hex {
+          font-size: 11px;
+          font-weight: 500;
+          font-family: monospace;
+          line-height: 1.2;
+          margin-top: 1px;
+        }
+
+        .tile-check-slot {
+          width: 20px;
+          height: 20px;
+          min-width: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .tile-check-slot ha-icon {
+          --mdc-icon-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      </style>
+      <div class="wrapper" id="container">
+        <div class="header" id="header" style="display: none;">
+          <div class="header-icon">
+            <ha-icon id="header-icon"></ha-icon>
+          </div>
+          <span class="header-title" id="header-title"></span>
+          <div class="header-line" id="header-line"></div>
+        </div>
+
+        <div class="palette-grid" id="palette-grid"></div>
+      </div>
+    `;
+            this._containerEl = this._root.getElementById('container');
+            this._headerEl = this._root.getElementById('header');
+            this._headerIconEl = this._root.getElementById('header-icon');
+            this._headerTitleEl = this._root.getElementById('header-title');
+            this._headerLineEl = this._root.getElementById('header-line');
+            this._gridEl = this._root.getElementById('palette-grid');
+        }
+        async _selectColor(colorName) {
+            const entityId = this._config.entity || 'input_select.couleur_theme_eclairages';
+            if (!this._hass)
+                return;
+            fireHaptic('selection');
+            await this._hass.callService('input_select', 'select_option', {
+                entity_id: entityId,
+                option: colorName
+            });
+        }
+        _render() {
+            if (!this._config)
+                return;
+            if (!this._containerEl) {
+                this._buildDom();
+            }
+            const entityId = this._config.entity || 'input_select.couleur_theme_eclairages';
+            const currentState = this._hass?.states?.[entityId]?.state || 'Cyan HOLM';
+            const activeColorHex = HOLM_PALETTE[currentState] || '#26c6da';
+            // En-tête optionnel
+            if (this._headerEl) {
+                if (this._config.title) {
+                    this._headerEl.style.display = 'flex';
+                    if (this._headerTitleEl)
+                        this._headerTitleEl.textContent = this._config.title;
+                    const icon = this._config.icon || 'mdi:palette';
+                    if (this._headerIconEl) {
+                        if (this._headerIconEl.getAttribute('icon') !== icon) {
+                            this._headerIconEl.setAttribute('icon', icon);
+                        }
+                        this._headerIconEl.style.color = activeColorHex;
+                    }
+                    if (this._headerLineEl) {
+                        this._headerLineEl.style.background = `linear-gradient(90deg, ${activeColorHex} 0%, ${activeColorHex}44 60%, transparent 100%)`;
+                    }
+                }
+                else {
+                    this._headerEl.style.display = 'none';
+                }
+            }
+            // Grille
+            if (this._gridEl) {
+                this._gridEl.innerHTML = '';
+                const cols = this._config.columns || 2;
+                this._gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                const paletteList = this._config.colors || DEFAULT_PALETTE_ORDER;
+                paletteList.forEach(color => {
+                    const isActive = (currentState === color.name);
+                    const hex = color.hex;
+                    const tileEl = document.createElement('div');
+                    tileEl.className = 'palette-tile';
+                    if (isActive) {
+                        tileEl.style.background = `linear-gradient(135deg, ${hex}26, rgba(15, 23, 36, 0.85))`;
+                        tileEl.style.border = `2px solid ${hex}`;
+                        tileEl.style.boxShadow = `0 0 14px ${hex}66, inset 0 1px 0 rgba(255, 255, 255, 0.12)`;
+                    }
+                    else {
+                        tileEl.style.background = `linear-gradient(135deg, ${hex}0D, rgba(15, 23, 36, 0.65))`;
+                        tileEl.style.border = `1px solid rgba(255, 255, 255, 0.08)`;
+                        tileEl.style.boxShadow = 'none';
+                    }
+                    const checkHtml = isActive
+                        ? `<ha-icon icon="mdi:check-circle" style="color: ${hex};"></ha-icon>`
+                        : ``;
+                    tileEl.innerHTML = `
+          <div class="tile-left">
+            <span class="tile-dot" style="background: ${hex}; box-shadow: 0 0 10px ${hex}88;"></span>
+            <div class="tile-texts">
+              <span class="tile-name">${color.name}</span>
+              <span class="tile-hex" style="color: ${hex};">${hex.toLowerCase()}</span>
+            </div>
+          </div>
+          <div class="tile-check-slot">
+            ${checkHtml}
+          </div>
+        `;
+                    tileEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this._selectColor(color.name);
+                    });
+                    this._gridEl.appendChild(tileEl);
+                });
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-palette-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-palette-card.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.2.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-palette-card.
+     * ==============================================================================
+     */
+    const SCHEMA = [
+        {
+            name: 'entity',
+            label: 'Entité sélecteur de thème (défaut: input_select.couleur_theme_eclairages)',
+            selector: { entity: { domain: 'input_select' } }
+        },
+        {
+            name: 'title',
+            label: 'Titre de la section (optionnel)',
+            selector: { text: {} }
+        },
+        {
+            name: 'icon',
+            label: 'Icône MDI (optionnel)',
+            selector: { icon: {} }
+        },
+        {
+            name: 'columns',
+            label: 'Nombre de colonnes',
+            selector: {
+                number: {
+                    min: 1,
+                    max: 4,
+                    mode: 'box'
+                }
+            }
+        }
+    ];
+    class HaloPaletteCardEditor extends HTMLElement {
+        setConfig(config) {
+            this._config = {
+                entity: 'input_select.couleur_theme_eclairages',
+                columns: 2,
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            const form = this.querySelector('ha-form');
+            if (form) {
+                form.hass = hass;
+            }
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            this._config = {
+                ...this._config,
+                ...ev.detail.value
+            };
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _render() {
+            if (!this._config)
+                return;
+            let form = this.querySelector('ha-form');
+            if (!form) {
+                this.innerHTML = `
+        <div style="padding: 8px 0;">
+          <ha-form id="form"></ha-form>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    form.schema = SCHEMA;
+                    form.data = this._config;
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+            }
+            else {
+                form.data = this._config;
+                if (this._hass)
+                    form.hass = this._hass;
             }
         }
     }
@@ -2406,22 +4490,27 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.1.0
+     * 📦 Version      : 1.2.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
-     *   - 💡 v1.1.0 (2026-10-30) : Intégration de custom:halo-light-card, éditeur visuel UI, calibrage 64px et bundle lisible/non-minifié.
+     *   - 💡 v1.2.0 (2026-10-30) : Intégration de custom:halo-button-card (polyvalente),
+     *                              custom:halo-cover-color-card (couleurs volets 2x2),
+     *                              custom:halo-palette-card (nuancier officiel 16 teintes HOLM)
+     *                              et volet accordéon intégré dans custom:halo-separator-card.
+     *   - 💡 v1.1.0 (2026-10-30) : Intégration de custom:halo-light-card, éditeur visuel UI,
+     *                              calibrage 64px et bundle lisible/non-minifié.
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.1.0';
+    const VERSION = '1.2.0';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
-        type: 'halo-cover-card',
-        name: 'HALO Cover Card',
-        description: 'Turnkey roller shutter card with Liquid Glass styling and dynamic glowing halo.',
+        type: 'halo-button-card',
+        name: 'HALO Button Card',
+        description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts and sub-buttons.',
         preview: true
     });
     window.customCards.push({
@@ -2431,17 +4520,35 @@ var HaloButtonCard = (function (exports) {
         preview: true
     });
     window.customCards.push({
+        type: 'halo-cover-card',
+        name: 'HALO Cover Card',
+        description: 'Turnkey roller shutter card with Liquid Glass styling and dynamic glowing halo.',
+        preview: true
+    });
+    window.customCards.push({
         type: 'halo-separator-card',
         name: 'HALO Separator Card',
-        description: 'Sleek section divider with neon gradient line and HOLM styling.',
+        description: 'Sleek section divider with neon gradient line, collapsible toggle button and built-in legend drawer.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-cover-color-card',
+        name: 'HALO Cover Color Card',
+        description: 'Interactive 2x2 grid for configuring shutter state colors with glowing dots, HEX codes and state icons.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-palette-card',
+        name: 'HALO Palette Card',
+        description: 'Official 16-color HOLM / HALO theme palette picker with glowing halos and active check badges.',
         preview: true
     });
     // Register Web Component custom elements
-    if (!customElements.get('halo-cover-card')) {
-        customElements.define('halo-cover-card', HaloCoverCard);
+    if (!customElements.get('halo-button-card')) {
+        customElements.define('halo-button-card', HaloButtonCard);
     }
-    if (!customElements.get('halo-cover-card-editor')) {
-        customElements.define('halo-cover-card-editor', HaloCoverCardEditor);
+    if (!customElements.get('halo-button-card-editor')) {
+        customElements.define('halo-button-card-editor', HaloButtonCardEditor);
     }
     if (!customElements.get('halo-light-card')) {
         customElements.define('halo-light-card', HaloLightCard);
@@ -2449,20 +4556,46 @@ var HaloButtonCard = (function (exports) {
     if (!customElements.get('halo-light-card-editor')) {
         customElements.define('halo-light-card-editor', HaloLightCardEditor);
     }
+    if (!customElements.get('halo-cover-card')) {
+        customElements.define('halo-cover-card', HaloCoverCard);
+    }
+    if (!customElements.get('halo-cover-card-editor')) {
+        customElements.define('halo-cover-card-editor', HaloCoverCardEditor);
+    }
     if (!customElements.get('halo-separator-card')) {
         customElements.define('halo-separator-card', HaloSeparatorCard);
     }
     if (!customElements.get('halo-separator-card-editor')) {
         customElements.define('halo-separator-card-editor', HaloSeparatorCardEditor);
     }
+    if (!customElements.get('halo-cover-color-card')) {
+        customElements.define('halo-cover-color-card', HaloCoverColorCard);
+    }
+    if (!customElements.get('halo-cover-color-card-editor')) {
+        customElements.define('halo-cover-color-card-editor', HaloCoverColorCardEditor);
+    }
+    if (!customElements.get('halo-palette-card')) {
+        customElements.define('halo-palette-card', HaloPaletteCard);
+    }
+    if (!customElements.get('halo-palette-card-editor')) {
+        customElements.define('halo-palette-card-editor', HaloPaletteCardEditor);
+    }
 
+    exports.HaloButtonCard = HaloButtonCard;
+    exports.HaloButtonCardEditor = HaloButtonCardEditor;
     exports.HaloCoverCard = HaloCoverCard;
     exports.HaloCoverCardEditor = HaloCoverCardEditor;
+    exports.HaloCoverColorCard = HaloCoverColorCard;
+    exports.HaloCoverColorCardEditor = HaloCoverColorCardEditor;
     exports.HaloLightCard = HaloLightCard;
     exports.HaloLightCardEditor = HaloLightCardEditor;
+    exports.HaloPaletteCard = HaloPaletteCard;
+    exports.HaloPaletteCardEditor = HaloPaletteCardEditor;
     exports.HaloSeparatorCard = HaloSeparatorCard;
     exports.HaloSeparatorCardEditor = HaloSeparatorCardEditor;
+    exports.actionHandler = actionHandler;
     exports.lightHelper = lightHelper;
+    exports.themeHelper = themeHelper;
     exports.voletHelperInstance = voletHelperInstance;
 
     return exports;

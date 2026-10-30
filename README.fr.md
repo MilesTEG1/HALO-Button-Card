@@ -165,6 +165,98 @@ color: '#26c6da'
 | `icon` | `string` | `mdi:bookmark`| Icône MDI d'en-tête. |
 | `color` | `string` | `#26c6da` | Couleur de la ligne néon dégradée (Hex ou nom de palette HOLM). |
 | `theme_entity` | `string` | *auto* | Entité optionnelle `input_select` pilotant la couleur de vue. |
+| `collapsible` | `boolean` | `false` | Active le bouton pill escamotable (*Masquer ⌃* / *Afficher ⌄*) et le volet accordéon. |
+| `initial_collapsed` | `boolean` | `false` | Initialement masqué / replié si activé. |
+| `label_on` | `string` | `Masquer` | Libellé du bouton quand le volet est ouvert. |
+| `label_off` | `string` | `Afficher` | Libellé du bouton quand le volet est replié. |
+| `toggle_entity` | `string` | *optionnel* | Entité `input_boolean` synchronisée avec le bouton de bascule. |
+| `legend_items` | `boolean` / `array` | *auto* | Active la grille standard 2x2 du Guide des Boutons (Icône gauche, % luminosité, Kelvin, Nom tuile) ou accepte un tableau personnalisé d'éléments. |
+
+---
+
+### 4. `custom:halo-button-card`
+
+Bouton multi-usage universel Liquid Glass avec halo spéculaire, remplaçant avantageusement les templates complexes `custom:button-card`.
+
+```yaml
+# Exemple 1 : Carte large horizontale (Extinction générale)
+type: custom:halo-button-card
+name: Éteindre Toutes les Lumières
+label: Extinction globale de l'ensemble des pièces
+icon: mdi:lightbulb-off
+color: Orange Flamme # ou #ff5a1f
+layout: horizontal
+tap_action:
+  action: call-service
+  service: light.turn_off
+  target:
+    entity_id:
+      - light.lumieres_tv
+      - light.lumiere_canape
+      - light.lumieres_bureau
+  confirmation:
+    text: "⚠️ Confirmer l'extinction de toutes les lumières de la maison ?"
+```
+
+```yaml
+# Exemple 2 : Bouton d'ambiance vertical carré
+type: custom:halo-button-card
+name: Ambiance Cinéma
+label: Salon TV (40% • 2200K)
+icon: mdi:movie-open
+color: Cyan HOLM
+layout: vertical
+tap_action:
+  action: call-service
+  service: scene.turn_on
+  target:
+    entity_id: scene.salon_cinema
+```
+
+#### Options de Configuration Disponibles :
+
+| Propriété | Type | Défaut | Description |
+| :--- | :---: | :---: | :--- |
+| `name` / `title` | `string` | *optionnel* | Titre principal du bouton. |
+| `label` / `subtitle` | `string` | *optionnel* | Sous-titre ou description atténuée. |
+| `icon` | `string` | `mdi:gesture-tap-button` | Icône MDI affichée dans le bouton carré Liquid Glass. |
+| `layout` | `string` | `horizontal` | Disposition : `horizontal` (large) ou `vertical` (ambiance compacte). |
+| `text_align` | `string` | *auto* | Alignement : `left`, `center`, `right` (`left` par défaut en horizontal, `center` en vertical). |
+| `color` / `halo_color` | `string` | *thème* | Couleur de l'icône, du bouton et du halo spéculaire (nom HOLM ou Hex). |
+| `entity` | `string` | *optionnel* | Entité liée optionnelle (pour état, nom ou bascule). |
+| `tap_action` | `object` | *toggle* | Action au clic simple sur la carte. |
+| `hold_action` | `object` | *none* | Action au clic long (500 ms) sur la carte. |
+| `double_tap_action` | `object` | *none* | Action au double appui rapide sur la carte. |
+| `icon_tap_action` | `object` | *optionnel* | Action dissociée exclusive au clic sur le bouton de l'icône. |
+| `sub_buttons` | `array` | *aucun* | Tableau de sous-boutons intégrés (`icon`, `badge`, `color`, `tap_action`, etc.). |
+
+---
+
+### 5. `custom:halo-cover-color-card`
+
+Carte prête à l'emploi reproduisant la grille 2×2 des couleurs d'états des volets (*Volet Fermé*, *Volet Partiel*, *Volet Ouvert*, *Mouvement*).
+
+```yaml
+type: custom:halo-cover-color-card
+title: "Couleurs d'États des Volets"
+icon: mdi:window-shutter-cog
+closed_entity: input_text.couleur_volet_ferme
+partial_entity: input_text.couleur_volet_partiel
+open_entity: input_text.couleur_volet_ouvert
+moving_entity: input_text.couleur_volet_en_mouvement
+```
+
+---
+
+### 6. `custom:halo-palette-card`
+
+Nuancier interactif officiel des 16 teintes HOLM / HALO en grille 2 colonnes × 8 lignes avec halo spéculaire et badge de sélection active ✓.
+
+```yaml
+type: custom:halo-palette-card
+entity: input_select.couleur_theme_eclairages
+columns: 2
+```
 
 ---
 
