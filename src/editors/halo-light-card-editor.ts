@@ -52,6 +52,19 @@ const SCHEMA = [
     selector: { entity: { domain: 'input_select' } }
   },
   {
+    name: 'border_width',
+    label: 'Épaisseur de bordure (px)',
+    selector: {
+      number: {
+        min: 0,
+        max: 3,
+        step: 0.25,
+        unit_of_measurement: 'px',
+        mode: 'slider'
+      }
+    }
+  },
+  {
     type: 'grid',
     name: '',
     schema: [
