@@ -66,9 +66,23 @@ export function toHexColor(color: any, fallback: string): string {
   if (!color) return fallback;
   if (Array.isArray(color)) return rgbToHex(color);
   if (typeof color === 'string') {
-    if (HOLM_PALETTE[color]) return HOLM_PALETTE[color];
-    if (color.startsWith('#')) return color;
-    if (color.startsWith('rgb')) return color;
+    const trimmed = color.trim();
+    if (HOLM_PALETTE[trimmed]) return HOLM_PALETTE[trimmed];
+    if (trimmed.startsWith('#')) {
+      const clean = trimmed.replace('#', '');
+      if (clean.length === 3) {
+        return '#' + clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
+      }
+      if (clean.length >= 6) {
+        return '#' + clean.substring(0, 6);
+      }
+    }
+    if (trimmed.startsWith('rgb')) {
+      const match = trimmed.match(/\d+/g);
+      if (match && match.length >= 3) {
+        return rgbToHex([parseInt(match[0], 10), parseInt(match[1], 10), parseInt(match[2], 10)]);
+      }
+    }
   }
   return fallback;
 }
@@ -130,16 +144,20 @@ export function getCoverColors(
 export function getHaloCardStyles(
   accentCol: string,
   isUnavail: boolean,
-  isMoving: boolean
+  isMoving: boolean,
+  borderWidth?: number
 ): {
   background: string;
   border: string;
   boxShadow: string;
 } {
+  const bw = (typeof borderWidth === 'number' && !isNaN(borderWidth)) ? borderWidth : 1.5;
+  const borderStr = (color: string) => bw > 0 ? `${bw}px solid ${color}` : 'none';
+
   if (isUnavail) {
     return {
       background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))',
-      border: '1.5px solid #f59e0b',
+      border: borderStr('#f59e0b'),
       boxShadow: '0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)'
     };
   }
@@ -147,14 +165,14 @@ export function getHaloCardStyles(
   if (isMoving) {
     return {
       background: `linear-gradient(135deg, ${accentCol}26, rgba(20, 28, 38, 0.90))`,
-      border: `1.5px solid ${accentCol}`,
+      border: borderStr(accentCol),
       boxShadow: `0 0 22px ${accentCol}77, 0 0 8px ${accentCol}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`
     };
   }
 
   return {
     background: `linear-gradient(135deg, ${accentCol}1A, rgba(20, 28, 38, 0.88))`,
-    border: `1.5px solid ${accentCol}`,
+    border: borderStr(accentCol),
     boxShadow: `0 0 18px ${accentCol}60, 0 0 6px ${accentCol}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`
   };
 }

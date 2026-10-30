@@ -7,11 +7,13 @@
  *                    et support complet des sous-boutons interactifs.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
+ * 📦 Version      : 1.2.1
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🩹 v1.2.1 (2026-10-30) : Ajout du contour net (border 1.5px solid) et
+ *                              du halo lumineux permanent (box-shadow) sur ha-card.
  *   - 💡 v1.2.0 (2026-10-30) : Création initiale de halo-button-card polyvalente.
  * ==============================================================================
  */
@@ -187,12 +189,19 @@ export class HaloButtonCard extends HTMLElement {
           display: flex;
           box-sizing: border-box;
           border-radius: 16px;
+          border: 1.5px solid transparent;
           background: linear-gradient(160deg, rgba(20, 28, 38, 0.85), rgba(10, 15, 22, 0.92));
           backdrop-filter: blur(20px) saturate(180%);
           -webkit-backdrop-filter: blur(20px) saturate(180%);
-          transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease;
+          transition: border 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      transform 0.15s ease,
+                      filter 0.15s ease;
           overflow: hidden;
           cursor: pointer;
+        }
+        ha-card:hover {
+          filter: brightness(1.05);
         }
         ha-card:active {
           transform: scale(0.985);
@@ -372,8 +381,17 @@ export class HaloButtonCard extends HTMLElement {
     this._cardEl!.className = isVertical ? 'layout-vertical' : 'layout-horizontal';
 
     // Card styling (Border & Glowing Specular Halo)
-    this._cardEl!.style.borderColor = `${color}40`;
-    this._cardEl!.style.boxShadow = `inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 14px ${color}26`;
+    const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
+      ? this._config.border_width
+      : 1.5;
+    const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
+    const cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+    if (this._cardEl!.style.border !== cardBorder) {
+      this._cardEl!.style.border = cardBorder;
+    }
+    if (this._cardEl!.style.boxShadow !== cardShadow) {
+      this._cardEl!.style.boxShadow = cardShadow;
+    }
 
     // Icon button styling
     if (this._iconBtnEl) {
