@@ -4,24 +4,31 @@
  * 📝 Description   : Composant Web custom:halo-separator-card.
  *                    Séparateur de section élégant avec ligne dégradée néon,
  *                    bouton escamotable (Masquer / Afficher) et volet accordéon
- *                    de légende intégré (zéro helper externe requis).
+ *                    de légende personnalisable (grille 1/2/3 colonnes,
+ *                    alignement vertical, badges/icônes, halos et actions tactiles).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
+ * 📦 Version      : 1.3.0
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.3.0 (2026-10-30) : Modularisation complète du volet repliable accordéon :
+ *                              • Grille responsive dynamique paramétrable (1, 2 ou 3 colonnes).
+ *                              • Alignement typographique parfait (icône centrée sur la 1ère ligne).
+ *                              • Rétro-éclairage et halo spéculaire paramétrables par item.
+ *                              • Support double icône MDI ou badge court (%, K, °C, etc.).
+ *                              • Prise en charge du contenu libre Markdown/texte.
+ *                              • Support des interactions tactiles optionnelles (tap_action).
  *   - 💡 v1.2.0 (2026-10-30) : Évolution accordéon intégrée (volet repliable avec
- *                              transition CSS fluide, bouton pill Masquer/Afficher
- *                              et grille 2x2 du Guide des Boutons intégrée).
+ *                              transition CSS fluide et bouton pill Masquer/Afficher).
  *   - 💡 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
  * ==============================================================================
  */
 
 import { HomeAssistant, HaloSeparatorCardConfig, LegendItemConfig } from '../types';
 import { resolveThemeColor, toHexColor } from '../core/theme-helper';
-import { fireHaptic } from '../core/action-handler';
+import { handleAction, fireHaptic } from '../core/action-handler';
 
 export class HaloSeparatorCard extends HTMLElement {
   private _config!: HaloSeparatorCardConfig;
@@ -41,6 +48,7 @@ export class HaloSeparatorCard extends HTMLElement {
   private _toggleLabelEl: HTMLElement | null = null;
   private _toggleIconEl: HTMLElement | null = null;
   private _accordionEl: HTMLElement | null = null;
+  private _legendContentEl: HTMLElement | null = null;
   private _legendGridEl: HTMLElement | null = null;
 
   constructor() {
@@ -54,9 +62,10 @@ export class HaloSeparatorCard extends HTMLElement {
 
   public static getStubConfig(): Record<string, any> {
     return {
-      name: 'Légende & Guide des Boutons',
+      name: 'Guide & Légendes',
       icon: 'mdi:book-open-variant',
-      collapsible: true
+      collapsible: true,
+      columns: 2
     };
   }
 
@@ -67,6 +76,7 @@ export class HaloSeparatorCard extends HTMLElement {
     this._config = {
       label_on: 'Masquer',
       label_off: 'Afficher',
+      columns: 2,
       ...config
     };
 
@@ -103,6 +113,7 @@ export class HaloSeparatorCard extends HTMLElement {
     return Boolean(
       this._config?.collapsible ||
       this._config?.legend_items ||
+      this._config?.content ||
       this._config?.toggle_entity
     );
   }
@@ -146,6 +157,8 @@ export class HaloSeparatorCard extends HTMLElement {
           background: transparent !important;
           border: none !important;
           box-shadow: none !important;
+          margin: 0;
+          padding: 0;
           user-select: none;
           -webkit-user-select: none;
         }
@@ -239,7 +252,7 @@ export class HaloSeparatorCard extends HTMLElement {
           pointer-events: none;
         }
         .halo-accordion-drawer.expanded {
-          max-height: 600px;
+          max-height: 1200px;
           opacity: 1;
           margin-top: 10px;
           overflow: visible;
@@ -258,9 +271,18 @@ export class HaloSeparatorCard extends HTMLElement {
           width: 100%;
         }
 
+        .legend-content {
+          font-size: 11.5px;
+          line-height: 1.5;
+          color: rgba(220, 235, 240, 0.85);
+          margin-bottom: 10px;
+          text-align: left;
+          word-break: break-word;
+        }
+
         .legend-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(var(--halo-columns, 2), minmax(0, 1fr));
           gap: 10px 16px;
           font-size: 11px;
           width: 100%;
@@ -268,38 +290,86 @@ export class HaloSeparatorCard extends HTMLElement {
           text-align: left;
         }
 
+        @media (max-width: 480px) {
+          .legend-grid {
+            grid-template-columns: repeat(min(var(--halo-columns, 2), 2), minmax(0, 1fr));
+            gap: 8px 12px;
+          }
+        }
+
+        @media (max-width: 340px) {
+          .legend-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
         .legend-item {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: flex-start;
           gap: 8px;
+          min-width: 0;
+          box-sizing: border-box;
         }
+
+        .legend-item.interactive {
+          cursor: pointer;
+          padding: 3px 6px;
+          margin: -3px -6px;
+          border-radius: 8px;
+          transition: background 0.2s ease, transform 0.15s ease;
+        }
+        .legend-item.interactive:hover {
+          background: rgba(255, 255, 255, 0.06);
+        }
+        .legend-item.interactive:active {
+          transform: scale(0.97);
+        }
+
         .legend-badge {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 24px;
-          height: 24px;
-          min-width: 24px;
+          width: 22px;
+          height: 22px;
+          min-width: 22px;
           border-radius: 6px;
           flex-shrink: 0;
+          box-sizing: border-box;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 0 8px var(--item-halo, transparent);
+          transition: all 0.25s ease;
+          margin-top: 0px;
         }
         .legend-badge ha-icon {
-          --mdc-icon-size: 15px;
-          width: 15px;
-          height: 15px;
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .legend-badge-text {
-          font-weight: bold;
+          font-weight: 700;
           font-size: 11px;
+          letter-spacing: -0.3px;
+          line-height: 1;
+          text-align: center;
         }
         .legend-text {
-          color: #e6f2f5;
-          line-height: 1.2;
+          flex: 1;
+          min-width: 0;
+          color: rgba(220, 235, 240, 0.85);
+          line-height: 22px;
           font-size: 11.5px;
+          text-align: left;
+          word-break: break-word;
+          overflow-wrap: break-word;
         }
         .legend-text b {
+          color: #ffffff;
           font-weight: 600;
+          letter-spacing: -0.1px;
         }
       </style>
       <div class="halo-separator-wrapper" id="container">
@@ -317,6 +387,7 @@ export class HaloSeparatorCard extends HTMLElement {
 
         <div class="halo-accordion-drawer" id="accordion-drawer">
           <div class="halo-legend-card">
+            <div class="legend-content" id="legend-content" style="display: none;"></div>
             <div class="legend-grid" id="legend-grid"></div>
           </div>
         </div>
@@ -332,6 +403,7 @@ export class HaloSeparatorCard extends HTMLElement {
     this._toggleLabelEl = this._root.getElementById('toggle-label');
     this._toggleIconEl = this._root.getElementById('toggle-icon');
     this._accordionEl = this._root.getElementById('accordion-drawer');
+    this._legendContentEl = this._root.getElementById('legend-content');
     this._legendGridEl = this._root.getElementById('legend-grid');
 
     if (this._toggleBtnEl) {
@@ -464,12 +536,35 @@ export class HaloSeparatorCard extends HTMLElement {
       }
     }
 
+    // Rendu du contenu libre Markdown/texte
+    if (this._legendContentEl) {
+      if (this._config.content) {
+        this._legendContentEl.textContent = this._config.content;
+        this._legendContentEl.style.display = 'block';
+      } else {
+        this._legendContentEl.textContent = '';
+        this._legendContentEl.style.display = 'none';
+      }
+    }
+
     // Rendu des items de légende
     if (isCollapsible && this._legendGridEl) {
+      let colCount = 2;
+      if (this._config.columns !== undefined) {
+        const parsed = parseInt(String(this._config.columns), 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 3) {
+          colCount = parsed;
+        }
+      }
+      this._legendGridEl.style.setProperty('--halo-columns', String(colCount));
+
       let items: LegendItemConfig[] = [];
       if (Array.isArray(this._config.legend_items)) {
         items = this._config.legend_items;
-      } else {
+      } else if (
+        this._config.legend_items === true ||
+        (this._config.collapsible && this._config.legend_items === undefined && !this._config.content)
+      ) {
         items = this._getDefaultLegendItems(col);
       }
 
@@ -484,16 +579,32 @@ export class HaloSeparatorCard extends HTMLElement {
           badgeContent = `<span class="legend-badge-text" style="color: ${itemCol};">${it.badge}</span>`;
         } else if (it.icon) {
           badgeContent = `<ha-icon icon="${it.icon}" style="color: ${itemCol};"></ha-icon>`;
+        } else {
+          badgeContent = `<ha-icon icon="mdi:circle-small" style="color: ${itemCol};"></ha-icon>`;
         }
 
+        const labelPart = it.label ? `<b>${it.label}</b>` : '';
+        const descPart = it.desc || '';
+        const separator = (labelPart && descPart && !descPart.startsWith(' ') && !descPart.startsWith(':')) ? ' : ' : '';
+
         div.innerHTML = `
-          <span class="legend-badge" style="background: ${itemCol}26;">
+          <span class="legend-badge" style="background: ${itemCol}22; border-color: ${itemCol}55; --item-halo: ${itemCol}40;">
             ${badgeContent}
           </span>
           <span class="legend-text">
-            <b>${it.label}</b>${it.desc || ''}
+            ${labelPart}${separator}${descPart}
           </span>
         `;
+
+        if (it.tap_action) {
+          div.classList.add('interactive');
+          div.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            fireHaptic('light');
+            handleAction(this, this._hass, { tap_action: it.tap_action }, 'tap');
+          });
+        }
+
         this._legendGridEl!.appendChild(div);
       });
     }

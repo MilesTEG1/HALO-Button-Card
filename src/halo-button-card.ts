@@ -7,11 +7,14 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
+ * 📦 Version      : 1.3.0
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.3.0 (2026-10-30) : Modularisation du volet accordéon de custom:halo-separator-card
+ *                              (grille 1/2/3 colonnes responsive, gestionnaire UI des légendes,
+ *                              alignement typographique, badges, halos et interactions tactiles).
  *   - 💡 v1.2.0 (2026-10-30) : Intégration de custom:halo-button-card (polyvalente),
  *                              custom:halo-cover-color-card (couleurs volets 2x2),
  *                              custom:halo-palette-card (nuancier officiel 16 teintes HOLM)
@@ -40,7 +43,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
