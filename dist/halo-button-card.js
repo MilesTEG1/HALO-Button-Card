@@ -1128,6 +1128,553 @@ var HaloButtonCard = (function (exports) {
   }
 `;
 
+    var en = {
+      "state": {
+        "on": "On",
+        "off": "Off",
+        "unavailable": "Unavailable",
+        "unknown": "Unknown",
+        "closed": "Closed",
+        "open": "Open",
+        "partial": "Partial",
+        "moving": "Moving"
+      },
+      "cover": {
+        "default_name": "Shutter",
+        "opening": "Opening…",
+        "closing": "Closing…",
+        "opening_pct": "Opening… {pct} %",
+        "closing_pct": "Closing… {pct} %",
+        "moving_n": "{count} shutters moving…",
+        "partial_pct": "Partial ({pct}%)",
+        "not_found": "Entity not found: {id}",
+        "down": "Lower",
+        "stop": "Stop",
+        "up": "Raise"
+      },
+      "light": {
+        "default_name": "Light",
+        "not_found": "Entity not found: {id}",
+        "toggle": "Toggle",
+        "details": "Details",
+        "cycle_brightness": "Cycle brightness",
+        "cycle_kelvin": "Cycle color temperature",
+        "power": "On / Off"
+      },
+      "cover_color": {
+        "title": "Shutter State Colors",
+        "closed": "Shutter Closed",
+        "partial": "Shutter Partial",
+        "open": "Shutter Open",
+        "moving": "Moving"
+      },
+      "separator": {
+        "section": "Section",
+        "hide": "Hide",
+        "show": "Show",
+        "lg_icon": "Left icon",
+        "lg_icon_d": " : On / Off",
+        "lg_pct": "Badge %",
+        "lg_pct_d": " : 30 / 67 / 100%",
+        "lg_k": "Badge K",
+        "lg_k_d": " : Warm / Cool",
+        "lg_name": "Tile name",
+        "lg_name_d": " : Light details"
+      },
+      "holm": {
+        "Cyan HOLM": "HOLM Cyan",
+        "Bleu Céleste": "Sky Blue",
+        "Saphir Océan": "Ocean Sapphire",
+        "Menthe Givrée": "Frosted Mint",
+        "Émeraude": "Emerald",
+        "Vert Lime": "Lime Green",
+        "Jaune Soleil": "Sunshine Yellow",
+        "Ambre Doré": "Golden Amber",
+        "Orange Flamme": "Flame Orange",
+        "Corail Pêche": "Peach Coral",
+        "Rose Rubis": "Ruby Pink",
+        "Rose Bonbon": "Candy Pink",
+        "Fuchsia Néon": "Neon Fuchsia",
+        "Améthyste": "Amethyst",
+        "Violet Nuit": "Night Violet",
+        "Blanc Glace": "Ice White"
+      },
+      "editor": {
+        "style_title": "Visual Customization (Halo & Border)",
+        "style_title_colors": "Visual Customization (Halo, Colors & Border)",
+        "halo_color": "Halo & Button Color",
+        "state_color": "Color: {state}",
+        "open_palette": "Open the free palette",
+        "open_wheel": "Open the color wheel",
+        "chips_label": "Official HOLM palette (quick pick):",
+        "border_title": "Border thickness",
+        "border_title_single": "Border thickness (single)",
+        "border_none": "No border",
+        "border_default": "Default",
+        "border_max": "Max",
+        "border_badge_off": "0 px (Off)",
+        "border_badge_default": "{v} px (Default)",
+        "color_custom": "Custom color",
+        "color_default_holm": "Default HOLM",
+        "color_default_cyan": "HOLM Cyan (Default)",
+        "color_active_theme": "Active HOLM theme",
+        "color_default_grey": "Default (#64748B)",
+        "button": {
+          "name": "Main title",
+          "label": "Subtitle / description",
+          "icon": "MDI icon",
+          "layout": "Layout",
+          "layout_horizontal": "Horizontal (wide card, text on the right)",
+          "layout_vertical": "Vertical (compact card, text centered below)",
+          "text_align": "Text alignment",
+          "align_left": "Left",
+          "align_center": "Centered",
+          "align_right": "Right",
+          "entity": "Linked entity (optional)",
+          "theme_entity": "Theme selector entity (optional)"
+        },
+        "cover": {
+          "entity": "Shutter or group entity",
+          "name": "Custom name (optional)"
+        },
+        "light": {
+          "entity": "Light or lighting group entity",
+          "name": "Custom name (optional)",
+          "icon": "Custom icon (optional)",
+          "sub_toggle_entity": "Dedicated entity for the Power button (optional)",
+          "use_light_color": "Tint the tile with the bulb's real color (RGB / Kelvin)",
+          "theme_entity": "Theme selector entity",
+          "theme_entity_helper": "Default: input_select.couleur_theme_eclairages",
+          "show_brightness": "Brightness sub-button (%)",
+          "show_kelvin": "Temperature sub-button (K)",
+          "show_toggle": "Power sub-button (On/Off)"
+        },
+        "separator": {
+          "name": "Section title",
+          "icon": "MDI icon",
+          "color": "Custom color (optional)",
+          "theme_entity": "Theme selector entity (optional)",
+          "collapsible": "Enable the collapsible legend drawer (accordion)",
+          "initial_collapsed": "Initially collapsed / hidden",
+          "columns": "Drawer columns",
+          "cols_1": "1 column (full width / detailed text)",
+          "cols_2": "2 columns (balanced standard)",
+          "cols_3": "3 columns (compact / 3 items per row)",
+          "label_on": "Button label when open",
+          "label_on_helper": "e.g. Hide",
+          "label_off": "Button label when closed",
+          "label_off_helper": "e.g. Show",
+          "content": "Free note or explanatory text (optional)",
+          "toggle_entity": "Synchronized external entity (optional)",
+          "items_title": "Legend Items & Guide",
+          "items_subtitle": "Configure the explanatory tiles of the collapsible drawer",
+          "add_item": "+ Add an item",
+          "no_items": "No custom legend item defined.",
+          "no_items_hint": "Click \"Add an item\" to customize the drawer.",
+          "item_n": "Item #{n}",
+          "new_label": "New item",
+          "new_desc": "Description",
+          "f_icon": "MDI icon (e.g. mdi:power)",
+          "or": "OR",
+          "f_badge": "Badge",
+          "f_badge_hint": "(max 2-3 chars)",
+          "f_label": "Label / title (bold)",
+          "f_label_ph": "e.g. Short press",
+          "f_desc": "Description",
+          "f_desc_ph": "e.g. Turn on",
+          "f_color": "Custom HEX color (optional, inherits from the card if empty)"
+        },
+        "cover_color": {
+          "title": "Header title",
+          "icon": "Header icon",
+          "closed_entity": "Closed shutter color entity",
+          "closed_entity_helper": "Default: input_text.couleur_volet_ferme",
+          "partial_entity": "Partial shutter color entity",
+          "partial_entity_helper": "Default: input_text.couleur_volet_partiel",
+          "open_entity": "Open shutter color entity",
+          "open_entity_helper": "Default: input_text.couleur_volet_ouvert",
+          "moving_entity": "Moving shutter color entity",
+          "moving_entity_helper": "Default: input_text.couleur_volet_en_mouvement",
+          "theme_entity": "Theme selector entity for the header (optional)"
+        },
+        "palette": {
+          "entity": "Theme selector entity",
+          "entity_helper": "Default: input_select.couleur_theme_eclairages",
+          "title": "Section title (optional)",
+          "icon": "MDI icon (optional)",
+          "columns": "Number of columns"
+        }
+      }
+    }
+    ;
+
+    var fr = {
+      "state": {
+        "on": "Allumé",
+        "off": "Éteint",
+        "unavailable": "Indisponible",
+        "unknown": "Inconnu",
+        "closed": "Fermé",
+        "open": "Ouvert",
+        "partial": "Partiel",
+        "moving": "En mouvement"
+      },
+      "cover": {
+        "default_name": "Volet",
+        "opening": "Ouverture…",
+        "closing": "Fermeture…",
+        "opening_pct": "Ouverture… {pct} %",
+        "closing_pct": "Fermeture… {pct} %",
+        "moving_n": "{count} volets en mouvement…",
+        "partial_pct": "Partiel ({pct}%)",
+        "not_found": "Entité non trouvée : {id}",
+        "down": "Descendre",
+        "stop": "Arrêter",
+        "up": "Monter"
+      },
+      "light": {
+        "default_name": "Éclairage",
+        "not_found": "Entité introuvable : {id}",
+        "toggle": "Basculer",
+        "details": "Détails",
+        "cycle_brightness": "Cycle luminosité",
+        "cycle_kelvin": "Cycle température",
+        "power": "Marche / Arrêt"
+      },
+      "cover_color": {
+        "title": "Couleurs d'États des Volets",
+        "closed": "Volet Fermé",
+        "partial": "Volet Partiel",
+        "open": "Volet Ouvert",
+        "moving": "Mouvement"
+      },
+      "separator": {
+        "section": "Section",
+        "hide": "Masquer",
+        "show": "Afficher",
+        "lg_icon": "Icône gauche",
+        "lg_icon_d": " : On / Off",
+        "lg_pct": "Badge %",
+        "lg_pct_d": " : 30 / 67 / 100%",
+        "lg_k": "Badge K",
+        "lg_k_d": " : Chaud / Froid",
+        "lg_name": "Nom tuile",
+        "lg_name_d": " : Détails lampe"
+      },
+      "holm": {
+        "Cyan HOLM": "Cyan HOLM",
+        "Bleu Céleste": "Bleu Céleste",
+        "Saphir Océan": "Saphir Océan",
+        "Menthe Givrée": "Menthe Givrée",
+        "Émeraude": "Émeraude",
+        "Vert Lime": "Vert Lime",
+        "Jaune Soleil": "Jaune Soleil",
+        "Ambre Doré": "Ambre Doré",
+        "Orange Flamme": "Orange Flamme",
+        "Corail Pêche": "Corail Pêche",
+        "Rose Rubis": "Rose Rubis",
+        "Rose Bonbon": "Rose Bonbon",
+        "Fuchsia Néon": "Fuchsia Néon",
+        "Améthyste": "Améthyste",
+        "Violet Nuit": "Violet Nuit",
+        "Blanc Glace": "Blanc Glace"
+      },
+      "editor": {
+        "style_title": "Personnalisation Visuelle (Halo & Bordure)",
+        "style_title_colors": "Personnalisation Visuelle (Halo, Couleurs & Bordure)",
+        "halo_color": "Couleur du Halo & Bouton",
+        "state_color": "Couleur : {state}",
+        "open_palette": "Ouvrir la palette libre",
+        "open_wheel": "Ouvrir la roue chromatique",
+        "chips_label": "Nuancier officiel HOLM (Sélection rapide) :",
+        "border_title": "Épaisseur de bordure",
+        "border_title_single": "Épaisseur de bordure (Unique)",
+        "border_none": "Sans bordure",
+        "border_default": "Défaut",
+        "border_max": "Maxi",
+        "border_badge_off": "0 px (Off)",
+        "border_badge_default": "{v} px (Défaut)",
+        "color_custom": "Couleur personnalisée",
+        "color_default_holm": "Défaut HOLM",
+        "color_default_cyan": "Cyan HOLM (Défaut)",
+        "color_active_theme": "Thème HOLM actif",
+        "color_default_grey": "Défaut (#64748B)",
+        "button": {
+          "name": "Titre principal",
+          "label": "Sous-titre / Description",
+          "icon": "Icône MDI",
+          "layout": "Disposition (Layout)",
+          "layout_horizontal": "Horizontal (Carte large avec texte à droite)",
+          "layout_vertical": "Vertical (Carte compacte avec texte centré en dessous)",
+          "text_align": "Alignement du texte",
+          "align_left": "Gauche",
+          "align_center": "Centré",
+          "align_right": "Droite",
+          "entity": "Entité liée (optionnel)",
+          "theme_entity": "Entité sélecteur de thème (optionnel)"
+        },
+        "cover": {
+          "entity": "Entité Volet ou Groupe",
+          "name": "Nom personnalisé (optionnel)"
+        },
+        "light": {
+          "entity": "Entité Lumière ou Groupe d’éclairages",
+          "name": "Nom personnalisé (optionnel)",
+          "icon": "Icône personnalisée (optionnel)",
+          "sub_toggle_entity": "Entité dédiée pour le bouton Power (optionnel)",
+          "use_light_color": "Teinter la tuile avec la couleur réelle de l’ampoule (RGB / Kelvin)",
+          "theme_entity": "Entité sélecteur de thème",
+          "theme_entity_helper": "Défaut : input_select.couleur_theme_eclairages",
+          "show_brightness": "Sous-bouton Luminosité (%)",
+          "show_kelvin": "Sous-bouton Température (K)",
+          "show_toggle": "Sous-bouton Power (On/Off)"
+        },
+        "separator": {
+          "name": "Titre de la section",
+          "icon": "Icône MDI",
+          "color": "Couleur personnalisée (optionnel)",
+          "theme_entity": "Entité sélecteur de thème (optionnel)",
+          "collapsible": "Activer le volet repliable de légende (Accordéon)",
+          "initial_collapsed": "Initialement replié / masqué",
+          "columns": "Nombre de colonnes du volet",
+          "cols_1": "1 colonne (Largeur complète / Texte détaillé)",
+          "cols_2": "2 colonnes (Standard équilibré)",
+          "cols_3": "3 colonnes (Compact / 3 éléments par ligne)",
+          "label_on": "Libellé bouton quand ouvert",
+          "label_on_helper": "ex : Masquer",
+          "label_off": "Libellé bouton quand fermé",
+          "label_off_helper": "ex : Afficher",
+          "content": "Note ou texte explicatif libre (optionnel)",
+          "toggle_entity": "Entité externe synchronisée (optionnel)",
+          "items_title": "Éléments de Légende & Guide",
+          "items_subtitle": "Configurez les tuiles explicatives du volet repliable",
+          "add_item": "+ Ajouter un élément",
+          "no_items": "Aucun élément de légende personnalisé défini.",
+          "no_items_hint": "Cliquez sur \"Ajouter un élément\" pour personnaliser le volet.",
+          "item_n": "Élément #{n}",
+          "new_label": "Nouvel élément",
+          "new_desc": "Description",
+          "f_icon": "Icône MDI (ex : mdi:power)",
+          "or": "OU",
+          "f_badge": "Badge",
+          "f_badge_hint": "(max 2-3 car.)",
+          "f_label": "Libellé / Titre (en gras)",
+          "f_label_ph": "ex : Appui court",
+          "f_desc": "Description",
+          "f_desc_ph": "ex : Allumage",
+          "f_color": "Couleur personnalisée HEX (optionnel, hérite de la carte si vide)"
+        },
+        "cover_color": {
+          "title": "Titre de l'en-tête",
+          "icon": "Icône de l'en-tête",
+          "closed_entity": "Entité couleur volet fermé",
+          "closed_entity_helper": "Défaut : input_text.couleur_volet_ferme",
+          "partial_entity": "Entité couleur volet partiel",
+          "partial_entity_helper": "Défaut : input_text.couleur_volet_partiel",
+          "open_entity": "Entité couleur volet ouvert",
+          "open_entity_helper": "Défaut : input_text.couleur_volet_ouvert",
+          "moving_entity": "Entité couleur mouvement",
+          "moving_entity_helper": "Défaut : input_text.couleur_volet_en_mouvement",
+          "theme_entity": "Entité sélecteur de thème pour en-tête (optionnel)"
+        },
+        "palette": {
+          "entity": "Entité sélecteur de thème",
+          "entity_helper": "Défaut : input_select.couleur_theme_eclairages",
+          "title": "Titre de la section (optionnel)",
+          "icon": "Icône MDI (optionnel)",
+          "columns": "Nombre de colonnes"
+        }
+      }
+    }
+    ;
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/localize/localize.ts
+     * 📝 Description   : Helper d'internationalisation (i18n) de la suite HALO Cards.
+     *                    Résout la langue active de Home Assistant
+     *                    (hass.locale?.language || hass.language || 'en') et traduit
+     *                    une clé pointée avec repli déterministe vers l'anglais.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.4.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.4.0 (2026-10-30) : Création initiale (dictionnaires en/fr, fallback EN).
+     * ==============================================================================
+     */
+    const LANGUAGES = { en, fr };
+    /** Retourne le code de langue primaire actif (ex. 'fr-CA' -> 'fr'), 'en' par défaut. */
+    function getLang(hass) {
+        const raw = hass?.locale?.language || hass?.language || 'en';
+        const lang = String(raw).toLowerCase().split(/[-_]/)[0];
+        return LANGUAGES[lang] ? lang : 'en';
+    }
+    function lookup(dict, key) {
+        let cur = dict;
+        for (const part of key.split('.')) {
+            if (cur == null || typeof cur !== 'object')
+                return undefined;
+            cur = cur[part];
+        }
+        return typeof cur === 'string' ? cur : undefined;
+    }
+    /**
+     * Traduit `key` selon la langue de `hass`. Repli : langue active -> anglais -> clé brute.
+     * Les marqueurs `{search}` du texte sont remplacés par `replace` (valeurs ou tableaux).
+     */
+    function localize(hass, key, search, replace) {
+        let str = lookup(LANGUAGES[getLang(hass)], key) ?? lookup(en, key) ?? key;
+        if (search !== undefined) {
+            const s = Array.isArray(search) ? search : [search];
+            const r = Array.isArray(replace) ? replace : [replace];
+            s.forEach((name, i) => {
+                str = str.split(`{${name}}`).join(String(r[i] ?? ''));
+            });
+        }
+        return str;
+    }
+    /** Fabrique un traducteur lié à `hass` : `t(key, search, replace)`. */
+    function useLocalize(hass) {
+        return (key, search, replace) => localize(hass, key, search, replace);
+    }
+    /** Traduit le nom d'une nuance HOLM (la valeur stockée en configuration reste inchangée). */
+    function localizeHolm(hass, name) {
+        return localize(hass, `holm.${name}`) === `holm.${name}` ? name : localize(hass, `holm.${name}`);
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/editor-common.ts
+     * 📝 Description   : Utilitaires partagés des éditeurs visuels HALO (i18n) :
+     *                    câblage computeLabel/computeHelper des <ha-form>, gabarit HTML
+     *                    du panneau Liquid Glass, badge de bordure, nuancier HOLM et
+     *                    nom d'affichage des couleurs.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.4.0
+     * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.4.0 (2026-10-30) : Création initiale (factorisation i18n des éditeurs).
+     * ==============================================================================
+     */
+    /**
+     * Assigne schéma, computeLabel et computeHelper d'un <ha-form> :
+     * label  = editor.<card>.<name>, aide = editor.<card>.<name>_helper (vide si absente).
+     */
+    function applyFormI18n(form, hass, card, schema) {
+        const t = useLocalize(hass);
+        form.schema = schema;
+        form.computeLabel = (s) => t(`editor.${card}.${s.name}`);
+        form.computeHelper = (s) => {
+            const key = `editor.${card}.${s.name}_helper`;
+            const val = t(key);
+            return val === key ? '' : val;
+        };
+    }
+    /** Options d'un sélecteur `select` traduites : [['valeur', 'clé de traduction'], ...]. */
+    function selectOptions(t, card, pairs) {
+        return pairs.map(([value, key]) => ({ value, label: t(`editor.${card}.${key}`) }));
+    }
+    /** Gabarit HTML du panneau de style Liquid Glass (médaillon, nuancier HOLM, bordure). */
+    function stylePanelHtml(t, o) {
+        const tabs = o.tabs
+            ? `<div class="halo-state-tabs">${o.tabs.map(s => `
+        <div class="halo-state-tab ${s.active ? 'active' : ''}" id="tab-${s.key}" data-key="${s.key}">
+          <span class="halo-state-tab-dot" id="tab-dot-${s.key}"></span>
+          <ha-icon icon="${s.icon}"></ha-icon>
+          <span>${s.label}</span>
+        </div>`).join('')}</div>`
+            : '';
+        const small = (k) => `<small style="opacity: 0.6;">${t(`editor.${k}`)}</small>`;
+        return `
+    <div class="halo-style-section">
+      <div class="halo-section-header">
+        <ha-icon icon="mdi:palette-swatch"></ha-icon>
+        <span>${o.title}</span>
+      </div>
+      ${tabs}
+      <div class="halo-style-grid">
+        <div class="halo-col">
+          <div class="halo-col-header">
+            <span class="halo-col-title" id="state-title">${o.leftTitle}</span>
+          </div>
+          <div class="halo-swatch-card" id="swatch-card">
+            <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="${t('editor.open_palette')}">
+              <div class="halo-swatch-circle" id="swatch-circle"></div>
+              <input type="color" id="native-color-input" class="hidden-color-input" />
+            </div>
+            <div class="halo-swatch-meta">
+              <span class="halo-color-title" id="swatch-name"></span>
+              <span class="halo-color-hex" id="swatch-hex"></span>
+            </div>
+            <button type="button" class="halo-pipette-btn" id="pipette-btn" title="${t('editor.open_wheel')}">
+              <ha-icon icon="mdi:eyedropper"></ha-icon>
+            </button>
+          </div>
+          <div class="halo-chips-label">${t('editor.chips_label')}</div>
+          <div class="halo-chips-grid" id="chips-grid"></div>
+        </div>
+        <div class="halo-col">
+          <div class="halo-col-header">
+            <span class="halo-col-title">${o.borderTitle}</span>
+            <span class="halo-badge-val" id="border-val-text"></span>
+          </div>
+          <div class="halo-border-card">
+            <input type="range" id="border-slider-input" min="0" max="3" step="0.25" value="1.5" class="halo-range-slider" />
+            <div class="slider-ticks">
+              <span>0 px<br>${small('border_none')}</span>
+              <span style="text-align: center;">1.5 px<br>${small('border_default')}</span>
+              <span style="text-align: right;">3.0 px<br>${small('border_max')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    }
+    /** Texte du badge d'épaisseur de bordure (Off / Défaut traduits). */
+    function borderBadge(t, bw) {
+        if (bw === 0)
+            return t('editor.border_badge_off');
+        if (bw === 1.5)
+            return t('editor.border_badge_default', 'v', String(bw));
+        return `${bw} px`;
+    }
+    /** Génère les pastilles du nuancier rapide HOLM (info-bulle traduite). */
+    function buildChips(container, hass, onPick) {
+        container.innerHTML = '';
+        for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
+            const chip = document.createElement('div');
+            chip.className = 'halo-chip';
+            chip.setAttribute('data-name', name);
+            chip.setAttribute('data-hex', hex);
+            chip.setAttribute('title', `${localizeHolm(hass, name)} (${hex})`);
+            chip.style.backgroundColor = hex;
+            chip.style.color = hex;
+            chip.addEventListener('click', () => onPick(name));
+            container.appendChild(chip);
+        }
+    }
+    /** Nom d'affichage traduit d'une couleur (nuance HOLM, personnalisée ou défaut). */
+    function colorDisplayName(hass, raw, emptyKey) {
+        const t = useLocalize(hass);
+        if (!raw)
+            return t(emptyKey);
+        if (typeof raw === 'string') {
+            if (HOLM_PALETTE[raw])
+                return localizeHolm(hass, raw);
+            for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
+                if (hex.toLowerCase() === raw.toLowerCase())
+                    return localizeHolm(hass, name);
+            }
+        }
+        return t('editor.color_custom');
+    }
+
     /**
      * ==============================================================================
      * 📌 Nom du fichier : src/editors/halo-button-card-editor.ts
@@ -1148,61 +1695,33 @@ var HaloButtonCard = (function (exports) {
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-button-card.
      * ==============================================================================
      */
-    const SCHEMA$4 = [
-        {
-            name: 'name',
-            label: 'Titre principal',
-            selector: { text: {} }
-        },
-        {
-            name: 'label',
-            label: 'Sous-titre / Description',
-            selector: { text: {} }
-        },
-        {
-            name: 'icon',
-            label: 'Icône MDI',
-            selector: { icon: {} }
-        },
+    const buildSchema$2 = (t) => [
+        { name: 'name', selector: { text: {} } },
+        { name: 'label', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
         {
             name: 'layout',
-            label: 'Disposition (Layout)',
             selector: {
                 select: {
-                    options: [
-                        { value: 'horizontal', label: 'Horizontal (Carte large avec texte à droite)' },
-                        { value: 'vertical', label: 'Vertical (Carte compacte avec texte centré en dessous)' }
-                    ]
+                    options: selectOptions(t, 'button', [['horizontal', 'layout_horizontal'], ['vertical', 'layout_vertical']])
                 }
             }
         },
         {
             name: 'text_align',
-            label: 'Alignement du texte',
             selector: {
                 select: {
-                    options: [
-                        { value: 'left', label: 'Gauche' },
-                        { value: 'center', label: 'Centré' },
-                        { value: 'right', label: 'Droite' }
-                    ]
+                    options: selectOptions(t, 'button', [['left', 'align_left'], ['center', 'align_center'], ['right', 'align_right']])
                 }
             }
         },
-        {
-            name: 'entity',
-            label: 'Entité liée (optionnel)',
-            selector: { entity: {} }
-        },
-        {
-            name: 'theme_entity',
-            label: 'Entité sélecteur de thème (optionnel)',
-            selector: { entity: { domain: 'input_select' } }
-        }
+        { name: 'entity', selector: { entity: {} } },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
     ];
     class HaloButtonCardEditor extends HTMLElement {
         constructor() {
             super(...arguments);
+            this._lang = "en";
             // Références DOM Style Panel
             this._swatchCircleEl = null;
             this._colorInputEl = null;
@@ -1222,6 +1741,11 @@ var HaloButtonCard = (function (exports) {
         }
         set hass(hass) {
             this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
             const form = this.querySelector('#form');
             if (form) {
                 form.hass = hass;
@@ -1240,19 +1764,7 @@ var HaloButtonCard = (function (exports) {
             return toHexColor(raw, '#26c6da');
         }
         _getColorDisplayName() {
-            const raw = this._config?.color;
-            if (!raw)
-                return 'Cyan HOLM (Défaut)';
-            if (typeof raw === 'string') {
-                if (HOLM_PALETTE[raw])
-                    return raw;
-                for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-                    if (hex.toLowerCase() === raw.toLowerCase())
-                        return name;
-                }
-                return 'Couleur personnalisée';
-            }
-            return 'Couleur personnalisée';
+            return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_cyan');
         }
         _updateColor(colorValue) {
             this._config = {
@@ -1305,12 +1817,7 @@ var HaloButtonCard = (function (exports) {
                 this._borderSliderEl.value = String(bw);
             }
             if (this._borderValBadgeEl) {
-                let desc = `${bw} px`;
-                if (bw === 0)
-                    desc = '0 px (Off)';
-                else if (bw === 1.5)
-                    desc = '1.5 px (Défaut)';
-                this._borderValBadgeEl.textContent = desc;
+                this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
             }
         }
         _render() {
@@ -1318,6 +1825,8 @@ var HaloButtonCard = (function (exports) {
                 return;
             let form = this.querySelector('#form');
             if (!form) {
+                const t = useLocalize(this._hass);
+                this._lang = getLang(this._hass);
                 this.innerHTML = `
         <style>
           ${COMMON_EDITOR_STYLES}
@@ -1325,63 +1834,16 @@ var HaloButtonCard = (function (exports) {
 
         <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
-
-          <div class="halo-style-section">
-            <div class="halo-section-header">
-              <ha-icon icon="mdi:palette-swatch"></ha-icon>
-              <span>Personnalisation Visuelle (Halo & Bordure)</span>
-            </div>
-
-            <div class="halo-style-grid">
-              <!-- GAUCHE : Couleur & Nuancier HOLM -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title">Couleur du Halo & Bouton</span>
-                </div>
-
-                <!-- Option A : Médaillon Swatch interactif -->
-                <div class="halo-swatch-card" id="swatch-card">
-                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="Ouvrir la palette libre">
-                    <div class="halo-swatch-circle" id="swatch-circle"></div>
-                    <input type="color" id="native-color-input" class="hidden-color-input" />
-                  </div>
-                  <div class="halo-swatch-meta">
-                    <span class="halo-color-title" id="swatch-name">Cyan HOLM</span>
-                    <span class="halo-color-hex" id="swatch-hex">#26C6DA</span>
-                  </div>
-                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="Ouvrir la roue chromatique">
-                    <ha-icon icon="mdi:eyedropper"></ha-icon>
-                  </button>
-                </div>
-
-                <!-- Option B : Nuancier rapide HOLM -->
-                <div class="halo-chips-label">Nuancier officiel HOLM (Sélection rapide) :</div>
-                <div class="halo-chips-grid" id="chips-grid"></div>
-              </div>
-
-              <!-- DROITE : Curseur d'épaisseur de bordure -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title">Épaisseur de bordure</span>
-                  <span class="halo-badge-val" id="border-val-text">1.5 px</span>
-                </div>
-
-                <div class="halo-border-card">
-                  <input type="range" id="border-slider-input" min="0" max="3" step="0.25" value="1.5" class="halo-range-slider" />
-                  <div class="slider-ticks">
-                    <span>0 px<br><small style="opacity: 0.6;">Sans bordure</small></span>
-                    <span style="text-align: center;">1.5 px<br><small style="opacity: 0.6;">Défaut</small></span>
-                    <span style="text-align: right;">3.0 px<br><small style="opacity: 0.6;">Maxi</small></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ${stylePanelHtml(t, {
+                title: t('editor.style_title'),
+                leftTitle: t('editor.halo_color'),
+                borderTitle: t('editor.border_title')
+            })}
         </div>
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA$4;
+                    applyFormI18n(form, this._hass, "button", buildSchema$2(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -1419,20 +1881,7 @@ var HaloButtonCard = (function (exports) {
             });
             // 2. Génération des chips HOLM (Option B)
             if (this._chipsContainerEl) {
-                this._chipsContainerEl.innerHTML = '';
-                for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-                    const chip = document.createElement('div');
-                    chip.className = 'halo-chip';
-                    chip.setAttribute('data-name', name);
-                    chip.setAttribute('data-hex', hex);
-                    chip.setAttribute('title', `${name} (${hex})`);
-                    chip.style.backgroundColor = hex;
-                    chip.style.color = hex;
-                    chip.addEventListener('click', () => {
-                        this._updateColor(name);
-                    });
-                    this._chipsContainerEl.appendChild(chip);
-                }
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
             }
             // 3. Slider de bordure
             this._borderSliderEl?.addEventListener('input', (e) => {
@@ -1733,6 +2182,9 @@ var HaloButtonCard = (function (exports) {
      * (c) 2026 MilesTEG1 — MIT License
      */
     class HaloCoverCard extends HTMLElement {
+        get _t() {
+            return useLocalize(this._hass);
+        }
         constructor() {
             super();
             this._updateTimerMS = 0;
@@ -2019,13 +2471,13 @@ var HaloButtonCard = (function (exports) {
         </div>
 
         <div class="halo-buttons">
-          <button class="halo-btn" id="btn-down" title="Descendre" type="button">
+          <button class="halo-btn" id="btn-down" title="${this._t('cover.down')}" type="button">
             <ha-icon icon="mdi:arrow-down"></ha-icon>
           </button>
-          <button class="halo-btn" id="btn-stop" title="Arrêter" type="button">
+          <button class="halo-btn" id="btn-stop" title="${this._t('cover.stop')}" type="button">
             <ha-icon icon="mdi:stop"></ha-icon>
           </button>
-          <button class="halo-btn" id="btn-up" title="Monter" type="button">
+          <button class="halo-btn" id="btn-up" title="${this._t('cover.up')}" type="button">
             <ha-icon icon="mdi:arrow-up"></ha-icon>
           </button>
         </div>
@@ -2054,7 +2506,7 @@ var HaloButtonCard = (function (exports) {
             const colors = getCoverColors(this._hass, this._config);
             if (!entity) {
                 if (this._unavailEl) {
-                    this._unavailEl.textContent = `Entité non trouvée : ${id}`;
+                    this._unavailEl.textContent = this._t('cover.not_found', 'id', id);
                     this._unavailEl.style.display = 'block';
                 }
                 if (this._cardEl) {
@@ -2096,31 +2548,34 @@ var HaloButtonCard = (function (exports) {
                 accentCol = colors.partial;
             }
             // Friendly name
-            let name = this._config.name || attrs.friendly_name || 'Volet';
+            let name = this._config.name || attrs.friendly_name || this._t('cover.default_name');
             name = name.replace(/^Volet\s+roulant\s+/i, '');
             // Status label
-            let statusText = 'Fermé';
+            const t = this._t;
+            let statusText = t('state.closed');
             if (isUnavail) {
-                statusText = 'Indisponible';
+                statusText = t('state.unavailable');
             }
             else if (isMoving) {
                 if (isGroup) {
-                    statusText = movingCount > 1 ? `${movingCount} volets en mouvement…` : moveDir === 'closing' ? 'Fermeture…' : 'Ouverture…';
+                    statusText = movingCount > 1
+                        ? t('cover.moving_n', 'count', String(movingCount))
+                        : moveDir === 'closing' ? t('cover.closing') : t('cover.opening');
                 }
                 else {
                     statusText = moveDir === 'closing'
-                        ? (p != null ? `Fermeture… ${100 - p} %` : 'Fermeture…')
-                        : (p != null ? `Ouverture… ${p} %` : 'Ouverture…');
+                        ? (p != null ? t('cover.closing_pct', 'pct', String(100 - p)) : t('cover.closing'))
+                        : (p != null ? t('cover.opening_pct', 'pct', String(p)) : t('cover.opening'));
                 }
             }
             else if (isClosed) {
-                statusText = 'Fermé';
+                statusText = t('state.closed');
             }
             else if (isOpen) {
-                statusText = 'Ouvert';
+                statusText = t('state.open');
             }
             else if (isPartial) {
-                statusText = `Partiel (${p}%)`;
+                statusText = t('cover.partial_pct', 'pct', String(p));
             }
             // Closure percentage
             const closurePct = p != null ? 100 - p : isClosed ? 100 : 0;
@@ -2224,48 +2679,41 @@ var HaloButtonCard = (function (exports) {
     const COVER_STATES = [
         {
             key: 'color_closed',
-            label: 'Fermé',
+            tk: 'closed',
             icon: 'mdi:window-shutter',
             fallback: '#FFB69C',
             stateEntityKey: 'input_text.couleur_volet_ferme'
         },
         {
             key: 'color_open',
-            label: 'Ouvert',
+            tk: 'open',
             icon: 'mdi:window-shutter-open',
             fallback: '#96E1FF',
             stateEntityKey: 'input_text.couleur_volet_ouvert'
         },
         {
             key: 'color_partial',
-            label: 'Partiel',
+            tk: 'partial',
             icon: 'mdi:window-shutter-cog',
             fallback: '#38bdf8',
             stateEntityKey: 'input_text.couleur_volet_partiel'
         },
         {
             key: 'color_moving',
-            label: 'En mouvement',
+            tk: 'moving',
             icon: 'mdi:arrow-up-down',
             fallback: '#f59e0b',
             stateEntityKey: 'input_text.couleur_volet_en_mouvement'
         }
     ];
-    const SCHEMA$3 = [
-        {
-            name: 'entity',
-            label: 'Entité Volet ou Groupe',
-            selector: { entity: { domain: 'cover' } }
-        },
-        {
-            name: 'name',
-            label: 'Nom personnalisé (optionnel)',
-            selector: { text: {} }
-        }
+    const buildSchema$1 = (_t) => [
+        { name: 'entity', selector: { entity: { domain: 'cover' } } },
+        { name: 'name', selector: { text: {} } }
     ];
     class HaloCoverCardEditor extends HTMLElement {
         constructor() {
             super(...arguments);
+            this._lang = "en";
             this._activeStateKey = 'color_closed';
             // Références DOM
             this._swatchCircleEl = null;
@@ -2286,6 +2734,11 @@ var HaloButtonCard = (function (exports) {
         }
         set hass(hass) {
             this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
             const form = this.querySelector('#form');
             if (form) {
                 form.hass = hass;
@@ -2314,18 +2767,7 @@ var HaloButtonCard = (function (exports) {
             return toHexColor(raw, fallback);
         }
         _getColorDisplayName(key) {
-            const raw = this._config?.[key];
-            if (!raw)
-                return 'Défaut HOLM';
-            if (typeof raw === 'string') {
-                if (HOLM_PALETTE[raw])
-                    return raw;
-                for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-                    if (hex.toLowerCase() === raw.toLowerCase())
-                        return name;
-                }
-            }
-            return 'Couleur personnalisée';
+            return colorDisplayName(this._hass, this._config?.[key], 'editor.color_default_holm');
         }
         _updateColor(colorValue) {
             this._config = {
@@ -2368,7 +2810,7 @@ var HaloButtonCard = (function (exports) {
             const activeHex = this._getColorHex(this._activeStateKey);
             const activeName = this._getColorDisplayName(this._activeStateKey);
             if (this._stateTitleEl) {
-                this._stateTitleEl.textContent = `Couleur : ${activeDef.label}`;
+                this._stateTitleEl.textContent = useLocalize(this._hass)('editor.state_color', 'state', useLocalize(this._hass)(`state.${activeDef.tk}`));
             }
             if (this._swatchCircleEl) {
                 this._swatchCircleEl.style.background = activeHex;
@@ -2401,12 +2843,7 @@ var HaloButtonCard = (function (exports) {
                 this._borderSliderEl.value = String(bw);
             }
             if (this._borderValBadgeEl) {
-                let desc = `${bw} px`;
-                if (bw === 0)
-                    desc = '0 px (Off)';
-                else if (bw === 1.5)
-                    desc = '1.5 px (Défaut)';
-                this._borderValBadgeEl.textContent = desc;
+                this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
             }
         }
         _formMetadata() {
@@ -2434,6 +2871,9 @@ var HaloButtonCard = (function (exports) {
                 return;
             let form = this.querySelector('#form');
             if (!form) {
+                const t = useLocalize(this._hass);
+                this._lang = getLang(this._hass);
+                const first = this._getStateDef(this._activeStateKey);
                 this.innerHTML = `
         <style>
           ${COMMON_EDITOR_STYLES}
@@ -2441,74 +2881,22 @@ var HaloButtonCard = (function (exports) {
 
         <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
-
-          <div class="halo-style-section">
-            <div class="halo-section-header">
-              <ha-icon icon="mdi:palette-swatch"></ha-icon>
-              <span>Personnalisation Visuelle (Halo, Couleurs & Bordure)</span>
-            </div>
-
-            <!-- Onglets de sélection des 4 états du volet -->
-            <div class="halo-state-tabs">
-              ${COVER_STATES.map(s => `
-                <div class="halo-state-tab ${s.key === this._activeStateKey ? 'active' : ''}" id="tab-${s.key}" data-key="${s.key}">
-                  <span class="halo-state-tab-dot" id="tab-dot-${s.key}"></span>
-                  <ha-icon icon="${s.icon}"></ha-icon>
-                  <span>${s.label}</span>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="halo-style-grid">
-              <!-- GAUCHE : Couleur de l'état actif (Option A + B) -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title" id="state-title">Couleur : Fermé</span>
-                </div>
-
-                <!-- Option A : Médaillon Swatch interactif -->
-                <div class="halo-swatch-card" id="swatch-card">
-                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="Ouvrir la palette libre">
-                    <div class="halo-swatch-circle" id="swatch-circle"></div>
-                    <input type="color" id="native-color-input" class="hidden-color-input" />
-                  </div>
-                  <div class="halo-swatch-meta">
-                    <span class="halo-color-title" id="swatch-name">Défaut HOLM</span>
-                    <span class="halo-color-hex" id="swatch-hex">#FFB69C</span>
-                  </div>
-                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="Ouvrir la roue chromatique">
-                    <ha-icon icon="mdi:eyedropper"></ha-icon>
-                  </button>
-                </div>
-
-                <!-- Option B : Nuancier rapide HOLM -->
-                <div class="halo-chips-label">Nuancier officiel HOLM (Sélection rapide) :</div>
-                <div class="halo-chips-grid" id="chips-grid"></div>
-              </div>
-
-              <!-- DROITE : Curseur UNIQUE d'épaisseur de bordure -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title">Épaisseur de bordure (Unique)</span>
-                  <span class="halo-badge-val" id="border-val-text">1.5 px</span>
-                </div>
-
-                <div class="halo-border-card">
-                  <input type="range" id="border-slider-input" min="0" max="3" step="0.25" value="1.5" class="halo-range-slider" />
-                  <div class="slider-ticks">
-                    <span>0 px<br><small style="opacity: 0.6;">Sans bordure</small></span>
-                    <span style="text-align: center;">1.5 px<br><small style="opacity: 0.6;">Défaut</small></span>
-                    <span style="text-align: right;">3.0 px<br><small style="opacity: 0.6;">Maxi</small></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ${stylePanelHtml(t, {
+                title: t('editor.style_title_colors'),
+                tabs: COVER_STATES.map(s => ({
+                    key: s.key,
+                    icon: s.icon,
+                    label: t(`state.${s.tk}`),
+                    active: s.key === this._activeStateKey
+                })),
+                leftTitle: t('editor.state_color', 'state', t(`state.${first.tk}`)),
+                borderTitle: t('editor.border_title_single')
+            })}
         </div>
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA$3;
+                    applyFormI18n(form, this._hass, "cover", buildSchema$1(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -2553,20 +2941,7 @@ var HaloButtonCard = (function (exports) {
             });
             // 3. Génération des chips HOLM (Option B)
             if (this._chipsContainerEl) {
-                this._chipsContainerEl.innerHTML = '';
-                for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-                    const chip = document.createElement('div');
-                    chip.className = 'halo-chip';
-                    chip.setAttribute('data-name', name);
-                    chip.setAttribute('data-hex', hex);
-                    chip.setAttribute('title', `${name} (${hex})`);
-                    chip.style.backgroundColor = hex;
-                    chip.style.color = hex;
-                    chip.addEventListener('click', () => {
-                        this._updateColor(name);
-                    });
-                    this._chipsContainerEl.appendChild(chip);
-                }
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
             }
             // 4. Slider unique de bordure
             this._borderSliderEl?.addEventListener('input', (e) => {
@@ -2774,17 +3149,17 @@ var HaloButtonCard = (function (exports) {
      * - 'Éteint' si pas on
      * - 'Allumé [• X %] [• Y K]' si on
      */
-    function formatLightStatus(entity) {
+    function formatLightStatus(entity, t) {
         if (!entity)
             return '—';
         const st = entity.state;
         if (st === 'unavailable')
-            return 'Indisponible';
+            return t('state.unavailable');
         if (st === 'unknown')
-            return 'Inconnu';
+            return t('state.unknown');
         if (st !== 'on')
-            return 'Éteint';
-        const parts = ['Allumé'];
+            return t('state.off');
+        const parts = [t('state.on')];
         const b = entity.attributes?.brightness;
         if (b != null) {
             const pct = Math.round((Number(b) / 255) * 100);
@@ -2897,6 +3272,9 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      */
     class HaloLightCard extends HTMLElement {
+        get _t() {
+            return useLocalize(this._hass);
+        }
         constructor() {
             super();
             // Persistent DOM references
@@ -3327,27 +3705,27 @@ var HaloButtonCard = (function (exports) {
       <div class="unavailable-box" id="unavail-box"></div>
 
       <ha-card class="halo-light-card" id="card-body">
-        <div class="main-icon-btn" id="main-icon-btn" role="button" tabindex="0" title="Basculer">
+        <div class="main-icon-btn" id="main-icon-btn" role="button" tabindex="0" title="${this._t('light.toggle')}">
           <ha-icon id="main-icon"></ha-icon>
         </div>
 
-        <div class="light-info" id="light-info" role="button" tabindex="0" title="Détails">
+        <div class="light-info" id="light-info" role="button" tabindex="0" title="${this._t('light.details')}">
           <div class="light-name" id="light-name"></div>
           <div class="light-label" id="light-label"></div>
         </div>
 
         <div class="sub-buttons-container" id="sub-buttons-container">
-          <div class="sub-btn sub-brightness" id="sub-brightness" role="button" tabindex="0" title="Cycle luminosité">
+          <div class="sub-btn sub-brightness" id="sub-brightness" role="button" tabindex="0" title="${this._t('light.cycle_brightness')}">
             <ha-icon icon="mdi:white-balance-sunny" id="sub-brightness-icon"></ha-icon>
             <span id="sub-brightness-label"></span>
           </div>
 
-          <div class="sub-btn sub-kelvin" id="sub-kelvin" role="button" tabindex="0" title="Cycle température">
+          <div class="sub-btn sub-kelvin" id="sub-kelvin" role="button" tabindex="0" title="${this._t('light.cycle_kelvin')}">
             <ha-icon icon="mdi:palette-outline" id="sub-kelvin-icon"></ha-icon>
             <span id="sub-kelvin-label"></span>
           </div>
 
-          <div class="sub-btn sub-toggle" id="sub-toggle" role="button" tabindex="0" title="Marche / Arrêt">
+          <div class="sub-btn sub-toggle" id="sub-toggle" role="button" tabindex="0" title="${this._t('light.power')}">
             <ha-icon icon="mdi:power" id="sub-toggle-icon"></ha-icon>
           </div>
         </div>
@@ -3391,7 +3769,7 @@ var HaloButtonCard = (function (exports) {
             const entity = this._hass.states[id];
             if (!entity) {
                 if (this._unavailEl) {
-                    this._unavailEl.textContent = `Entité introuvable : ${id}`;
+                    this._unavailEl.textContent = this._t('light.not_found', 'id', id);
                     this._unavailEl.style.display = 'block';
                 }
                 if (this._cardEl) {
@@ -3462,14 +3840,14 @@ var HaloButtonCard = (function (exports) {
             }
             // 3. Nom
             if (this._nameEl) {
-                const name = this._config.name || attrs.friendly_name || 'Éclairage';
+                const name = this._config.name || attrs.friendly_name || this._t('light.default_name');
                 if (this._nameEl.textContent !== name) {
                     this._nameEl.textContent = name;
                 }
             }
             // 4. Label (statut textuel "Allumé • 80 % • 2700 K" ou "Éteint")
             if (this._labelEl) {
-                const statusText = formatLightStatus(entity);
+                const statusText = formatLightStatus(entity, this._t);
                 if (this._labelEl.textContent !== statusText) {
                     this._labelEl.textContent = statusText;
                 }
@@ -3602,73 +3980,38 @@ var HaloButtonCard = (function (exports) {
     const LIGHT_STATES = [
         {
             key: 'color_on',
-            label: 'Allumé',
+            tk: 'on',
             icon: 'mdi:lightbulb-on',
             fallback: '#26c6da'
         },
         {
             key: 'color_off',
-            label: 'Éteint',
+            tk: 'off',
             icon: 'mdi:lightbulb-off',
             fallback: '#64748b'
         }
     ];
-    const SCHEMA$2 = [
-        {
-            name: 'entity',
-            label: 'Entité Lumière ou Groupe d’éclairages',
-            selector: { entity: { domain: 'light' } }
-        },
-        {
-            name: 'name',
-            label: 'Nom personnalisé (optionnel)',
-            selector: { text: {} }
-        },
-        {
-            name: 'icon',
-            label: 'Icône personnalisée (optionnel)',
-            selector: { icon: {} }
-        },
-        {
-            name: 'sub_toggle_entity',
-            label: 'Entité dédiée pour le bouton Power (optionnel)',
-            selector: { entity: {} }
-        },
-        {
-            name: 'use_light_color',
-            label: 'Teinter la tuile avec la couleur réelle de l’ampoule (RGB / Kelvin)',
-            selector: { boolean: {} }
-        },
-        {
-            name: 'theme_entity',
-            label: 'Entité sélecteur de thème (défaut : input_select.couleur_theme_eclairages)',
-            selector: { entity: { domain: 'input_select' } }
-        },
+    const buildSchema = (_t) => [
+        { name: 'entity', selector: { entity: { domain: 'light' } } },
+        { name: 'name', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
+        { name: 'sub_toggle_entity', selector: { entity: {} } },
+        { name: 'use_light_color', selector: { boolean: {} } },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } },
         {
             type: 'grid',
             name: '',
             schema: [
-                {
-                    name: 'show_brightness',
-                    label: 'Sous-bouton Luminosité (%)',
-                    selector: { boolean: {} }
-                },
-                {
-                    name: 'show_kelvin',
-                    label: 'Sous-bouton Température (K)',
-                    selector: { boolean: {} }
-                },
-                {
-                    name: 'show_toggle',
-                    label: 'Sous-bouton Power (On/Off)',
-                    selector: { boolean: {} }
-                }
+                { name: 'show_brightness', selector: { boolean: {} } },
+                { name: 'show_kelvin', selector: { boolean: {} } },
+                { name: 'show_toggle', selector: { boolean: {} } }
             ]
         }
     ];
     class HaloLightCardEditor extends HTMLElement {
         constructor() {
             super(...arguments);
+            this._lang = "en";
             this._activeStateKey = 'color_on';
             // Références DOM
             this._swatchCircleEl = null;
@@ -3693,6 +4036,11 @@ var HaloButtonCard = (function (exports) {
         }
         set hass(hass) {
             this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
             const form = this.querySelector('#form');
             if (form) {
                 form.hass = hass;
@@ -3722,18 +4070,7 @@ var HaloButtonCard = (function (exports) {
             return toHexColor(raw, fallback);
         }
         _getColorDisplayName(key) {
-            const raw = this._config?.[key];
-            if (!raw)
-                return key === 'color_on' ? 'Thème HOLM actif' : 'Défaut (#64748B)';
-            if (typeof raw === 'string') {
-                if (HOLM_PALETTE[raw])
-                    return raw;
-                for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-                    if (hex.toLowerCase() === raw.toLowerCase())
-                        return name;
-                }
-            }
-            return 'Couleur personnalisée';
+            return colorDisplayName(this._hass, this._config?.[key], key === 'color_on' ? 'editor.color_active_theme' : 'editor.color_default_grey');
         }
         _updateColor(colorValue) {
             this._config = {
@@ -3776,7 +4113,7 @@ var HaloButtonCard = (function (exports) {
             const activeHex = this._getColorHex(this._activeStateKey);
             const activeName = this._getColorDisplayName(this._activeStateKey);
             if (this._stateTitleEl) {
-                this._stateTitleEl.textContent = `Couleur : ${activeDef.label}`;
+                this._stateTitleEl.textContent = useLocalize(this._hass)('editor.state_color', 'state', useLocalize(this._hass)(`state.${activeDef.tk}`));
             }
             if (this._swatchCircleEl) {
                 this._swatchCircleEl.style.background = activeHex;
@@ -3809,12 +4146,7 @@ var HaloButtonCard = (function (exports) {
                 this._borderSliderEl.value = String(bw);
             }
             if (this._borderValBadgeEl) {
-                let desc = `${bw} px`;
-                if (bw === 0)
-                    desc = '0 px (Off)';
-                else if (bw === 1.5)
-                    desc = '1.5 px (Défaut)';
-                this._borderValBadgeEl.textContent = desc;
+                this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
             }
         }
         _formMetadata() {
@@ -3840,6 +4172,9 @@ var HaloButtonCard = (function (exports) {
                 return;
             let form = this.querySelector('#form');
             if (!form) {
+                const t = useLocalize(this._hass);
+                this._lang = getLang(this._hass);
+                const first = this._getStateDef(this._activeStateKey);
                 this.innerHTML = `
         <style>
           ${COMMON_EDITOR_STYLES}
@@ -3847,74 +4182,22 @@ var HaloButtonCard = (function (exports) {
 
         <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
-
-          <div class="halo-style-section">
-            <div class="halo-section-header">
-              <ha-icon icon="mdi:palette-swatch"></ha-icon>
-              <span>Personnalisation Visuelle (Halo, Couleurs & Bordure)</span>
-            </div>
-
-            <!-- Onglets de sélection des états de la lumière -->
-            <div class="halo-state-tabs">
-              ${LIGHT_STATES.map(s => `
-                <div class="halo-state-tab ${s.key === this._activeStateKey ? 'active' : ''}" id="tab-${s.key}" data-key="${s.key}">
-                  <span class="halo-state-tab-dot" id="tab-dot-${s.key}"></span>
-                  <ha-icon icon="${s.icon}"></ha-icon>
-                  <span>${s.label}</span>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="halo-style-grid">
-              <!-- GAUCHE : Couleur de l'état actif (Option A + B) -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title" id="state-title">Couleur : Allumé</span>
-                </div>
-
-                <!-- Option A : Médaillon Swatch interactif -->
-                <div class="halo-swatch-card" id="swatch-card">
-                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="Ouvrir la palette libre">
-                    <div class="halo-swatch-circle" id="swatch-circle"></div>
-                    <input type="color" id="native-color-input" class="hidden-color-input" />
-                  </div>
-                  <div class="halo-swatch-meta">
-                    <span class="halo-color-title" id="swatch-name">Thème HOLM actif</span>
-                    <span class="halo-color-hex" id="swatch-hex">#26C6DA</span>
-                  </div>
-                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="Ouvrir la roue chromatique">
-                    <ha-icon icon="mdi:eyedropper"></ha-icon>
-                  </button>
-                </div>
-
-                <!-- Option B : Nuancier rapide HOLM -->
-                <div class="halo-chips-label">Nuancier officiel HOLM (Sélection rapide) :</div>
-                <div class="halo-chips-grid" id="chips-grid"></div>
-              </div>
-
-              <!-- DROITE : Curseur UNIQUE d'épaisseur de bordure -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title">Épaisseur de bordure (Unique)</span>
-                  <span class="halo-badge-val" id="border-val-text">1.5 px</span>
-                </div>
-
-                <div class="halo-border-card">
-                  <input type="range" id="border-slider-input" min="0" max="3" step="0.25" value="1.5" class="halo-range-slider" />
-                  <div class="slider-ticks">
-                    <span>0 px<br><small style="opacity: 0.6;">Sans bordure</small></span>
-                    <span style="text-align: center;">1.5 px<br><small style="opacity: 0.6;">Défaut</small></span>
-                    <span style="text-align: right;">3.0 px<br><small style="opacity: 0.6;">Maxi</small></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ${stylePanelHtml(t, {
+                title: t('editor.style_title_colors'),
+                tabs: LIGHT_STATES.map(s => ({
+                    key: s.key,
+                    icon: s.icon,
+                    label: t(`state.${s.tk}`),
+                    active: s.key === this._activeStateKey
+                })),
+                leftTitle: t('editor.state_color', 'state', t(`state.${first.tk}`)),
+                borderTitle: t('editor.border_title_single')
+            })}
         </div>
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA$2;
+                    applyFormI18n(form, this._hass, "light", buildSchema(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -3959,20 +4242,7 @@ var HaloButtonCard = (function (exports) {
             });
             // 3. Génération des chips HOLM (Option B)
             if (this._chipsContainerEl) {
-                this._chipsContainerEl.innerHTML = '';
-                for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-                    const chip = document.createElement('div');
-                    chip.className = 'halo-chip';
-                    chip.setAttribute('data-name', name);
-                    chip.setAttribute('data-hex', hex);
-                    chip.setAttribute('title', `${name} (${hex})`);
-                    chip.style.backgroundColor = hex;
-                    chip.style.color = hex;
-                    chip.addEventListener('click', () => {
-                        this._updateColor(name);
-                    });
-                    this._chipsContainerEl.appendChild(chip);
-                }
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
             }
             // 4. Slider unique de bordure
             this._borderSliderEl?.addEventListener('input', (e) => {
@@ -4010,6 +4280,9 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      */
     class HaloSeparatorCard extends HTMLElement {
+        get _t() {
+            return useLocalize(this._hass);
+        }
         constructor() {
             super();
             // Internal state
@@ -4043,8 +4316,6 @@ var HaloButtonCard = (function (exports) {
                 throw new Error('Invalid configuration for halo-separator-card');
             }
             this._config = {
-                label_on: 'Masquer',
-                label_off: 'Afficher',
                 columns: 2,
                 collapsible: false,
                 ...config
@@ -4384,26 +4655,26 @@ var HaloButtonCard = (function (exports) {
             return [
                 {
                     icon: 'mdi:lightbulb',
-                    label: 'Icône gauche',
-                    desc: ' : On / Off',
+                    label: this._t('separator.lg_icon'),
+                    desc: this._t('separator.lg_icon_d'),
                     color: accentColor
                 },
                 {
                     badge: '%',
-                    label: 'Badge %',
-                    desc: ' : 30 / 67 / 100%',
+                    label: this._t('separator.lg_pct'),
+                    desc: this._t('separator.lg_pct_d'),
                     color: '#f59e0b'
                 },
                 {
                     icon: 'mdi:thermometer',
-                    label: 'Badge K',
-                    desc: ' : Chaud / Froid',
+                    label: this._t('separator.lg_k'),
+                    desc: this._t('separator.lg_k_d'),
                     color: '#f97316'
                 },
                 {
                     icon: 'mdi:gesture-tap',
-                    label: 'Nom tuile',
-                    desc: ' : Détails lampe',
+                    label: this._t('separator.lg_name'),
+                    desc: this._t('separator.lg_name_d'),
                     color: '#e6f2f5'
                 }
             ];
@@ -4414,7 +4685,7 @@ var HaloButtonCard = (function (exports) {
             if (!this._containerEl) {
                 this._buildDom();
             }
-            const name = this._config.name || this._config.title || 'Section';
+            const name = this._config.name || this._config.title || this._t('separator.section');
             const icon = this._config.icon || 'mdi:bookmark';
             const col = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
             // Synchroniser l'état d'expansion si lié à toggle_entity
@@ -4450,8 +4721,8 @@ var HaloButtonCard = (function (exports) {
                     this._toggleBtnEl.style.boxShadow = this._isExpanded ? `0 0 8px ${col}40` : 'none';
                     this._toggleBtnEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
                     const labelText = this._isExpanded
-                        ? (this._config.label_on || 'Masquer')
-                        : (this._config.label_off || 'Afficher');
+                        ? (this._config.label_on || this._t('separator.hide'))
+                        : (this._config.label_off || this._t('separator.show'));
                     if (this._toggleLabelEl)
                         this._toggleLabelEl.textContent = labelText;
                     const chevronIcon = this._isExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down';
@@ -4582,73 +4853,35 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      */
     const BASE_SCHEMA = [
-        {
-            name: 'name',
-            label: 'Titre de la section',
-            selector: { text: {} }
-        },
-        {
-            name: 'icon',
-            label: 'Icône MDI',
-            selector: { icon: {} }
-        },
-        {
-            name: 'color',
-            label: 'Couleur personnalisée (optionnel)',
-            selector: { color_rgb: {} }
-        },
-        {
-            name: 'theme_entity',
-            label: 'Entité sélecteur de thème (optionnel)',
-            selector: { entity: { domain: 'input_select' } }
-        },
-        {
-            name: 'collapsible',
-            label: 'Activer le volet repliable de légende (Accordéon)',
-            selector: { boolean: {} }
-        }
+        { name: 'name', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
+        { name: 'color', selector: { color_rgb: {} } },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } },
+        { name: 'collapsible', selector: { boolean: {} } }
     ];
-    const ACCORDION_SCHEMA = [
-        {
-            name: 'initial_collapsed',
-            label: 'Initialement replié / masqué',
-            selector: { boolean: {} }
-        },
+    const buildAccordionSchema = (t) => [
+        { name: 'initial_collapsed', selector: { boolean: {} } },
         {
             name: 'columns',
-            label: 'Nombre de colonnes du volet',
             selector: {
                 select: {
-                    options: [
-                        { value: '1', label: '1 colonne (Largeur complète / Texte détaillé)' },
-                        { value: '2', label: '2 colonnes (Standard équilibré)' },
-                        { value: '3', label: '3 colonnes (Compact / 3 éléments par ligne)' }
-                    ]
+                    options: selectOptions(t, 'separator', [['1', 'cols_1'], ['2', 'cols_2'], ['3', 'cols_3']])
                 }
             }
         },
-        {
-            name: 'label_on',
-            label: 'Libellé bouton quand ouvert (ex: Masquer)',
-            selector: { text: {} }
-        },
-        {
-            name: 'label_off',
-            label: 'Libellé bouton quand fermé (ex: Afficher)',
-            selector: { text: {} }
-        },
-        {
-            name: 'content',
-            label: 'Note ou texte explicatif libre (optionnel)',
-            selector: { text: { multiline: true } }
-        },
-        {
-            name: 'toggle_entity',
-            label: 'Entité externe synchronisée (optionnel)',
-            selector: { entity: { domain: 'input_boolean' } }
-        }
+        { name: 'label_on', selector: { text: {} } },
+        { name: 'label_off', selector: { text: {} } },
+        { name: 'content', selector: { text: { multiline: true } } },
+        { name: 'toggle_entity', selector: { entity: { domain: 'input_boolean' } } }
     ];
     class HaloSeparatorCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = "en";
+        }
+        get _t() {
+            return useLocalize(this._hass);
+        }
         setConfig(config) {
             this._config = {
                 columns: 2,
@@ -4659,6 +4892,11 @@ var HaloButtonCard = (function (exports) {
         }
         set hass(hass) {
             this._hass = hass;
+            if (this._config && this.querySelector('ha-form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
             const form = this.querySelector('ha-form');
             if (form) {
                 form.hass = hass;
@@ -4721,8 +4959,8 @@ var HaloButtonCard = (function (exports) {
             const items = this._getItems();
             items.push({
                 icon: 'mdi:information-outline',
-                label: 'Nouvel élément',
-                desc: 'Description',
+                label: this._t('editor.separator.new_label'),
+                desc: this._t('editor.separator.new_desc'),
                 color: ''
             });
             this._config = {
@@ -4773,11 +5011,12 @@ var HaloButtonCard = (function (exports) {
             if (!container)
                 return;
             const items = this._getItems();
+            const t = (k) => this._t(`editor.separator.${k}`);
             if (items.length === 0) {
                 container.innerHTML = `
         <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; color: var(--secondary-text-color); font-size: 13px;">
-          Aucun élément de légende personnalisé défini.<br>
-          <small>Cliquez sur "Ajouter un élément" pour personnaliser le volet.</small>
+          ${t("no_items")}<br>
+          <small>${t("no_items_hint")}</small>
         </div>
       `;
                 return;
@@ -4801,7 +5040,7 @@ var HaloButtonCard = (function (exports) {
                 headerRow.innerHTML = `
         <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px;">
           <ha-icon icon="${it.icon || 'mdi:circle-small'}" style="color: ${it.color || 'var(--primary-color)'}; --mdc-icon-size: 18px;"></ha-icon>
-          <span>${it.label || `Élément #${idx + 1}`}</span>
+          <span>${it.label || this._t("editor.separator.item_n", "n", String(idx + 1))}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 4px;">
           <button type="button" class="btn-up" style="background: none; border: none; color: var(--primary-text-color); cursor: pointer; padding: 2px 6px; font-size: 14px;" ${idx === 0 ? 'disabled' : ''}>▲</button>
@@ -4817,14 +5056,14 @@ var HaloButtonCard = (function (exports) {
                 row1.style.cssText = 'display: flex; align-items: flex-end; gap: 8px; width: 100%; box-sizing: border-box;';
                 row1.innerHTML = `
         <div style="flex: 1; min-width: 0;">
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Icône MDI (ex: mdi:power)</label>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">${t("f_icon")}</label>
           <input type="text" class="input-icon" value="${it.icon || ''}" placeholder="mdi:tag" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
         <div style="display: flex; align-items: center; justify-content: center; height: 31px; padding: 0 1px;">
-          <span style="font-size: 10px; font-weight: 700; color: var(--secondary-text-color); background: rgba(255, 255, 255, 0.08); padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); letter-spacing: 0.5px; user-select: none;">OU</span>
+          <span style="font-size: 10px; font-weight: 700; color: var(--secondary-text-color); background: rgba(255, 255, 255, 0.08); padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); letter-spacing: 0.5px; user-select: none;">${t("or")}</span>
         </div>
         <div style="width: 130px; min-width: 130px;">
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px; white-space: nowrap;">Badge <span style="font-size: 10px; opacity: 0.8;">(max 2-3 car.)</span></label>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px; white-space: nowrap;">${t("f_badge")} <span style="font-size: 10px; opacity: 0.8;">${t("f_badge_hint")}</span></label>
           <input type="text" class="input-badge" value="${it.badge || ''}" maxlength="3" placeholder="%, K, °C" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px; text-align: center; font-weight: 700;">
         </div>
       `;
@@ -4835,12 +5074,12 @@ var HaloButtonCard = (function (exports) {
                 row2.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px;';
                 row2.innerHTML = `
         <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Libellé / Titre (en gras)</label>
-          <input type="text" class="input-label" value="${it.label || ''}" placeholder="ex: Appui court" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">${t("f_label")}</label>
+          <input type="text" class="input-label" value="${it.label || ''}" placeholder="${t("f_label_ph")}" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
         <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Description</label>
-          <input type="text" class="input-desc" value="${it.desc || ''}" placeholder="ex: Allumage" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">${t("f_desc")}</label>
+          <input type="text" class="input-desc" value="${it.desc || ''}" placeholder="${t("f_desc_ph")}" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
       `;
                 row2.querySelector('.input-label')?.addEventListener('change', (e) => this._updateItemField(idx, 'label', e.target.value));
@@ -4850,7 +5089,7 @@ var HaloButtonCard = (function (exports) {
                 row3.style.cssText = 'display: grid; grid-template-columns: 1fr; gap: 8px;';
                 row3.innerHTML = `
         <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Couleur personnalisée HEX (optionnel, hérite de la carte si vide)</label>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">${t("f_color")}</label>
           <input type="text" class="input-color" value="${it.color || ''}" placeholder="ex: #38bdf8" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
       `;
@@ -4866,20 +5105,22 @@ var HaloButtonCard = (function (exports) {
             if (!this._config)
                 return;
             const isCollapsible = Boolean(this._config?.collapsible || this._config?.show_legend);
-            const schema = isCollapsible ? [...BASE_SCHEMA, ...ACCORDION_SCHEMA] : BASE_SCHEMA;
+            const schema = isCollapsible ? [...BASE_SCHEMA, ...buildAccordionSchema(this._t)] : BASE_SCHEMA;
+            const t = (k) => this._t(`editor.separator.${k}`);
             let form = this.querySelector('ha-form');
             if (!form) {
+                this._lang = getLang(this._hass);
                 this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
           <div id="legend-items-manager" style="display: ${isCollapsible ? 'block' : 'none'}; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
               <div>
-                <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">Éléments de Légende & Guide</span>
-                <span style="display: block; font-size: 11px; color: var(--secondary-text-color);">Configurez les tuiles explicatives du volet repliable</span>
+                <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">${t("items_title")}</span>
+                <span style="display: block; font-size: 11px; color: var(--secondary-text-color);">${t("items_subtitle")}</span>
               </div>
               <button type="button" id="btn-add-item" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; background: var(--primary-color, #0288d1); color: #fff; border: none; cursor: pointer; font-size: 12px; font-weight: 600;">
-                <span>+ Ajouter un élément</span>
+                <span>${t("add_item")}</span>
               </button>
             </div>
             <div id="items-container"></div>
@@ -4888,7 +5129,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = schema;
+                    applyFormI18n(form, this._hass, "separator", schema);
                     form.data = this._formData();
                     if (this._hass)
                         form.hass = this._hass;
@@ -4900,7 +5141,7 @@ var HaloButtonCard = (function (exports) {
                 }
             }
             else {
-                form.schema = schema;
+                applyFormI18n(form, this._hass, "separator", schema);
                 form.data = this._formData();
                 if (this._hass)
                     form.hass = this._hass;
@@ -4935,34 +5176,37 @@ var HaloButtonCard = (function (exports) {
     const TILE_DEFINITIONS = [
         {
             key: 'closed',
-            defaultTitle: 'Volet Fermé',
+            titleKey: 'cover_color.closed',
             defaultEntity: 'input_text.couleur_volet_ferme',
             defaultHex: '#E2E8F0',
             defaultIcon: 'mdi:window-shutter'
         },
         {
             key: 'partial',
-            defaultTitle: 'Volet Partiel',
+            titleKey: 'cover_color.partial',
             defaultEntity: 'input_text.couleur_volet_partiel',
             defaultHex: '#38BDF8',
             defaultIcon: 'mdi:window-shutter-open'
         },
         {
             key: 'open',
-            defaultTitle: 'Volet Ouvert',
+            titleKey: 'cover_color.open',
             defaultEntity: 'input_text.couleur_volet_ouvert',
             defaultHex: '#2F86FF',
             defaultIcon: 'mdi:window-shutter-open'
         },
         {
             key: 'moving',
-            defaultTitle: 'Mouvement',
+            titleKey: 'cover_color.moving',
             defaultEntity: 'input_text.couleur_volet_en_mouvement',
             defaultHex: '#F59E0B',
             defaultIcon: 'mdi:swap-vertical'
         }
     ];
     class HaloCoverColorCard extends HTMLElement {
+        get _t() {
+            return useLocalize(this._hass);
+        }
         constructor() {
             super();
             // Persistent DOM references
@@ -4978,7 +5222,6 @@ var HaloButtonCard = (function (exports) {
         }
         static getStubConfig() {
             return {
-                title: "Couleurs d'États des Volets",
                 icon: 'mdi:window-shutter-cog'
             };
         }
@@ -4987,7 +5230,6 @@ var HaloButtonCard = (function (exports) {
                 throw new Error('Invalid configuration for halo-cover-color-card');
             }
             this._config = {
-                title: "Couleurs d'États des Volets",
                 icon: 'mdi:window-shutter-cog',
                 ...config
             };
@@ -5223,7 +5465,7 @@ var HaloButtonCard = (function (exports) {
             if (!this._containerEl) {
                 this._buildDom();
             }
-            const title = this._config.title || "Couleurs d'États des Volets";
+            const title = this._config.title || this._t('cover_color.title');
             const icon = this._config.icon || 'mdi:window-shutter-cog';
             const headerColor = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity || 'input_select.couleur_theme_ouvertures', '#26c6da');
             // Header
@@ -5245,7 +5487,7 @@ var HaloButtonCard = (function (exports) {
                 TILE_DEFINITIONS.forEach(def => {
                     const titleKey = `${def.key}_name`;
                     const iconKey = `${def.key}_icon`;
-                    const tileTitle = this._config[titleKey] || def.defaultTitle;
+                    const tileTitle = this._config[titleKey] || this._t(def.titleKey);
                     const tileIcon = this._config[iconKey] || def.defaultIcon;
                     const hex = this._getTileHex(def);
                     const tileEl = document.createElement('div');
@@ -5290,49 +5532,30 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      */
     const SCHEMA$1 = [
-        {
-            name: 'title',
-            label: "Titre de l'en-tête",
-            selector: { text: {} }
-        },
-        {
-            name: 'icon',
-            label: "Icône de l'en-tête",
-            selector: { icon: {} }
-        },
-        {
-            name: 'closed_entity',
-            label: 'Entité couleur volet fermé (défaut: input_text.couleur_volet_ferme)',
-            selector: { entity: { domain: 'input_text' } }
-        },
-        {
-            name: 'partial_entity',
-            label: 'Entité couleur volet partiel (défaut: input_text.couleur_volet_partiel)',
-            selector: { entity: { domain: 'input_text' } }
-        },
-        {
-            name: 'open_entity',
-            label: 'Entité couleur volet ouvert (défaut: input_text.couleur_volet_ouvert)',
-            selector: { entity: { domain: 'input_text' } }
-        },
-        {
-            name: 'moving_entity',
-            label: 'Entité couleur mouvement (défaut: input_text.couleur_volet_en_mouvement)',
-            selector: { entity: { domain: 'input_text' } }
-        },
-        {
-            name: 'theme_entity',
-            label: 'Entité sélecteur de thème pour en-tête (optionnel)',
-            selector: { entity: { domain: 'input_select' } }
-        }
+        { name: 'title', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
+        { name: 'closed_entity', selector: { entity: { domain: 'input_text' } } },
+        { name: 'partial_entity', selector: { entity: { domain: 'input_text' } } },
+        { name: 'open_entity', selector: { entity: { domain: 'input_text' } } },
+        { name: 'moving_entity', selector: { entity: { domain: 'input_text' } } },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
     ];
     class HaloCoverColorCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = "en";
+        }
         setConfig(config) {
             this._config = { ...config };
             this._render();
         }
         set hass(hass) {
             this._hass = hass;
+            if (this._config && this.querySelector('ha-form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
             const form = this.querySelector('ha-form');
             if (form) {
                 form.hass = hass;
@@ -5372,6 +5595,7 @@ var HaloButtonCard = (function (exports) {
                 return;
             let form = this.querySelector('ha-form');
             if (!form) {
+                this._lang = getLang(this._hass);
                 this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
@@ -5379,7 +5603,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA$1;
+                    applyFormI18n(form, this._hass, "cover_color", SCHEMA$1);
                     form.data = this._formData();
                     if (this._hass)
                         form.hass = this._hass;
@@ -5718,7 +5942,7 @@ var HaloButtonCard = (function (exports) {
           <div class="tile-left">
             <span class="tile-dot" style="background: ${hex}; box-shadow: 0 0 10px ${hex}88;"></span>
             <div class="tile-texts">
-              <span class="tile-name">${color.name}</span>
+              <span class="tile-name">${localizeHolm(this._hass, color.name)}</span>
               <span class="tile-hex" style="color: ${hex};">${hex.toLowerCase()}</span>
             </div>
           </div>
@@ -5751,34 +5975,16 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      */
     const SCHEMA = [
-        {
-            name: 'entity',
-            label: 'Entité sélecteur de thème (défaut: input_select.couleur_theme_eclairages)',
-            selector: { entity: { domain: 'input_select' } }
-        },
-        {
-            name: 'title',
-            label: 'Titre de la section (optionnel)',
-            selector: { text: {} }
-        },
-        {
-            name: 'icon',
-            label: 'Icône MDI (optionnel)',
-            selector: { icon: {} }
-        },
-        {
-            name: 'columns',
-            label: 'Nombre de colonnes',
-            selector: {
-                number: {
-                    min: 1,
-                    max: 4,
-                    mode: 'box'
-                }
-            }
-        }
+        { name: 'entity', selector: { entity: { domain: 'input_select' } } },
+        { name: 'title', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
+        { name: 'columns', selector: { number: { min: 1, max: 4, mode: 'box' } } }
     ];
     class HaloPaletteCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = "en";
+        }
         setConfig(config) {
             this._config = {
                 entity: 'input_select.couleur_theme_eclairages',
@@ -5789,6 +5995,11 @@ var HaloButtonCard = (function (exports) {
         }
         set hass(hass) {
             this._hass = hass;
+            if (this._config && this.querySelector('ha-form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
             const form = this.querySelector('ha-form');
             if (form) {
                 form.hass = hass;
@@ -5813,6 +6024,7 @@ var HaloButtonCard = (function (exports) {
                 return;
             let form = this.querySelector('ha-form');
             if (!form) {
+                this._lang = getLang(this._hass);
                 this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
@@ -5820,7 +6032,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA;
+                    applyFormI18n(form, this._hass, "palette", SCHEMA);
                     form.data = this._config;
                     if (this._hass)
                         form.hass = this._hass;
@@ -5844,11 +6056,14 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.0
+     * 📦 Version      : 1.4.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) en/fr de toute la suite :
+     *                              src/localize/, éditeurs ha-form (computeLabel/computeHelper),
+     *                              panneaux Liquid Glass et états des cartes traduits.
      *   - ✨ v1.3.0 (2026-10-30) : Personnalisation visuelle avancée :
      *                              - Réglage de l'épaisseur de bordure (0 à 3 px, pas 0.25) sur
      *                                halo-button-card, halo-cover-card et halo-light-card.
@@ -5873,7 +6088,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.3.1';
+    const VERSION = '1.4.0';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({

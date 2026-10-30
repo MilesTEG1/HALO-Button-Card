@@ -36,10 +36,15 @@ import {
   getLightAccentColor,
   getLightCardStyles
 } from '../core/light-helper';
+import { useLocalize, localizeHolm } from '../localize/localize';
 
 export class HaloLightCard extends HTMLElement {
   private _config!: HaloLightCardConfig;
   private _hass!: HomeAssistant;
+
+  private get _t() {
+    return useLocalize(this._hass);
+  }
   private _root: ShadowRoot;
 
   // Persistent DOM references
@@ -496,27 +501,27 @@ export class HaloLightCard extends HTMLElement {
       <div class="unavailable-box" id="unavail-box"></div>
 
       <ha-card class="halo-light-card" id="card-body">
-        <div class="main-icon-btn" id="main-icon-btn" role="button" tabindex="0" title="Basculer">
+        <div class="main-icon-btn" id="main-icon-btn" role="button" tabindex="0" title="${this._t('light.toggle')}">
           <ha-icon id="main-icon"></ha-icon>
         </div>
 
-        <div class="light-info" id="light-info" role="button" tabindex="0" title="Détails">
+        <div class="light-info" id="light-info" role="button" tabindex="0" title="${this._t('light.details')}">
           <div class="light-name" id="light-name"></div>
           <div class="light-label" id="light-label"></div>
         </div>
 
         <div class="sub-buttons-container" id="sub-buttons-container">
-          <div class="sub-btn sub-brightness" id="sub-brightness" role="button" tabindex="0" title="Cycle luminosité">
+          <div class="sub-btn sub-brightness" id="sub-brightness" role="button" tabindex="0" title="${this._t('light.cycle_brightness')}">
             <ha-icon icon="mdi:white-balance-sunny" id="sub-brightness-icon"></ha-icon>
             <span id="sub-brightness-label"></span>
           </div>
 
-          <div class="sub-btn sub-kelvin" id="sub-kelvin" role="button" tabindex="0" title="Cycle température">
+          <div class="sub-btn sub-kelvin" id="sub-kelvin" role="button" tabindex="0" title="${this._t('light.cycle_kelvin')}">
             <ha-icon icon="mdi:palette-outline" id="sub-kelvin-icon"></ha-icon>
             <span id="sub-kelvin-label"></span>
           </div>
 
-          <div class="sub-btn sub-toggle" id="sub-toggle" role="button" tabindex="0" title="Marche / Arrêt">
+          <div class="sub-btn sub-toggle" id="sub-toggle" role="button" tabindex="0" title="${this._t('light.power')}">
             <ha-icon icon="mdi:power" id="sub-toggle-icon"></ha-icon>
           </div>
         </div>
@@ -567,7 +572,7 @@ export class HaloLightCard extends HTMLElement {
 
     if (!entity) {
       if (this._unavailEl) {
-        this._unavailEl.textContent = `Entité introuvable : ${id}`;
+        this._unavailEl.textContent = this._t('light.not_found', 'id', id);
         this._unavailEl.style.display = 'block';
       }
       if (this._cardEl) {
@@ -642,7 +647,7 @@ export class HaloLightCard extends HTMLElement {
 
     // 3. Nom
     if (this._nameEl) {
-      const name = this._config.name || attrs.friendly_name || 'Éclairage';
+      const name = this._config.name || attrs.friendly_name || this._t('light.default_name');
       if (this._nameEl.textContent !== name) {
         this._nameEl.textContent = name;
       }
@@ -650,7 +655,7 @@ export class HaloLightCard extends HTMLElement {
 
     // 4. Label (statut textuel "Allumé • 80 % • 2700 K" ou "Éteint")
     if (this._labelEl) {
-      const statusText = formatLightStatus(entity);
+      const statusText = formatLightStatus(entity, this._t);
       if (this._labelEl.textContent !== statusText) {
         this._labelEl.textContent = statusText;
       }

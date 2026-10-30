@@ -27,10 +27,15 @@
 import { HomeAssistant, HaloSeparatorCardConfig, LegendItemConfig } from '../types';
 import { resolveThemeColor, toHexColor } from '../core/theme-helper';
 import { handleAction, fireHaptic } from '../core/action-handler';
+import { useLocalize, localizeHolm } from '../localize/localize';
 
 export class HaloSeparatorCard extends HTMLElement {
   private _config!: HaloSeparatorCardConfig;
   private _hass!: HomeAssistant;
+
+  private get _t() {
+    return useLocalize(this._hass);
+  }
   private _root: ShadowRoot;
 
   // Internal state
@@ -71,8 +76,6 @@ export class HaloSeparatorCard extends HTMLElement {
       throw new Error('Invalid configuration for halo-separator-card');
     }
     this._config = {
-      label_on: 'Masquer',
-      label_off: 'Afficher',
       columns: 2,
       collapsible: false,
       ...config
@@ -428,26 +431,26 @@ export class HaloSeparatorCard extends HTMLElement {
     return [
       {
         icon: 'mdi:lightbulb',
-        label: 'Icône gauche',
-        desc: ' : On / Off',
+        label: this._t('separator.lg_icon'),
+        desc: this._t('separator.lg_icon_d'),
         color: accentColor
       },
       {
         badge: '%',
-        label: 'Badge %',
-        desc: ' : 30 / 67 / 100%',
+        label: this._t('separator.lg_pct'),
+        desc: this._t('separator.lg_pct_d'),
         color: '#f59e0b'
       },
       {
         icon: 'mdi:thermometer',
-        label: 'Badge K',
-        desc: ' : Chaud / Froid',
+        label: this._t('separator.lg_k'),
+        desc: this._t('separator.lg_k_d'),
         color: '#f97316'
       },
       {
         icon: 'mdi:gesture-tap',
-        label: 'Nom tuile',
-        desc: ' : Détails lampe',
+        label: this._t('separator.lg_name'),
+        desc: this._t('separator.lg_name_d'),
         color: '#e6f2f5'
       }
     ];
@@ -459,7 +462,7 @@ export class HaloSeparatorCard extends HTMLElement {
       this._buildDom();
     }
 
-    const name = this._config.name || this._config.title || 'Section';
+    const name = this._config.name || this._config.title || this._t('separator.section');
     const icon = this._config.icon || 'mdi:bookmark';
     const col = resolveThemeColor(
       this._hass,
@@ -507,8 +510,8 @@ export class HaloSeparatorCard extends HTMLElement {
         this._toggleBtnEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
 
         const labelText = this._isExpanded
-          ? (this._config.label_on || 'Masquer')
-          : (this._config.label_off || 'Afficher');
+          ? (this._config.label_on || this._t('separator.hide'))
+          : (this._config.label_off || this._t('separator.show'));
         if (this._toggleLabelEl) this._toggleLabelEl.textContent = labelText;
 
         const chevronIcon = this._isExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down';

@@ -22,63 +22,37 @@
 import { HomeAssistant, HaloButtonCardConfig } from '../types';
 import { HOLM_PALETTE, toHexColor } from '../core/theme-helper';
 import { COMMON_EDITOR_STYLES } from './editor-styles';
+import { useLocalize, getLang } from '../localize/localize';
+import { applyFormI18n, selectOptions, stylePanelHtml, borderBadge, buildChips, colorDisplayName } from './editor-common';
 
-const SCHEMA = [
-  {
-    name: 'name',
-    label: 'Titre principal',
-    selector: { text: {} }
-  },
-  {
-    name: 'label',
-    label: 'Sous-titre / Description',
-    selector: { text: {} }
-  },
-  {
-    name: 'icon',
-    label: 'Icône MDI',
-    selector: { icon: {} }
-  },
+const buildSchema = (t: ReturnType<typeof useLocalize>) => [
+  { name: 'name', selector: { text: {} } },
+  { name: 'label', selector: { text: {} } },
+  { name: 'icon', selector: { icon: {} } },
   {
     name: 'layout',
-    label: 'Disposition (Layout)',
     selector: {
       select: {
-        options: [
-          { value: 'horizontal', label: 'Horizontal (Carte large avec texte à droite)' },
-          { value: 'vertical', label: 'Vertical (Carte compacte avec texte centré en dessous)' }
-        ]
+        options: selectOptions(t, 'button', [['horizontal', 'layout_horizontal'], ['vertical', 'layout_vertical']])
       }
     }
   },
   {
     name: 'text_align',
-    label: 'Alignement du texte',
     selector: {
       select: {
-        options: [
-          { value: 'left', label: 'Gauche' },
-          { value: 'center', label: 'Centré' },
-          { value: 'right', label: 'Droite' }
-        ]
+        options: selectOptions(t, 'button', [['left', 'align_left'], ['center', 'align_center'], ['right', 'align_right']])
       }
     }
   },
-  {
-    name: 'entity',
-    label: 'Entité liée (optionnel)',
-    selector: { entity: {} }
-  },
-  {
-    name: 'theme_entity',
-    label: 'Entité sélecteur de thème (optionnel)',
-    selector: { entity: { domain: 'input_select' } }
-  }
+  { name: 'entity', selector: { entity: {} } },
+  { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
 ];
 
 export class HaloButtonCardEditor extends HTMLElement {
   private _config!: HaloButtonCardConfig;
   private _hass!: HomeAssistant;
+  private _lang = "en";
 
   // Références DOM Style Panel
   private _swatchCircleEl: HTMLElement | null = null;
@@ -100,12 +74,16 @@ export class HaloButtonCardEditor extends HTMLElement {
 
   public set hass(hass: HomeAssistant) {
     this._hass = hass;
+    if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+      this.innerHTML = '';
+      this._render();
+      return;
+    }
     const form = this.querySelector('#form') as any;
     if (form) {
       form.hass = hass;
     }
   }
-
   private _fireConfigChanged() {
     const event = new CustomEvent('config-changed', {
       detail: { config: this._config },
@@ -121,18 +99,8 @@ export class HaloButtonCardEditor extends HTMLElement {
   }
 
   private _getColorDisplayName(): string {
-    const raw = this._config?.color;
-    if (!raw) return 'Cyan HOLM (Défaut)';
-    if (typeof raw === 'string') {
-      if (HOLM_PALETTE[raw]) return raw;
-      for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-        if (hex.toLowerCase() === raw.toLowerCase()) return name;
-      }
-      return 'Couleur personnalisée';
-    }
-    return 'Couleur personnalisée';
+    return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_cyan');
   }
-
   private _updateColor(colorValue: string) {
     this._config = {
       ...this._config,
@@ -189,10 +157,7 @@ export class HaloButtonCardEditor extends HTMLElement {
       this._borderSliderEl.value = String(bw);
     }
     if (this._borderValBadgeEl) {
-      let desc = `${bw} px`;
-      if (bw === 0) desc = '0 px (Off)';
-      else if (bw === 1.5) desc = '1.5 px (Défaut)';
-      this._borderValBadgeEl.textContent = desc;
+      this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
     }
   }
 
@@ -201,6 +166,8 @@ export class HaloButtonCardEditor extends HTMLElement {
 
     let form = this.querySelector('#form') as any;
     if (!form) {
+      const t = useLocalize(this._hass);
+      this._lang = getLang(this._hass);
       this.innerHTML = `
         <style>
           ${COMMON_EDITOR_STYLES}
@@ -208,64 +175,17 @@ export class HaloButtonCardEditor extends HTMLElement {
 
         <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
-
-          <div class="halo-style-section">
-            <div class="halo-section-header">
-              <ha-icon icon="mdi:palette-swatch"></ha-icon>
-              <span>Personnalisation Visuelle (Halo & Bordure)</span>
-            </div>
-
-            <div class="halo-style-grid">
-              <!-- GAUCHE : Couleur & Nuancier HOLM -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title">Couleur du Halo & Bouton</span>
-                </div>
-
-                <!-- Option A : Médaillon Swatch interactif -->
-                <div class="halo-swatch-card" id="swatch-card">
-                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="Ouvrir la palette libre">
-                    <div class="halo-swatch-circle" id="swatch-circle"></div>
-                    <input type="color" id="native-color-input" class="hidden-color-input" />
-                  </div>
-                  <div class="halo-swatch-meta">
-                    <span class="halo-color-title" id="swatch-name">Cyan HOLM</span>
-                    <span class="halo-color-hex" id="swatch-hex">#26C6DA</span>
-                  </div>
-                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="Ouvrir la roue chromatique">
-                    <ha-icon icon="mdi:eyedropper"></ha-icon>
-                  </button>
-                </div>
-
-                <!-- Option B : Nuancier rapide HOLM -->
-                <div class="halo-chips-label">Nuancier officiel HOLM (Sélection rapide) :</div>
-                <div class="halo-chips-grid" id="chips-grid"></div>
-              </div>
-
-              <!-- DROITE : Curseur d'épaisseur de bordure -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title">Épaisseur de bordure</span>
-                  <span class="halo-badge-val" id="border-val-text">1.5 px</span>
-                </div>
-
-                <div class="halo-border-card">
-                  <input type="range" id="border-slider-input" min="0" max="3" step="0.25" value="1.5" class="halo-range-slider" />
-                  <div class="slider-ticks">
-                    <span>0 px<br><small style="opacity: 0.6;">Sans bordure</small></span>
-                    <span style="text-align: center;">1.5 px<br><small style="opacity: 0.6;">Défaut</small></span>
-                    <span style="text-align: right;">3.0 px<br><small style="opacity: 0.6;">Maxi</small></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ${stylePanelHtml(t, {
+            title: t('editor.style_title'),
+            leftTitle: t('editor.halo_color'),
+            borderTitle: t('editor.border_title')
+          })}
         </div>
       `;
 
       form = this.querySelector('#form') as any;
       if (form) {
-        form.schema = SCHEMA;
+        applyFormI18n(form, this._hass, "button", buildSchema(useLocalize(this._hass)));
         form.data = this._formMetadata();
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
@@ -305,20 +225,7 @@ export class HaloButtonCardEditor extends HTMLElement {
 
     // 2. Génération des chips HOLM (Option B)
     if (this._chipsContainerEl) {
-      this._chipsContainerEl.innerHTML = '';
-      for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-        const chip = document.createElement('div');
-        chip.className = 'halo-chip';
-        chip.setAttribute('data-name', name);
-        chip.setAttribute('data-hex', hex);
-        chip.setAttribute('title', `${name} (${hex})`);
-        chip.style.backgroundColor = hex;
-        chip.style.color = hex;
-        chip.addEventListener('click', () => {
-          this._updateColor(name);
-        });
-        this._chipsContainerEl.appendChild(chip);
-      }
+      buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
     }
 
     // 3. Slider de bordure
