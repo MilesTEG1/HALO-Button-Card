@@ -1,23 +1,47 @@
 /**
- * HALO Button Card — Halo Separator Card Component
- * Sleek section divider with neon gradient line and HOLM styling.
- * High-performance persistent DOM architecture (zero flicker).
- * (c) 2026 MilesTEG1 — MIT License
+ * ==============================================================================
+ * 📌 Nom du fichier : src/components/halo-separator-card.ts
+ * 📝 Description   : Composant Web custom:halo-separator-card.
+ *                    Séparateur de section élégant avec ligne dégradée néon,
+ *                    bouton escamotable (Masquer / Afficher) et volet accordéon
+ *                    de légende intégré (zéro helper externe requis).
+ * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+ * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+ * 📦 Version      : 1.2.0
+ * 📅 Date         : 2026-10-30
+ * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+ * ==============================================================================
+ * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.2.0 (2026-10-30) : Évolution accordéon intégrée (volet repliable avec
+ *                              transition CSS fluide, bouton pill Masquer/Afficher
+ *                              et grille 2x2 du Guide des Boutons intégrée).
+ *   - 💡 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
+ * ==============================================================================
  */
 
-import { HomeAssistant, HaloSeparatorCardConfig } from '../types';
-import { resolveThemeColor } from '../core/theme-helper';
+import { HomeAssistant, HaloSeparatorCardConfig, LegendItemConfig } from '../types';
+import { resolveThemeColor, toHexColor } from '../core/theme-helper';
+import { fireHaptic } from '../core/action-handler';
 
 export class HaloSeparatorCard extends HTMLElement {
   private _config!: HaloSeparatorCardConfig;
   private _hass!: HomeAssistant;
   private _root: ShadowRoot;
 
+  // Internal state
+  private _isExpanded: boolean = true;
+
   // Persistent DOM references
   private _containerEl: HTMLElement | null = null;
+  private _headerEl: HTMLElement | null = null;
   private _iconEl: HTMLElement | null = null;
   private _titleEl: HTMLElement | null = null;
   private _lineEl: HTMLElement | null = null;
+  private _toggleBtnEl: HTMLElement | null = null;
+  private _toggleLabelEl: HTMLElement | null = null;
+  private _toggleIconEl: HTMLElement | null = null;
+  private _accordionEl: HTMLElement | null = null;
+  private _legendGridEl: HTMLElement | null = null;
 
   constructor() {
     super();
@@ -30,16 +54,28 @@ export class HaloSeparatorCard extends HTMLElement {
 
   public static getStubConfig(): Record<string, any> {
     return {
-      name: 'Section',
-      icon: 'mdi:bookmark'
+      name: 'Légende & Guide des Boutons',
+      icon: 'mdi:book-open-variant',
+      collapsible: true
     };
   }
 
   public setConfig(config: HaloSeparatorCardConfig) {
     if (!config) {
-      throw new Error('Invalid configuration');
+      throw new Error('Invalid configuration for halo-separator-card');
     }
-    this._config = config;
+    this._config = {
+      label_on: 'Masquer',
+      label_off: 'Afficher',
+      ...config
+    };
+
+    if (config.initial_collapsed) {
+      this._isExpanded = false;
+    } else if (config.expanded !== undefined) {
+      this._isExpanded = config.expanded;
+    }
+
     if (this._hass) {
       this._render();
     }
@@ -60,25 +96,39 @@ export class HaloSeparatorCard extends HTMLElement {
   }
 
   public getCardSize(): number {
-    return 1;
+    return this._isExpanded && this._isCollapsible() ? 2 : 1;
+  }
+
+  private _isCollapsible(): boolean {
+    return Boolean(
+      this._config?.collapsible ||
+      this._config?.legend_items ||
+      this._config?.toggle_entity
+    );
   }
 
   private _hasChanged(oldHass?: HomeAssistant, newHass?: HomeAssistant): boolean {
     if (!oldHass || !newHass || !this._config) return true;
 
-    // Check specific theme entity if bound
+    // Entité de toggle externe synchronisée
+    if (this._config.toggle_entity) {
+      if (oldHass.states[this._config.toggle_entity] !== newHass.states[this._config.toggle_entity]) {
+        return true;
+      }
+    }
+
+    // Entité de thème
     if (this._config.theme_entity) {
       if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
         return true;
       }
     }
 
-    // Check standard global theme helpers
+    // Thèmes globaux
     const themeEntities = [
+      'input_select.couleur_theme_eclairages',
       'input_select.couleur_theme_ouvertures',
       'input_select.couleur_theme_chauffage',
-      'input_select.couleur_theme_eclairage',
-      'input_select.couleur_theme_eclairages',
       'input_select.couleur_theme_global'
     ];
     for (const te of themeEntities) {
@@ -96,15 +146,20 @@ export class HaloSeparatorCard extends HTMLElement {
           background: transparent !important;
           border: none !important;
           box-shadow: none !important;
+          user-select: none;
+          -webkit-user-select: none;
         }
-        .halo-separator {
+        .halo-separator-wrapper {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 14px 0px 6px 0px;
+        }
+        .halo-separator-header {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 14px 0px 6px 0px;
           width: 100%;
           box-sizing: border-box;
-          user-select: none;
         }
         .halo-separator-icon {
           width: 18px;
@@ -141,20 +196,193 @@ export class HaloSeparatorCard extends HTMLElement {
           border-radius: 2px;
           transition: background 0.3s ease;
         }
+
+        /* Bouton Pill Toggle */
+        .halo-toggle-btn {
+          display: none;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 8px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          line-height: 14px;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all 0.25s ease;
+        }
+        .halo-toggle-btn:hover {
+          filter: brightness(1.2);
+        }
+        .halo-toggle-btn:active {
+          transform: scale(0.95);
+        }
+        .halo-toggle-btn ha-icon {
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: -1px;
+        }
+
+        /* Volet Accordéon */
+        .halo-accordion-drawer {
+          max-height: 0;
+          opacity: 0;
+          overflow: hidden;
+          margin-top: 0;
+          transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                      opacity 0.3s ease,
+                      margin-top 0.3s ease;
+          pointer-events: none;
+        }
+        .halo-accordion-drawer.expanded {
+          max-height: 600px;
+          opacity: 1;
+          margin-top: 10px;
+          overflow: visible;
+          pointer-events: auto;
+        }
+
+        .halo-legend-card {
+          border-radius: 14px;
+          padding: 12px 14px;
+          background: linear-gradient(160deg, rgba(20, 28, 38, 0.70), rgba(10, 15, 22, 0.85));
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 16px rgba(0, 0, 0, 0.25);
+          backdrop-filter: blur(16px) saturate(180%);
+          -webkit-backdrop-filter: blur(16px) saturate(180%);
+          box-sizing: border-box;
+          width: 100%;
+        }
+
+        .legend-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px 16px;
+          font-size: 11px;
+          width: 100%;
+          box-sizing: border-box;
+          text-align: left;
+        }
+
+        .legend-item {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 8px;
+        }
+        .legend-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          min-width: 24px;
+          border-radius: 6px;
+          flex-shrink: 0;
+        }
+        .legend-badge ha-icon {
+          --mdc-icon-size: 15px;
+          width: 15px;
+          height: 15px;
+        }
+        .legend-badge-text {
+          font-weight: bold;
+          font-size: 11px;
+        }
+        .legend-text {
+          color: #e6f2f5;
+          line-height: 1.2;
+          font-size: 11.5px;
+        }
+        .legend-text b {
+          font-weight: 600;
+        }
       </style>
-      <div class="halo-separator" id="container">
-        <div class="halo-separator-icon">
-          <ha-icon id="sep-icon"></ha-icon>
+      <div class="halo-separator-wrapper" id="container">
+        <div class="halo-separator-header" id="header">
+          <div class="halo-separator-icon">
+            <ha-icon id="sep-icon"></ha-icon>
+          </div>
+          <span class="halo-separator-title" id="sep-title"></span>
+          <div class="halo-separator-line" id="sep-line"></div>
+          <div class="halo-toggle-btn" id="toggle-btn">
+            <span id="toggle-label">Masquer</span>
+            <ha-icon id="toggle-icon" icon="mdi:chevron-up"></ha-icon>
+          </div>
         </div>
-        <span class="halo-separator-title" id="sep-title"></span>
-        <div class="halo-separator-line" id="sep-line"></div>
+
+        <div class="halo-accordion-drawer" id="accordion-drawer">
+          <div class="halo-legend-card">
+            <div class="legend-grid" id="legend-grid"></div>
+          </div>
+        </div>
       </div>
     `;
 
     this._containerEl = this._root.getElementById('container');
+    this._headerEl = this._root.getElementById('header');
     this._iconEl = this._root.getElementById('sep-icon');
     this._titleEl = this._root.getElementById('sep-title');
     this._lineEl = this._root.getElementById('sep-line');
+    this._toggleBtnEl = this._root.getElementById('toggle-btn');
+    this._toggleLabelEl = this._root.getElementById('toggle-label');
+    this._toggleIconEl = this._root.getElementById('toggle-icon');
+    this._accordionEl = this._root.getElementById('accordion-drawer');
+    this._legendGridEl = this._root.getElementById('legend-grid');
+
+    if (this._toggleBtnEl) {
+      this._toggleBtnEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._handleToggle();
+      });
+    }
+  }
+
+  private _handleToggle() {
+    this._isExpanded = !this._isExpanded;
+    fireHaptic('light');
+
+    // Synchronisation si toggle_entity configurée
+    if (this._config.toggle_entity && this._hass) {
+      const ent = this._config.toggle_entity;
+      const domain = ent.split('.')[0] || 'input_boolean';
+      this._hass.callService(domain, 'toggle', { entity_id: ent });
+    }
+
+    this._render();
+  }
+
+  private _getDefaultLegendItems(accentColor: string): LegendItemConfig[] {
+    return [
+      {
+        icon: 'mdi:lightbulb',
+        label: 'Icône gauche',
+        desc: ' : On / Off',
+        color: accentColor
+      },
+      {
+        badge: '%',
+        label: 'Badge %',
+        desc: ' : 30 / 67 / 100%',
+        color: '#f59e0b'
+      },
+      {
+        icon: 'mdi:thermometer',
+        label: 'Badge K',
+        desc: ' : Chaud / Froid',
+        color: '#f97316'
+      },
+      {
+        icon: 'mdi:gesture-tap',
+        label: 'Nom tuile',
+        desc: ' : Détails lampe',
+        color: '#e6f2f5'
+      }
+    ];
   }
 
   private _render() {
@@ -172,24 +400,102 @@ export class HaloSeparatorCard extends HTMLElement {
       '#26c6da'
     );
 
+    // Synchroniser l'état d'expansion si lié à toggle_entity
+    if (this._config.toggle_entity && this._hass?.states?.[this._config.toggle_entity]) {
+      const extState = this._hass.states[this._config.toggle_entity].state;
+      this._isExpanded = (extState === 'on');
+    }
+
+    // Icône principale
     if (this._iconEl) {
       if (this._iconEl.getAttribute('icon') !== icon) {
         this._iconEl.setAttribute('icon', icon);
       }
-      if (this._iconEl.style.color !== col) {
-        this._iconEl.style.color = col;
-      }
+      this._iconEl.style.color = col;
     }
 
+    // Titre
     if (this._titleEl && this._titleEl.textContent !== name) {
       this._titleEl.textContent = name;
     }
 
+    // Ligne dégradée
     if (this._lineEl) {
       const gradient = `linear-gradient(90deg, ${col} 0%, ${col}44 60%, transparent 100%)`;
       if (this._lineEl.style.background !== gradient) {
         this._lineEl.style.background = gradient;
       }
+    }
+
+    // Gestion Accordéon & Bouton Pill
+    const isCollapsible = this._isCollapsible();
+
+    if (this._toggleBtnEl) {
+      if (isCollapsible) {
+        this._toggleBtnEl.style.display = 'inline-flex';
+        this._toggleBtnEl.style.background = this._isExpanded ? `${col}26` : 'rgba(255, 255, 255, 0.05)';
+        this._toggleBtnEl.style.border = this._isExpanded ? `1px solid ${col}66` : '1px solid rgba(255, 255, 255, 0.10)';
+        this._toggleBtnEl.style.boxShadow = this._isExpanded ? `0 0 8px ${col}40` : 'none';
+        this._toggleBtnEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
+
+        const labelText = this._isExpanded
+          ? (this._config.label_on || 'Masquer')
+          : (this._config.label_off || 'Afficher');
+        if (this._toggleLabelEl) this._toggleLabelEl.textContent = labelText;
+
+        const chevronIcon = this._isExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down';
+        if (this._toggleIconEl) {
+          if (this._toggleIconEl.getAttribute('icon') !== chevronIcon) {
+            this._toggleIconEl.setAttribute('icon', chevronIcon);
+          }
+          this._toggleIconEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
+        }
+      } else {
+        this._toggleBtnEl.style.display = 'none';
+      }
+    }
+
+    // Tiroir Accordéon
+    if (this._accordionEl) {
+      if (isCollapsible && this._isExpanded) {
+        this._accordionEl.className = 'halo-accordion-drawer expanded';
+      } else {
+        this._accordionEl.className = 'halo-accordion-drawer';
+      }
+    }
+
+    // Rendu des items de légende
+    if (isCollapsible && this._legendGridEl) {
+      let items: LegendItemConfig[] = [];
+      if (Array.isArray(this._config.legend_items)) {
+        items = this._config.legend_items;
+      } else {
+        items = this._getDefaultLegendItems(col);
+      }
+
+      this._legendGridEl.innerHTML = '';
+      items.forEach(it => {
+        const itemCol = it.color ? toHexColor(it.color, col) : col;
+        const div = document.createElement('div');
+        div.className = 'legend-item';
+
+        let badgeContent = '';
+        if (it.badge) {
+          badgeContent = `<span class="legend-badge-text" style="color: ${itemCol};">${it.badge}</span>`;
+        } else if (it.icon) {
+          badgeContent = `<ha-icon icon="${it.icon}" style="color: ${itemCol};"></ha-icon>`;
+        }
+
+        div.innerHTML = `
+          <span class="legend-badge" style="background: ${itemCol}26;">
+            ${badgeContent}
+          </span>
+          <span class="legend-text">
+            <b>${it.label}</b>${it.desc || ''}
+          </span>
+        `;
+        this._legendGridEl!.appendChild(div);
+      });
     }
   }
 }
