@@ -95,6 +95,7 @@ export interface HaloButtonCardConfig {
   halo_color?: string | [number, number, number];
   accent_color?: string | [number, number, number];
   theme_entity?: string;
+  border_width?: number;
   layout?: 'horizontal' | 'vertical';
   text_align?: 'left' | 'center' | 'right';
   tap_action?: ActionConfig;
@@ -146,6 +147,7 @@ export interface HaloCoverCardConfig {
   color_open?: string | [number, number, number];
   color_partial?: string | [number, number, number];
   color_moving?: string | [number, number, number];
+  border_width?: number;
   show_slider?: boolean;
   tap_action?: ActionConfig;
 }
@@ -157,6 +159,7 @@ export interface HaloLightCardConfig {
   icon?: string;
   color_on?: string | [number, number, number];
   color_off?: string | [number, number, number];
+  border_width?: number;
   theme_entity?: string;
   use_light_color?: boolean;
   sub_toggle_entity?: string;
