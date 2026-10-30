@@ -2980,17 +2980,24 @@ var HaloButtonCard = (function (exports) {
      * 📝 Description   : Composant Web custom:halo-separator-card.
      *                    Séparateur de section élégant avec ligne dégradée néon,
      *                    bouton escamotable (Masquer / Afficher) et volet accordéon
-     *                    de légende intégré (zéro helper externe requis).
+     *                    de légende personnalisable (grille 1/2/3 colonnes,
+     *                    alignement vertical, badges/icônes, halos et actions tactiles).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
+     * 📦 Version      : 1.3.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.0 (2026-10-30) : Modularisation complète du volet repliable accordéon :
+     *                              • Grille responsive dynamique paramétrable (1, 2 ou 3 colonnes).
+     *                              • Alignement typographique parfait (icône centrée sur la 1ère ligne).
+     *                              • Rétro-éclairage et halo spéculaire paramétrables par item.
+     *                              • Support double icône MDI ou badge court (%, K, °C, etc.).
+     *                              • Prise en charge du contenu libre Markdown/texte.
+     *                              • Support des interactions tactiles optionnelles (tap_action).
      *   - 💡 v1.2.0 (2026-10-30) : Évolution accordéon intégrée (volet repliable avec
-     *                              transition CSS fluide, bouton pill Masquer/Afficher
-     *                              et grille 2x2 du Guide des Boutons intégrée).
+     *                              transition CSS fluide et bouton pill Masquer/Afficher).
      *   - 💡 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
      * ==============================================================================
      */
@@ -3009,6 +3016,7 @@ var HaloButtonCard = (function (exports) {
             this._toggleLabelEl = null;
             this._toggleIconEl = null;
             this._accordionEl = null;
+            this._legendContentEl = null;
             this._legendGridEl = null;
             this._root = this.attachShadow({ mode: 'open' });
         }
@@ -3017,9 +3025,10 @@ var HaloButtonCard = (function (exports) {
         }
         static getStubConfig() {
             return {
-                name: 'Légende & Guide des Boutons',
+                name: 'Guide & Légendes',
                 icon: 'mdi:book-open-variant',
-                collapsible: true
+                collapsible: true,
+                columns: 2
             };
         }
         setConfig(config) {
@@ -3029,6 +3038,7 @@ var HaloButtonCard = (function (exports) {
             this._config = {
                 label_on: 'Masquer',
                 label_off: 'Afficher',
+                columns: 2,
                 ...config
             };
             if (config.initial_collapsed) {
@@ -3058,6 +3068,7 @@ var HaloButtonCard = (function (exports) {
         _isCollapsible() {
             return Boolean(this._config?.collapsible ||
                 this._config?.legend_items ||
+                this._config?.content ||
                 this._config?.toggle_entity);
         }
         _hasChanged(oldHass, newHass) {
@@ -3096,6 +3107,8 @@ var HaloButtonCard = (function (exports) {
           background: transparent !important;
           border: none !important;
           box-shadow: none !important;
+          margin: 0;
+          padding: 0;
           user-select: none;
           -webkit-user-select: none;
         }
@@ -3189,7 +3202,7 @@ var HaloButtonCard = (function (exports) {
           pointer-events: none;
         }
         .halo-accordion-drawer.expanded {
-          max-height: 600px;
+          max-height: 1200px;
           opacity: 1;
           margin-top: 10px;
           overflow: visible;
@@ -3208,9 +3221,18 @@ var HaloButtonCard = (function (exports) {
           width: 100%;
         }
 
+        .legend-content {
+          font-size: 11.5px;
+          line-height: 1.5;
+          color: rgba(220, 235, 240, 0.85);
+          margin-bottom: 10px;
+          text-align: left;
+          word-break: break-word;
+        }
+
         .legend-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(var(--halo-columns, 2), minmax(0, 1fr));
           gap: 10px 16px;
           font-size: 11px;
           width: 100%;
@@ -3218,38 +3240,86 @@ var HaloButtonCard = (function (exports) {
           text-align: left;
         }
 
+        @media (max-width: 480px) {
+          .legend-grid {
+            grid-template-columns: repeat(min(var(--halo-columns, 2), 2), minmax(0, 1fr));
+            gap: 8px 12px;
+          }
+        }
+
+        @media (max-width: 340px) {
+          .legend-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
         .legend-item {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: flex-start;
           gap: 8px;
+          min-width: 0;
+          box-sizing: border-box;
         }
+
+        .legend-item.interactive {
+          cursor: pointer;
+          padding: 3px 6px;
+          margin: -3px -6px;
+          border-radius: 8px;
+          transition: background 0.2s ease, transform 0.15s ease;
+        }
+        .legend-item.interactive:hover {
+          background: rgba(255, 255, 255, 0.06);
+        }
+        .legend-item.interactive:active {
+          transform: scale(0.97);
+        }
+
         .legend-badge {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 24px;
-          height: 24px;
-          min-width: 24px;
+          width: 22px;
+          height: 22px;
+          min-width: 22px;
           border-radius: 6px;
           flex-shrink: 0;
+          box-sizing: border-box;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 0 8px var(--item-halo, transparent);
+          transition: all 0.25s ease;
+          margin-top: 0px;
         }
         .legend-badge ha-icon {
-          --mdc-icon-size: 15px;
-          width: 15px;
-          height: 15px;
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .legend-badge-text {
-          font-weight: bold;
+          font-weight: 700;
           font-size: 11px;
+          letter-spacing: -0.3px;
+          line-height: 1;
+          text-align: center;
         }
         .legend-text {
-          color: #e6f2f5;
-          line-height: 1.2;
+          flex: 1;
+          min-width: 0;
+          color: rgba(220, 235, 240, 0.85);
+          line-height: 22px;
           font-size: 11.5px;
+          text-align: left;
+          word-break: break-word;
+          overflow-wrap: break-word;
         }
         .legend-text b {
+          color: #ffffff;
           font-weight: 600;
+          letter-spacing: -0.1px;
         }
       </style>
       <div class="halo-separator-wrapper" id="container">
@@ -3267,6 +3337,7 @@ var HaloButtonCard = (function (exports) {
 
         <div class="halo-accordion-drawer" id="accordion-drawer">
           <div class="halo-legend-card">
+            <div class="legend-content" id="legend-content" style="display: none;"></div>
             <div class="legend-grid" id="legend-grid"></div>
           </div>
         </div>
@@ -3281,6 +3352,7 @@ var HaloButtonCard = (function (exports) {
             this._toggleLabelEl = this._root.getElementById('toggle-label');
             this._toggleIconEl = this._root.getElementById('toggle-icon');
             this._accordionEl = this._root.getElementById('accordion-drawer');
+            this._legendContentEl = this._root.getElementById('legend-content');
             this._legendGridEl = this._root.getElementById('legend-grid');
             if (this._toggleBtnEl) {
                 this._toggleBtnEl.addEventListener('click', (e) => {
@@ -3395,13 +3467,33 @@ var HaloButtonCard = (function (exports) {
                     this._accordionEl.className = 'halo-accordion-drawer';
                 }
             }
+            // Rendu du contenu libre Markdown/texte
+            if (this._legendContentEl) {
+                if (this._config.content) {
+                    this._legendContentEl.textContent = this._config.content;
+                    this._legendContentEl.style.display = 'block';
+                }
+                else {
+                    this._legendContentEl.textContent = '';
+                    this._legendContentEl.style.display = 'none';
+                }
+            }
             // Rendu des items de légende
             if (isCollapsible && this._legendGridEl) {
+                let colCount = 2;
+                if (this._config.columns !== undefined) {
+                    const parsed = parseInt(String(this._config.columns), 10);
+                    if (!isNaN(parsed) && parsed >= 1 && parsed <= 3) {
+                        colCount = parsed;
+                    }
+                }
+                this._legendGridEl.style.setProperty('--halo-columns', String(colCount));
                 let items = [];
                 if (Array.isArray(this._config.legend_items)) {
                     items = this._config.legend_items;
                 }
-                else {
+                else if (this._config.legend_items === true ||
+                    (this._config.collapsible && this._config.legend_items === undefined && !this._config.content)) {
                     items = this._getDefaultLegendItems(col);
                 }
                 this._legendGridEl.innerHTML = '';
@@ -3416,14 +3508,28 @@ var HaloButtonCard = (function (exports) {
                     else if (it.icon) {
                         badgeContent = `<ha-icon icon="${it.icon}" style="color: ${itemCol};"></ha-icon>`;
                     }
+                    else {
+                        badgeContent = `<ha-icon icon="mdi:circle-small" style="color: ${itemCol};"></ha-icon>`;
+                    }
+                    const labelPart = it.label ? `<b>${it.label}</b>` : '';
+                    const descPart = it.desc || '';
+                    const separator = (labelPart && descPart && !descPart.startsWith(' ') && !descPart.startsWith(':')) ? ' : ' : '';
                     div.innerHTML = `
-          <span class="legend-badge" style="background: ${itemCol}26;">
+          <span class="legend-badge" style="background: ${itemCol}22; border-color: ${itemCol}55; --item-halo: ${itemCol}40;">
             ${badgeContent}
           </span>
           <span class="legend-text">
-            <b>${it.label}</b>${it.desc || ''}
+            ${labelPart}${separator}${descPart}
           </span>
         `;
+                    if (it.tap_action) {
+                        div.classList.add('interactive');
+                        div.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            fireHaptic('light');
+                            handleAction(this, this._hass, { tap_action: it.tap_action }, 'tap');
+                        });
+                    }
                     this._legendGridEl.appendChild(div);
                 });
             }
@@ -3434,14 +3540,18 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      * 📌 Nom du fichier : src/editors/halo-separator-card-editor.ts
      * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-separator-card
-     *                    avec support des options accordéon / volet légende.
+     *                    avec support des options accordéon, colonnes (1/2/3) et
+     *                    gestionnaire visuel d'éléments de légendes.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
+     * 📦 Version      : 1.3.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.0 (2026-10-30) : Support complet des colonnes (1, 2, 3) et gestionnaire
+     *                              dynamique des éléments de légende (ajout, édition,
+     *                              réordonnancement, suppression).
      *   - 💡 v1.2.0 (2026-10-30) : Ajout des contrôles accordéon (collapsible, labels, toggle_entity).
      *   - 💡 v1.0.0 (2026-10-29) : Création initiale de l'éditeur séparateur.
      * ==============================================================================
@@ -3468,6 +3578,19 @@ var HaloButtonCard = (function (exports) {
             selector: { boolean: {} }
         },
         {
+            name: 'columns',
+            label: 'Nombre de colonnes du volet',
+            selector: {
+                select: {
+                    options: [
+                        { value: '1', label: '1 colonne (Largeur complète / Texte détaillé)' },
+                        { value: '2', label: '2 colonnes (Standard équilibré)' },
+                        { value: '3', label: '3 colonnes (Compact / 3 éléments par ligne)' }
+                    ]
+                }
+            }
+        },
+        {
             name: 'label_on',
             label: 'Libellé bouton quand ouvert (ex: Masquer)',
             selector: { text: {} }
@@ -3476,6 +3599,11 @@ var HaloButtonCard = (function (exports) {
             name: 'label_off',
             label: 'Libellé bouton quand fermé (ex: Afficher)',
             selector: { text: {} }
+        },
+        {
+            name: 'content',
+            label: 'Note ou texte explicatif libre (optionnel)',
+            selector: { text: { multiline: true } }
         },
         {
             name: 'toggle_entity',
@@ -3495,7 +3623,10 @@ var HaloButtonCard = (function (exports) {
     ];
     class HaloSeparatorCardEditor extends HTMLElement {
         setConfig(config) {
-            this._config = { ...config };
+            this._config = {
+                columns: 2,
+                ...config
+            };
             this._render();
         }
         set hass(hass) {
@@ -3509,6 +3640,9 @@ var HaloButtonCard = (function (exports) {
             if (!this._config)
                 return {};
             const data = { ...this._config };
+            if (data.columns !== undefined) {
+                data.columns = String(data.columns);
+            }
             if (data.color && typeof data.color === 'string') {
                 const rgb = hexToRgb(data.color);
                 if (rgb)
@@ -3516,10 +3650,21 @@ var HaloButtonCard = (function (exports) {
             }
             return data;
         }
+        _fireChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
         _valueChanged(ev) {
             if (!this._config || !ev.detail.value)
                 return;
             const val = { ...ev.detail.value };
+            if (val.columns !== undefined) {
+                val.columns = parseInt(String(val.columns), 10) || 2;
+            }
             if (val.color && Array.isArray(val.color)) {
                 val.color = rgbToHex(val.color);
             }
@@ -3527,12 +3672,155 @@ var HaloButtonCard = (function (exports) {
                 ...this._config,
                 ...val
             };
-            const event = new CustomEvent('config-changed', {
-                detail: { config: this._config },
-                bubbles: true,
-                composed: true
+            this._fireChanged();
+        }
+        _getItems() {
+            if (Array.isArray(this._config.legend_items)) {
+                return [...this._config.legend_items];
+            }
+            return [];
+        }
+        _addItem() {
+            const items = this._getItems();
+            items.push({
+                icon: 'mdi:information-outline',
+                label: 'Nouvel élément',
+                desc: 'Description',
+                color: ''
             });
-            this.dispatchEvent(event);
+            this._config = {
+                ...this._config,
+                legend_items: items
+            };
+            this._fireChanged();
+            this._renderItemsManager();
+        }
+        _removeItem(index) {
+            const items = this._getItems();
+            items.splice(index, 1);
+            this._config = {
+                ...this._config,
+                legend_items: items
+            };
+            this._fireChanged();
+            this._renderItemsManager();
+        }
+        _moveItem(index, direction) {
+            const items = this._getItems();
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= items.length)
+                return;
+            const temp = items[index];
+            items[index] = items[targetIndex];
+            items[targetIndex] = temp;
+            this._config = {
+                ...this._config,
+                legend_items: items
+            };
+            this._fireChanged();
+            this._renderItemsManager();
+        }
+        _updateItemField(index, field, value) {
+            const items = this._getItems();
+            if (!items[index])
+                return;
+            items[index][field] = value;
+            this._config = {
+                ...this._config,
+                legend_items: items
+            };
+            this._fireChanged();
+        }
+        _renderItemsManager() {
+            const container = this.querySelector('#items-container');
+            if (!container)
+                return;
+            const items = this._getItems();
+            if (items.length === 0) {
+                container.innerHTML = `
+        <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; color: var(--secondary-text-color); font-size: 13px;">
+          Aucun élément de légende personnalisé défini.<br>
+          <small>Cliquez sur "Ajouter un élément" pour personnaliser le volet.</small>
+        </div>
+      `;
+                return;
+            }
+            container.innerHTML = '';
+            items.forEach((it, idx) => {
+                const card = document.createElement('div');
+                card.style.cssText = `
+        background: var(--card-background-color, rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.1));
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      `;
+                // Header row
+                const headerRow = document.createElement('div');
+                headerRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;';
+                headerRow.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px;">
+          <ha-icon icon="${it.icon || 'mdi:circle-small'}" style="color: ${it.color || 'var(--primary-color)'}; --mdc-icon-size: 18px;"></ha-icon>
+          <span>${it.label || `Élément #${idx + 1}`}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <button type="button" class="btn-up" style="background: none; border: none; color: var(--primary-text-color); cursor: pointer; padding: 2px 6px; font-size: 14px;" ${idx === 0 ? 'disabled' : ''}>▲</button>
+          <button type="button" class="btn-down" style="background: none; border: none; color: var(--primary-text-color); cursor: pointer; padding: 2px 6px; font-size: 14px;" ${idx === items.length - 1 ? 'disabled' : ''}>▼</button>
+          <button type="button" class="btn-del" style="background: none; border: none; color: var(--error-color, #f44336); cursor: pointer; padding: 2px 6px; font-size: 16px;">✕</button>
+        </div>
+      `;
+                headerRow.querySelector('.btn-up')?.addEventListener('click', () => this._moveItem(idx, 'up'));
+                headerRow.querySelector('.btn-down')?.addEventListener('click', () => this._moveItem(idx, 'down'));
+                headerRow.querySelector('.btn-del')?.addEventListener('click', () => this._removeItem(idx));
+                // Fields row 1 (Icon & Badge)
+                const row1 = document.createElement('div');
+                row1.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px;';
+                row1.innerHTML = `
+        <div>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Icône (ex: mdi:power)</label>
+          <input type="text" class="input-icon" value="${it.icon || ''}" placeholder="mdi:tag" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        </div>
+        <div>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Badge court (ex: %, K, °C)</label>
+          <input type="text" class="input-badge" value="${it.badge || ''}" placeholder="%, K..." style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        </div>
+      `;
+                row1.querySelector('.input-icon')?.addEventListener('change', (e) => this._updateItemField(idx, 'icon', e.target.value));
+                row1.querySelector('.input-badge')?.addEventListener('change', (e) => this._updateItemField(idx, 'badge', e.target.value));
+                // Fields row 2 (Label & Desc)
+                const row2 = document.createElement('div');
+                row2.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px;';
+                row2.innerHTML = `
+        <div>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Libellé / Titre (en gras)</label>
+          <input type="text" class="input-label" value="${it.label || ''}" placeholder="ex: Appui court" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        </div>
+        <div>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Description</label>
+          <input type="text" class="input-desc" value="${it.desc || ''}" placeholder="ex: Allumage" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        </div>
+      `;
+                row2.querySelector('.input-label')?.addEventListener('change', (e) => this._updateItemField(idx, 'label', e.target.value));
+                row2.querySelector('.input-desc')?.addEventListener('change', (e) => this._updateItemField(idx, 'desc', e.target.value));
+                // Fields row 3 (Color)
+                const row3 = document.createElement('div');
+                row3.style.cssText = 'display: grid; grid-template-columns: 1fr; gap: 8px;';
+                row3.innerHTML = `
+        <div>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Couleur personnalisée HEX (optionnel, hérite de la carte si vide)</label>
+          <input type="text" class="input-color" value="${it.color || ''}" placeholder="ex: #38bdf8" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        </div>
+      `;
+                row3.querySelector('.input-color')?.addEventListener('change', (e) => this._updateItemField(idx, 'color', e.target.value));
+                card.appendChild(headerRow);
+                card.appendChild(row1);
+                card.appendChild(row2);
+                card.appendChild(row3);
+                container.appendChild(card);
+            });
         }
         _render() {
             if (!this._config)
@@ -3542,6 +3830,15 @@ var HaloButtonCard = (function (exports) {
                 this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
+          <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">Éléments de Légende & Guide</span>
+              <button type="button" id="btn-add-item" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; background: var(--primary-color, #0288d1); color: #fff; border: none; cursor: pointer; font-size: 12px; font-weight: 600;">
+                <span>+ Ajouter un élément</span>
+              </button>
+            </div>
+            <div id="items-container"></div>
+          </div>
         </div>
       `;
                 form = this.querySelector('#form');
@@ -3552,11 +3849,14 @@ var HaloButtonCard = (function (exports) {
                         form.hass = this._hass;
                     form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
                 }
+                this.querySelector('#btn-add-item')?.addEventListener('click', () => this._addItem());
+                this._renderItemsManager();
             }
             else {
                 form.data = this._formData();
                 if (this._hass)
                     form.hass = this._hass;
+                this._renderItemsManager();
             }
         }
     }
@@ -4490,11 +4790,14 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
+     * 📦 Version      : 1.3.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.0 (2026-10-30) : Modularisation du volet accordéon de custom:halo-separator-card
+     *                              (grille 1/2/3 colonnes responsive, gestionnaire UI des légendes,
+     *                              alignement typographique, badges, halos et interactions tactiles).
      *   - 💡 v1.2.0 (2026-10-30) : Intégration de custom:halo-button-card (polyvalente),
      *                              custom:halo-cover-color-card (couleurs volets 2x2),
      *                              custom:halo-palette-card (nuancier officiel 16 teintes HOLM)
@@ -4504,7 +4807,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.2.0';
+    const VERSION = '1.3.0';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
