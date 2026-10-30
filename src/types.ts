@@ -126,6 +126,7 @@ export interface HaloSeparatorCardConfig {
   color?: string | [number, number, number];
   theme_entity?: string;
   collapsible?: boolean;
+  show_legend?: boolean;
   expanded?: boolean;
   initial_collapsed?: boolean;
   label_on?: string;

@@ -8,11 +8,14 @@
  *                    alignement vertical, badges/icônes, halos et actions tactiles).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.0
+ * 📦 Version      : 1.3.1
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.3.1 (2026-10-30) : Séparation stricte du mode séparateur pur (collapsible: false)
+ *                              et accordéon actif (collapsible: true). Masquage total
+ *                              du volet et du bouton toggle si l'accordéon n'est pas activé.
  *   - 💡 v1.3.0 (2026-10-30) : Modularisation complète du volet repliable accordéon :
  *                              • Grille responsive dynamique paramétrable (1, 2 ou 3 colonnes).
  *                              • Alignement typographique parfait (icône centrée sur la 1ère ligne).
@@ -62,10 +65,9 @@ export class HaloSeparatorCard extends HTMLElement {
 
   public static getStubConfig(): Record<string, any> {
     return {
-      name: 'Guide & Légendes',
-      icon: 'mdi:book-open-variant',
-      collapsible: true,
-      columns: 2
+      name: 'Section',
+      icon: 'mdi:bookmark',
+      collapsible: false
     };
   }
 
@@ -77,6 +79,7 @@ export class HaloSeparatorCard extends HTMLElement {
       label_on: 'Masquer',
       label_off: 'Afficher',
       columns: 2,
+      collapsible: false,
       ...config
     };
 
@@ -110,12 +113,10 @@ export class HaloSeparatorCard extends HTMLElement {
   }
 
   private _isCollapsible(): boolean {
-    return Boolean(
-      this._config?.collapsible ||
-      this._config?.legend_items ||
-      this._config?.content ||
-      this._config?.toggle_entity
-    );
+    if (this._config?.collapsible === false || this._config?.show_legend === false) {
+      return false;
+    }
+    return Boolean(this._config?.collapsible || this._config?.show_legend);
   }
 
   private _hasChanged(oldHass?: HomeAssistant, newHass?: HomeAssistant): boolean {
@@ -530,8 +531,13 @@ export class HaloSeparatorCard extends HTMLElement {
     // Tiroir Accordéon
     if (this._accordionEl) {
       if (isCollapsible && this._isExpanded) {
+        this._accordionEl.style.display = 'block';
         this._accordionEl.className = 'halo-accordion-drawer expanded';
+      } else if (isCollapsible) {
+        this._accordionEl.style.display = 'block';
+        this._accordionEl.className = 'halo-accordion-drawer';
       } else {
+        this._accordionEl.style.display = 'none';
         this._accordionEl.className = 'halo-accordion-drawer';
       }
     }
