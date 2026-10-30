@@ -166,6 +166,80 @@ color: '#26c6da'
 | `icon` | `string` | `mdi:bookmark`| Section leading MDI icon. |
 | `color` | `string` | `#26c6da` | Neon gradient accent color (Hex or HOLM palette name). |
 | `theme_entity` | `string` | *auto* | Optional `input_select` entity driving view/dashboard colors. |
+| `collapsible` | `boolean` | `false` | Enables collapsible drawer and pill toggle button (*Hide ⌃* / *Show ⌄*). |
+| `initial_collapsed` | `boolean` | `false` | Initially collapsed/hidden when collapsible is true. |
+| `label_on` | `string` | `Hide` | Button label when drawer is expanded. |
+| `label_off` | `string` | `Show` | Button label when drawer is collapsed. |
+| `toggle_entity` | `string` | *optional* | `input_boolean` entity synchronized with the toggle button. |
+| `legend_items` | `boolean` / `array` | *auto* | Displays standard 2x2 Button Guide grid or accepts custom items array. |
+
+---
+
+### 4. `custom:halo-button-card`
+
+Universal Liquid Glass multi-purpose button card with specular halo, flexible horizontal/vertical layouts, decoupled actions and interactive sub-buttons.
+
+```yaml
+# Example 1: Wide horizontal button card (Master light toggle)
+type: custom:halo-button-card
+name: Turn Off All Lights
+label: Global extinction for all rooms
+icon: mdi:lightbulb-off
+color: Orange Flamme
+layout: horizontal
+tap_action:
+  action: call-service
+  service: light.turn_off
+  target:
+    entity_id:
+      - light.living_room
+      - light.office
+  confirmation:
+    text: "⚠️ Confirm turning off all lights in the home?"
+```
+
+```yaml
+# Example 2: Compact vertical mood button card
+type: custom:halo-button-card
+name: Cinema Mood
+label: TV Room (40% • 2200K)
+icon: mdi:movie-open
+color: Cyan HOLM
+layout: vertical
+tap_action:
+  action: call-service
+  service: scene.turn_on
+  target:
+    entity_id: scene.living_room_cinema
+```
+
+---
+
+### 5. `custom:halo-cover-color-card`
+
+Turnkey 2×2 grid card for configuring shutter state colors (*Closed*, *Partial*, *Open*, *Moving*) with glowing dots and state icons.
+
+```yaml
+type: custom:halo-cover-color-card
+title: "Cover State Colors"
+icon: mdi:window-shutter-cog
+closed_entity: input_text.couleur_volet_ferme
+partial_entity: input_text.couleur_volet_partiel
+open_entity: input_text.couleur_volet_ouvert
+moving_entity: input_text.couleur_volet_en_mouvement
+```
+
+---
+
+### 6. `custom:halo-palette-card`
+
+Official HOLM / HALO 16-color theme palette selector in a responsive 2×8 grid with active check badges and instant `input_select` synchronization.
+
+```yaml
+type: custom:halo-palette-card
+entity: input_select.couleur_theme_eclairages
+columns: 2
+```
 
 ---
 
