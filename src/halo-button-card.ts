@@ -7,23 +7,19 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.2
+ * 📦 Version      : 1.2.0
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 💡 v1.3.2 (2026-10-30) : Mention OU stylisée entre icône et badge court dans
- *                              l'éditeur, et calibrage de taille de police (max 3 car.).
- *   - 💡 v1.3.1 (2026-10-30) : Découplage complet séparateur simple vs accordéon :
- *                              interrupteur collapsible conditionnant l'affichage du
- *                              volet et masquage total des contrôles de légende dans l'éditeur.
- *   - 💡 v1.3.0 (2026-10-30) : Modularisation du volet accordéon de custom:halo-separator-card
- *                              (grille 1/2/3 colonnes responsive, gestionnaire UI des légendes,
- *                              alignement typographique, badges, halos et interactions tactiles).
- *   - 💡 v1.2.0 (2026-10-30) : Intégration de custom:halo-button-card (polyvalente),
- *                              custom:halo-cover-color-card (couleurs volets 2x2),
- *                              custom:halo-palette-card (nuancier officiel 16 teintes HOLM)
- *                              et volet accordéon intégré dans custom:halo-separator-card.
+ *   - 💡 v1.2.0 (2026-10-30) : Suite majeure Liquid Glass & Composants modulaires :
+ *                              - custom:halo-button-card (tuile universelle polyvalente).
+ *                              - custom:halo-separator-card modulaire (mode adaptateur simple
+ *                                ou accordéon repliable, grille 1/2/3 colonnes responsive,
+ *                                légendes dynamiques, mention "OU" stylisée et badge court auto-calibré).
+ *                              - custom:halo-cover-color-card (palette 2x2 états volets).
+ *                              - custom:halo-palette-card (nuancier officiel 16 teintes HOLM).
+ *                              - Remédiation Spook & zéro entités fantômes.
  *   - 💡 v1.1.0 (2026-10-30) : Intégration de custom:halo-light-card, éditeur visuel UI,
  *                              calibrage 64px et bundle lisible/non-minifié.
  *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
@@ -48,7 +44,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.3.2';
+const VERSION = '1.2.0';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,

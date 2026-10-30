@@ -2984,26 +2984,19 @@ var HaloButtonCard = (function (exports) {
      *                    alignement vertical, badges/icônes, halos et actions tactiles).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.2
+     * 📦 Version      : 1.2.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
-     *   - 💡 v1.3.2 (2026-10-30) : Calibrage précis du badge court (max 2-3 caractères,
-     *                              ajustement dynamique de la taille de police et troncature stricte).
-     *   - 💡 v1.3.1 (2026-10-30) : Séparation stricte du mode séparateur pur (collapsible: false)
-     *                              et accordéon actif (collapsible: true). Masquage total
-     *                              du volet et du bouton toggle si l'accordéon n'est pas activé.
-     *   - 💡 v1.3.0 (2026-10-30) : Modularisation complète du volet repliable accordéon :
+     *   - 💡 v1.2.0 (2026-10-30) : Refonte modulaire majeure :
+     *                              • Mode adaptatif : séparateur épuré (collapsible: false) ou accordéon (collapsible: true).
      *                              • Grille responsive dynamique paramétrable (1, 2 ou 3 colonnes).
-     *                              • Alignement typographique parfait (icône centrée sur la 1ère ligne).
+     *                              • Alignement optique vertical au pixel près entre icône/badge et libellé.
+     *                              • Support double icône MDI ou badge court (max 2-3 car. avec calibrage dynamique).
      *                              • Rétro-éclairage et halo spéculaire paramétrables par item.
-     *                              • Support double icône MDI ou badge court (%, K, °C, etc.).
-     *                              • Prise en charge du contenu libre Markdown/texte.
-     *                              • Support des interactions tactiles optionnelles (tap_action).
-     *   - 💡 v1.2.0 (2026-10-30) : Évolution accordéon intégrée (volet repliable avec
-     *                              transition CSS fluide et bouton pill Masquer/Afficher).
-     *   - 💡 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
+     *                              • Support du contenu libre et interactions tactiles optionnelles.
+     *   - 🆕 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
      * ==============================================================================
      */
     class HaloSeparatorCard extends HTMLElement {
@@ -3564,22 +3557,18 @@ var HaloButtonCard = (function (exports) {
      *                    si l'accordéon est explicitement activé.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.2
+     * 📦 Version      : 1.2.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
-     *   - 💡 v1.3.2 (2026-10-30) : Amélioration ergonomique de la sélection d'indicateur :
-     *                              mention visuelle 'OU' entre l'icône et le badge court,
-     *                              champ badge calibré avec limite stricte de 3 caractères (maxlength 3).
-     *   - 💡 v1.3.1 (2026-10-30) : Affichage conditionnel strict : masquage complet des
-     *                              options et du gestionnaire de légendes si collapsible
-     *                              n'est pas coché. Séparateur simple et épuré par défaut.
-     *   - 💡 v1.3.0 (2026-10-30) : Support complet des colonnes (1, 2, 3) et gestionnaire
-     *                              dynamique des éléments de légende (ajout, édition,
-     *                              réordonnancement, suppression).
-     *   - 💡 v1.2.0 (2026-10-30) : Ajout des contrôles accordéon (collapsible, labels, toggle_entity).
-     *   - 💡 v1.0.0 (2026-10-29) : Création initiale de l'éditeur séparateur.
+     *   - 💡 v1.2.0 (2026-10-30) : Éditeur adaptatif modulaire complet :
+     *                              • Masquage strict des options de volet/légendes si collapsible est désactivé.
+     *                              • Répéteur dynamique des éléments de légende (ajout, édition, réordonnancement, suppression).
+     *                              • Support sélecteur colonnes (1, 2, 3).
+     *                              • Mention visuelle "OU" stylisée entre sélecteur d'icône et badge court.
+     *                              • Champ badge court calibré avec limite stricte (maxlength="3").
+     *   - 🆕 v1.0.0 (2026-10-29) : Création initiale de l'éditeur séparateur.
      * ==============================================================================
      */
     const BASE_SCHEMA = [
@@ -4845,29 +4834,25 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.2
+     * 📦 Version      : 1.2.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
-     *   - 💡 v1.3.2 (2026-10-30) : Mention OU stylisée entre icône et badge court dans
-     *                              l'éditeur, et calibrage de taille de police (max 3 car.).
-     *   - 💡 v1.3.1 (2026-10-30) : Découplage complet séparateur simple vs accordéon :
-     *                              interrupteur collapsible conditionnant l'affichage du
-     *                              volet et masquage total des contrôles de légende dans l'éditeur.
-     *   - 💡 v1.3.0 (2026-10-30) : Modularisation du volet accordéon de custom:halo-separator-card
-     *                              (grille 1/2/3 colonnes responsive, gestionnaire UI des légendes,
-     *                              alignement typographique, badges, halos et interactions tactiles).
-     *   - 💡 v1.2.0 (2026-10-30) : Intégration de custom:halo-button-card (polyvalente),
-     *                              custom:halo-cover-color-card (couleurs volets 2x2),
-     *                              custom:halo-palette-card (nuancier officiel 16 teintes HOLM)
-     *                              et volet accordéon intégré dans custom:halo-separator-card.
+     *   - 💡 v1.2.0 (2026-10-30) : Suite majeure Liquid Glass & Composants modulaires :
+     *                              - custom:halo-button-card (tuile universelle polyvalente).
+     *                              - custom:halo-separator-card modulaire (mode adaptateur simple
+     *                                ou accordéon repliable, grille 1/2/3 colonnes responsive,
+     *                                légendes dynamiques, mention "OU" stylisée et badge court auto-calibré).
+     *                              - custom:halo-cover-color-card (palette 2x2 états volets).
+     *                              - custom:halo-palette-card (nuancier officiel 16 teintes HOLM).
+     *                              - Remédiation Spook & zéro entités fantômes.
      *   - 💡 v1.1.0 (2026-10-30) : Intégration de custom:halo-light-card, éditeur visuel UI,
      *                              calibrage 64px et bundle lisible/non-minifié.
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.3.2';
+    const VERSION = '1.2.0';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
