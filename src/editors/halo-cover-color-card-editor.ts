@@ -15,48 +15,23 @@
 
 import { HomeAssistant, HaloCoverColorCardConfig } from '../types';
 import { hexToRgb, rgbToHex } from '../core/theme-helper';
+import { getLang } from '../localize/localize';
+import { applyFormI18n } from './editor-common';
 
 const SCHEMA = [
-  {
-    name: 'title',
-    label: "Titre de l'en-tête",
-    selector: { text: {} }
-  },
-  {
-    name: 'icon',
-    label: "Icône de l'en-tête",
-    selector: { icon: {} }
-  },
-  {
-    name: 'closed_entity',
-    label: 'Entité couleur volet fermé (défaut: input_text.couleur_volet_ferme)',
-    selector: { entity: { domain: 'input_text' } }
-  },
-  {
-    name: 'partial_entity',
-    label: 'Entité couleur volet partiel (défaut: input_text.couleur_volet_partiel)',
-    selector: { entity: { domain: 'input_text' } }
-  },
-  {
-    name: 'open_entity',
-    label: 'Entité couleur volet ouvert (défaut: input_text.couleur_volet_ouvert)',
-    selector: { entity: { domain: 'input_text' } }
-  },
-  {
-    name: 'moving_entity',
-    label: 'Entité couleur mouvement (défaut: input_text.couleur_volet_en_mouvement)',
-    selector: { entity: { domain: 'input_text' } }
-  },
-  {
-    name: 'theme_entity',
-    label: 'Entité sélecteur de thème pour en-tête (optionnel)',
-    selector: { entity: { domain: 'input_select' } }
-  }
+  { name: 'title', selector: { text: {} } },
+  { name: 'icon', selector: { icon: {} } },
+  { name: 'closed_entity', selector: { entity: { domain: 'input_text' } } },
+  { name: 'partial_entity', selector: { entity: { domain: 'input_text' } } },
+  { name: 'open_entity', selector: { entity: { domain: 'input_text' } } },
+  { name: 'moving_entity', selector: { entity: { domain: 'input_text' } } },
+  { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
 ];
 
 export class HaloCoverColorCardEditor extends HTMLElement {
   private _config!: HaloCoverColorCardConfig;
   private _hass!: HomeAssistant;
+  private _lang = "en";
 
   public setConfig(config: HaloCoverColorCardConfig) {
     this._config = { ...config };
@@ -65,12 +40,16 @@ export class HaloCoverColorCardEditor extends HTMLElement {
 
   public set hass(hass: HomeAssistant) {
     this._hass = hass;
+    if (this._config && this.querySelector('ha-form') && getLang(hass) !== this._lang) {
+      this.innerHTML = '';
+      this._render();
+      return;
+    }
     const form = this.querySelector('ha-form') as any;
     if (form) {
       form.hass = hass;
     }
   }
-
   private _formData(): Record<string, any> {
     if (!this._config) return {};
     const data: Record<string, any> = { ...this._config };
@@ -104,6 +83,7 @@ export class HaloCoverColorCardEditor extends HTMLElement {
 
     let form = this.querySelector('ha-form') as any;
     if (!form) {
+      this._lang = getLang(this._hass);
       this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
@@ -111,7 +91,7 @@ export class HaloCoverColorCardEditor extends HTMLElement {
       `;
       form = this.querySelector('#form') as any;
       if (form) {
-        form.schema = SCHEMA;
+        applyFormI18n(form, this._hass, "cover_color", SCHEMA);
         form.data = this._formData();
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));

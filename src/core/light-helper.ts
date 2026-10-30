@@ -195,14 +195,17 @@ export function formatKelvinShort(kelvin: number | undefined): string {
  * - 'Éteint' si pas on
  * - 'Allumé [• X %] [• Y K]' si on
  */
-export function formatLightStatus(entity: HassEntity | undefined): string {
+export function formatLightStatus(
+  entity: HassEntity | undefined,
+  t: (key: string) => string
+): string {
   if (!entity) return '—';
   const st = entity.state;
-  if (st === 'unavailable') return 'Indisponible';
-  if (st === 'unknown') return 'Inconnu';
-  if (st !== 'on') return 'Éteint';
+  if (st === 'unavailable') return t('state.unavailable');
+  if (st === 'unknown') return t('state.unknown');
+  if (st !== 'on') return t('state.off');
 
-  const parts: string[] = ['Allumé'];
+  const parts: string[] = [t('state.on')];
   const b = entity.attributes?.brightness;
   if (b != null) {
     const pct = Math.round((Number(b) / 255) * 100);
