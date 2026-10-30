@@ -590,7 +590,7 @@ export class HaloLightCard extends HTMLElement {
     const currentKelvin = getKelvin(entity);
 
     const accentCol = getLightAccentColor(this._hass, this._config, entity);
-    const cardStyles = getLightCardStyles(accentCol, isOn, isUnavail);
+    const cardStyles = getLightCardStyles(accentCol, isOn, isUnavail, this._config.border_width);
 
     // 1. Mise à jour de ha-card (fond, bordure, box-shadow)
     if (this._cardEl) {

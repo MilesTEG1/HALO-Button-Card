@@ -116,24 +116,26 @@ var HaloButtonCard = (function (exports) {
             moving: toHexColor(config?.color_moving, states['input_text.couleur_volet_en_mouvement']?.state || '#f59e0b')
         };
     }
-    function getHaloCardStyles(accentCol, isUnavail, isMoving) {
+    function getHaloCardStyles(accentCol, isUnavail, isMoving, borderWidth) {
+        const bw = (typeof borderWidth === 'number' && !isNaN(borderWidth)) ? borderWidth : 1.5;
+        const borderStr = (color) => bw > 0 ? `${bw}px solid ${color}` : 'none';
         if (isUnavail) {
             return {
                 background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))',
-                border: '1.5px solid #f59e0b',
+                border: borderStr('#f59e0b'),
                 boxShadow: '0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)'
             };
         }
         if (isMoving) {
             return {
                 background: `linear-gradient(135deg, ${accentCol}26, rgba(20, 28, 38, 0.90))`,
-                border: `1.5px solid ${accentCol}`,
+                border: borderStr(accentCol),
                 boxShadow: `0 0 22px ${accentCol}77, 0 0 8px ${accentCol}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`
             };
         }
         return {
             background: `linear-gradient(135deg, ${accentCol}1A, rgba(20, 28, 38, 0.88))`,
-            border: `1.5px solid ${accentCol}`,
+            border: borderStr(accentCol),
             boxShadow: `0 0 18px ${accentCol}60, 0 0 6px ${accentCol}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`
         };
     }
@@ -690,7 +692,10 @@ var HaloButtonCard = (function (exports) {
             // Classes & Layout
             this._cardEl.className = isVertical ? 'layout-vertical' : 'layout-horizontal';
             // Card styling (Border & Glowing Specular Halo)
-            const cardBorder = `1.5px solid ${color}`;
+            const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
+                ? this._config.border_width
+                : 1.5;
+            const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
             const cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
             if (this._cardEl.style.border !== cardBorder) {
                 this._cardEl.style.border = cardBorder;
@@ -852,15 +857,20 @@ var HaloButtonCard = (function (exports) {
     /**
      * ==============================================================================
      * 📌 Nom du fichier : src/editors/halo-button-card-editor.ts
-     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-button-card
-     *                    utilisant le composant natif <ha-form> de Home Assistant.
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-button-card.
+     *                    Combine le composant natif <ha-form> pour les métadonnées et un
+     *                    panneau Liquid Glass avec médaillon halo interactif, nuancier
+     *                    rapide HOLM et curseur d'épaisseur de bordure.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
+     * 📦 Version      : 1.2.1
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.2.1 (2026-10-30) : Sélecteur de couleur Mix A+B (Halo Swatch + Nuancier
+     *                              rapide HOLM 16 teintes) et curseur d'épaisseur de bordure
+     *                              (0 à 3 px) côte à côte en grille responsive.
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-button-card.
      * ==============================================================================
      */
@@ -911,53 +921,39 @@ var HaloButtonCard = (function (exports) {
             selector: { entity: {} }
         },
         {
-            name: 'color',
-            label: 'Couleur personnalisée (optionnel)',
-            selector: { color_rgb: {} }
-        },
-        {
             name: 'theme_entity',
             label: 'Entité sélecteur de thème (optionnel)',
             selector: { entity: { domain: 'input_select' } }
         }
     ];
     class HaloButtonCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            // Références DOM Style Panel
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._chipsContainerEl = null;
+            this._borderSliderEl = null;
+            this._borderValBadgeEl = null;
+        }
         setConfig(config) {
             this._config = {
                 layout: 'horizontal',
+                border_width: 1.5,
                 ...config
             };
             this._render();
         }
         set hass(hass) {
             this._hass = hass;
-            const form = this.querySelector('ha-form');
+            const form = this.querySelector('#form');
             if (form) {
                 form.hass = hass;
             }
         }
-        _formData() {
-            if (!this._config)
-                return {};
-            const data = { ...this._config };
-            if (data.color && typeof data.color === 'string') {
-                const rgb = hexToRgb(data.color);
-                if (rgb)
-                    data.color = rgb;
-            }
-            return data;
-        }
-        _valueChanged(ev) {
-            if (!this._config || !ev.detail.value)
-                return;
-            const val = { ...ev.detail.value };
-            if (val.color && Array.isArray(val.color)) {
-                val.color = rgbToHex(val.color);
-            }
-            this._config = {
-                ...this._config,
-                ...val
-            };
+        _fireConfigChanged() {
             const event = new CustomEvent('config-changed', {
                 detail: { config: this._config },
                 bubbles: true,
@@ -965,30 +961,444 @@ var HaloButtonCard = (function (exports) {
             });
             this.dispatchEvent(event);
         }
+        _getColorHex() {
+            const raw = this._config?.color || 'Cyan HOLM';
+            return toHexColor(raw, '#26c6da');
+        }
+        _getColorDisplayName() {
+            const raw = this._config?.color;
+            if (!raw)
+                return 'Cyan HOLM (Défaut)';
+            if (typeof raw === 'string') {
+                if (HOLM_PALETTE[raw])
+                    return raw;
+                for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
+                    if (hex.toLowerCase() === raw.toLowerCase())
+                        return name;
+                }
+                return 'Couleur personnalisée';
+            }
+            return 'Couleur personnalisée';
+        }
+        _updateColor(colorValue) {
+            this._config = {
+                ...this._config,
+                color: colorValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _updateBorderWidth(widthValue) {
+            this._config = {
+                ...this._config,
+                border_width: widthValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _syncStylePanel() {
+            const hex = this._getColorHex();
+            const name = this._getColorDisplayName();
+            const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.5;
+            // 1. Swatch Circle & Halo (Option A)
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = hex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = hex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = hex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = name;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = hex.toUpperCase();
+            }
+            // 2. Nuancier rapide Chips (Option B)
+            if (this._chipsContainerEl) {
+                const activeRaw = this._config.color || 'Cyan HOLM';
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = (chipName === activeRaw || chipHex?.toLowerCase() === hex.toLowerCase());
+                    btn.classList.toggle('active', isActive);
+                });
+            }
+            // 3. Border Slider & Badge
+            if (this._borderSliderEl) {
+                this._borderSliderEl.value = String(bw);
+            }
+            if (this._borderValBadgeEl) {
+                let desc = `${bw} px`;
+                if (bw === 0)
+                    desc = '0 px (Off)';
+                else if (bw === 1.5)
+                    desc = '1.5 px (Défaut)';
+                this._borderValBadgeEl.textContent = desc;
+            }
+        }
         _render() {
             if (!this._config)
                 return;
-            let form = this.querySelector('ha-form');
+            let form = this.querySelector('#form');
             if (!form) {
                 this.innerHTML = `
-        <div style="padding: 8px 0;">
+        <style>
+          .halo-editor-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 4px 0 12px 0;
+            box-sizing: border-box;
+          }
+
+          /* Style Panel Container */
+          .halo-style-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 14px 16px;
+            background: linear-gradient(145deg, rgba(20, 28, 38, 0.70), rgba(10, 15, 22, 0.90));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            box-sizing: border-box;
+          }
+          .halo-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #e2e8f0;
+          }
+          .halo-section-header ha-icon {
+            --mdc-icon-size: 18px;
+            color: #26c6da;
+          }
+
+          /* 2 Colonnes : Couleur à gauche, Bordure à droite */
+          .halo-style-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            align-items: stretch;
+          }
+          @media (max-width: 520px) {
+            .halo-style-grid {
+              grid-template-columns: 1fr;
+            }
+          }
+
+          .halo-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+          }
+          .halo-col-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 22px;
+          }
+          .halo-col-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(226, 232, 240, 0.90);
+          }
+          .halo-badge-val {
+            font-size: 11px;
+            font-weight: 700;
+            color: #26c6da;
+            background: rgba(38, 198, 218, 0.15);
+            border: 1px solid rgba(38, 198, 218, 0.35);
+            border-radius: 6px;
+            padding: 1px 6px;
+          }
+
+          /* Option A : Swatch Card & Pipette */
+          .halo-swatch-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            min-height: 44px;
+            box-sizing: border-box;
+          }
+          .halo-swatch-circle-wrap {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .halo-swatch-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-sizing: border-box;
+            transition: transform 0.15s ease, box-shadow 0.25s ease;
+          }
+          .halo-swatch-circle:hover {
+            transform: scale(1.1);
+          }
+          .hidden-color-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            pointer-events: none;
+          }
+          .halo-swatch-meta {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+          }
+          .halo-color-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+          }
+          .halo-color-hex {
+            font-size: 10.5px;
+            font-family: monospace;
+            color: rgba(226, 232, 240, 0.60);
+          }
+          .halo-pipette-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            color: #e2e8f0;
+            cursor: pointer;
+            padding: 5px 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, transform 0.1s ease;
+          }
+          .halo-pipette-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+            transform: scale(1.05);
+          }
+          .halo-pipette-btn ha-icon {
+            --mdc-icon-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+
+          /* Option B : Nuancier rapide HOLM */
+          .halo-chips-label {
+            font-size: 10.5px;
+            color: rgba(226, 232, 240, 0.55);
+            margin-top: 2px;
+          }
+          .halo-chips-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+          }
+          .halo-chip {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-sizing: border-box;
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+          }
+          .halo-chip:hover {
+            transform: scale(1.22);
+            box-shadow: 0 0 6px currentColor;
+          }
+          .halo-chip.active {
+            transform: scale(1.25);
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 10px currentColor;
+          }
+
+          /* Colonne Droite : Curseur Bordure */
+          .halo-border-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            height: 100%;
+            box-sizing: border-box;
+          }
+          .halo-range-slider {
+            width: 100%;
+            height: 6px;
+            accent-color: #26c6da;
+            cursor: pointer;
+            margin: 4px 0;
+          }
+          .slider-ticks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: rgba(226, 232, 240, 0.55);
+            line-height: 1.2;
+          }
+        </style>
+
+        <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
+
+          <div class="halo-style-section">
+            <div class="halo-section-header">
+              <ha-icon icon="mdi:palette-swatch"></ha-icon>
+              <span>Personnalisation Visuelle (Halo & Bordure)</span>
+            </div>
+
+            <div class="halo-style-grid">
+              <!-- GAUCHE : Couleur & Nuancier HOLM -->
+              <div class="halo-col">
+                <div class="halo-col-header">
+                  <span class="halo-col-title">Couleur du Halo & Bouton</span>
+                </div>
+
+                <!-- Option A : Médaillon Swatch interactif -->
+                <div class="halo-swatch-card" id="swatch-card">
+                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="Ouvrir la palette libre">
+                    <div class="halo-swatch-circle" id="swatch-circle"></div>
+                    <input type="color" id="native-color-input" class="hidden-color-input" />
+                  </div>
+                  <div class="halo-swatch-meta">
+                    <span class="halo-color-title" id="swatch-name">Cyan HOLM</span>
+                    <span class="halo-color-hex" id="swatch-hex">#26C6DA</span>
+                  </div>
+                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="Ouvrir la roue chromatique">
+                    <ha-icon icon="mdi:eyedropper"></ha-icon>
+                  </button>
+                </div>
+
+                <!-- Option B : Nuancier rapide HOLM -->
+                <div class="halo-chips-label">Nuancier officiel HOLM (Sélection rapide) :</div>
+                <div class="halo-chips-grid" id="chips-grid"></div>
+              </div>
+
+              <!-- DROITE : Curseur d'épaisseur de bordure -->
+              <div class="halo-col">
+                <div class="halo-col-header">
+                  <span class="halo-col-title">Épaisseur de bordure</span>
+                  <span class="halo-badge-val" id="border-val-text">1.5 px</span>
+                </div>
+
+                <div class="halo-border-card">
+                  <input type="range" id="border-slider-input" min="0" max="3" step="0.25" value="1.5" class="halo-range-slider" />
+                  <div class="slider-ticks">
+                    <span>0 px<br><small style="opacity: 0.6;">Sans bordure</small></span>
+                    <span style="text-align: center;">1.5 px<br><small style="opacity: 0.6;">Défaut</small></span>
+                    <span style="text-align: right;">3.0 px<br><small style="opacity: 0.6;">Maxi</small></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       `;
                 form = this.querySelector('#form');
                 if (form) {
                     form.schema = SCHEMA$4;
-                    form.data = this._formData();
+                    form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
                     form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
                 }
+                this._initDomBindings();
             }
             else {
-                form.data = this._formData();
+                form.data = this._formMetadata();
                 if (this._hass)
                     form.hass = this._hass;
             }
+            this._syncStylePanel();
+        }
+        _initDomBindings() {
+            this._swatchCircleEl = this.querySelector('#swatch-circle');
+            this._colorInputEl = this.querySelector('#native-color-input');
+            this._swatchNameEl = this.querySelector('#swatch-name');
+            this._swatchHexEl = this.querySelector('#swatch-hex');
+            this._chipsContainerEl = this.querySelector('#chips-grid');
+            this._borderSliderEl = this.querySelector('#border-slider-input');
+            this._borderValBadgeEl = this.querySelector('#border-val-text');
+            // 1. Déclencheur input color natif
+            const triggerColor = () => {
+                if (this._colorInputEl) {
+                    this._colorInputEl.click();
+                }
+            };
+            this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+            this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+            this._colorInputEl?.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val)
+                    this._updateColor(val);
+            });
+            // 2. Génération des chips HOLM (Option B)
+            if (this._chipsContainerEl) {
+                this._chipsContainerEl.innerHTML = '';
+                for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
+                    const chip = document.createElement('div');
+                    chip.className = 'halo-chip';
+                    chip.setAttribute('data-name', name);
+                    chip.setAttribute('data-hex', hex);
+                    chip.setAttribute('title', `${name} (${hex})`);
+                    chip.style.backgroundColor = hex;
+                    chip.style.color = hex;
+                    chip.addEventListener('click', () => {
+                        this._updateColor(name);
+                    });
+                    this._chipsContainerEl.appendChild(chip);
+                }
+            }
+            // 3. Slider de bordure
+            this._borderSliderEl?.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    this._updateBorderWidth(val);
+                }
+            });
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            delete data.color;
+            delete data.border_width;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            this._config = {
+                ...this._config,
+                ...ev.detail.value
+            };
+            this._fireConfigChanged();
         }
     }
 
@@ -1669,7 +2079,7 @@ var HaloButtonCard = (function (exports) {
             else {
                 iconName = 'mdi:window-shutter';
             }
-            const cardStyles = getHaloCardStyles(accentCol, isUnavail, isMoving);
+            const cardStyles = getHaloCardStyles(accentCol, isUnavail, isMoving, this._config.border_width);
             // Update card body styling
             if (this._cardEl) {
                 if (this._cardEl.style.background !== cardStyles.background) {
@@ -1745,6 +2155,19 @@ var HaloButtonCard = (function (exports) {
             name: 'name',
             label: 'Nom personnalisé (optionnel)',
             selector: { text: {} }
+        },
+        {
+            name: 'border_width',
+            label: 'Épaisseur de bordure (px)',
+            selector: {
+                number: {
+                    min: 0,
+                    max: 3,
+                    step: 0.25,
+                    unit_of_measurement: 'px',
+                    mode: 'slider'
+                }
+            }
         },
         {
             type: 'grid',
@@ -2097,25 +2520,27 @@ var HaloButtonCard = (function (exports) {
      * Génère les styles CSS pour le conteneur ha-card :
      * Alignement strict 1:1 avec tuile_avec_sous_boutons.
      */
-    function getLightCardStyles(accentCol, isOn, isUnavail) {
+    function getLightCardStyles(accentCol, isOn, isUnavail, borderWidth) {
+        const bw = (typeof borderWidth === 'number' && !isNaN(borderWidth)) ? borderWidth : 1.5;
+        const borderStr = (color) => bw > 0 ? `${bw}px solid ${color}` : 'none';
         if (isUnavail) {
             return {
                 background: 'linear-gradient(160deg, rgba(22, 32, 46, 0.72), rgba(12, 18, 26, 0.86))',
-                border: '1px solid rgba(245, 158, 11, 0.50)',
+                border: borderStr('rgba(245, 158, 11, 0.50)'),
                 boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 22px rgba(0, 0, 0, 0.40), 0 0 16px rgba(245, 158, 11, 0.30)'
             };
         }
         if (isOn) {
             return {
                 background: 'linear-gradient(160deg, rgba(22, 34, 48, 0.90), rgba(12, 18, 28, 0.95))',
-                border: `1px solid ${accentCol}55`,
+                border: borderStr(accentCol),
                 boxShadow: `inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 6px 20px rgba(0, 0, 0, 0.38), 0 0 14px ${accentCol}26`
             };
         }
         // Éteint : compact, sobre et discret, sans halo bleuté parasite
         return {
             background: 'linear-gradient(160deg, rgba(22, 32, 46, 0.72), rgba(12, 18, 26, 0.86))',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: borderStr('rgba(255, 255, 255, 0.08)'),
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 16px rgba(0, 0, 0, 0.35)'
         };
     }
@@ -2677,7 +3102,7 @@ var HaloButtonCard = (function (exports) {
             const currentPct = getBrightnessPct(entity);
             const currentKelvin = getKelvin(entity);
             const accentCol = getLightAccentColor(this._hass, this._config, entity);
-            const cardStyles = getLightCardStyles(accentCol, isOn, isUnavail);
+            const cardStyles = getLightCardStyles(accentCol, isOn, isUnavail, this._config.border_width);
             // 1. Mise à jour de ha-card (fond, bordure, box-shadow)
             if (this._cardEl) {
                 if (this._cardEl.style.background !== cardStyles.background) {
@@ -2888,6 +3313,19 @@ var HaloButtonCard = (function (exports) {
             name: 'theme_entity',
             label: 'Entité sélecteur de thème (défaut : input_select.couleur_theme_eclairages)',
             selector: { entity: { domain: 'input_select' } }
+        },
+        {
+            name: 'border_width',
+            label: 'Épaisseur de bordure (px)',
+            selector: {
+                number: {
+                    min: 0,
+                    max: 3,
+                    step: 0.25,
+                    unit_of_measurement: 'px',
+                    mode: 'slider'
+                }
+            }
         },
         {
             type: 'grid',
@@ -4861,11 +5299,16 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.1
+     * 📦 Version      : 1.3.0
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.3.0 (2026-10-30) : Personnalisation visuelle avancée :
+     *                              - Réglage de l'épaisseur de bordure (0 à 3 px, pas 0.25) sur
+     *                                halo-button-card, halo-cover-card et halo-light-card.
+     *                              - Sélecteur de couleur Mix A+B (Halo Swatch médaillon interactif
+     *                                + Nuancier rapide HOLM 16 teintes) dans l'éditeur de carte.
      *   - 🩹 v1.2.1 (2026-10-30) : Correctif halo-button-card : contour net (border 1.5px solid)
      *                              et halo lumineux permanent (box-shadow) assorti au bouton.
      *   - 💡 v1.2.0 (2026-10-30) : Suite majeure Liquid Glass & Composants modulaires :
@@ -4881,7 +5324,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.2.1';
+    const VERSION = '1.3.0';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({

@@ -381,7 +381,10 @@ export class HaloButtonCard extends HTMLElement {
     this._cardEl!.className = isVertical ? 'layout-vertical' : 'layout-horizontal';
 
     // Card styling (Border & Glowing Specular Halo)
-    const cardBorder = `1.5px solid ${color}`;
+    const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
+      ? this._config.border_width
+      : 1.5;
+    const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
     const cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
     if (this._cardEl!.style.border !== cardBorder) {
       this._cardEl!.style.border = cardBorder;
