@@ -24,79 +24,41 @@
 
 import { HomeAssistant, HaloSeparatorCardConfig, LegendItemConfig } from '../types';
 import { hexToRgb, rgbToHex } from '../core/theme-helper';
+import { useLocalize, getLang } from '../localize/localize';
+import { applyFormI18n, selectOptions } from './editor-common';
 
 const BASE_SCHEMA = [
-  {
-    name: 'name',
-    label: 'Titre de la section',
-    selector: { text: {} }
-  },
-  {
-    name: 'icon',
-    label: 'Icône MDI',
-    selector: { icon: {} }
-  },
-  {
-    name: 'color',
-    label: 'Couleur personnalisée (optionnel)',
-    selector: { color_rgb: {} }
-  },
-  {
-    name: 'theme_entity',
-    label: 'Entité sélecteur de thème (optionnel)',
-    selector: { entity: { domain: 'input_select' } }
-  },
-  {
-    name: 'collapsible',
-    label: 'Activer le volet repliable de légende (Accordéon)',
-    selector: { boolean: {} }
-  }
+  { name: 'name', selector: { text: {} } },
+  { name: 'icon', selector: { icon: {} } },
+  { name: 'color', selector: { color_rgb: {} } },
+  { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } },
+  { name: 'collapsible', selector: { boolean: {} } }
 ];
 
-const ACCORDION_SCHEMA = [
-  {
-    name: 'initial_collapsed',
-    label: 'Initialement replié / masqué',
-    selector: { boolean: {} }
-  },
+const buildAccordionSchema = (t: ReturnType<typeof useLocalize>) => [
+  { name: 'initial_collapsed', selector: { boolean: {} } },
   {
     name: 'columns',
-    label: 'Nombre de colonnes du volet',
     selector: {
       select: {
-        options: [
-          { value: '1', label: '1 colonne (Largeur complète / Texte détaillé)' },
-          { value: '2', label: '2 colonnes (Standard équilibré)' },
-          { value: '3', label: '3 colonnes (Compact / 3 éléments par ligne)' }
-        ]
+        options: selectOptions(t, 'separator', [['1', 'cols_1'], ['2', 'cols_2'], ['3', 'cols_3']])
       }
     }
   },
-  {
-    name: 'label_on',
-    label: 'Libellé bouton quand ouvert (ex: Masquer)',
-    selector: { text: {} }
-  },
-  {
-    name: 'label_off',
-    label: 'Libellé bouton quand fermé (ex: Afficher)',
-    selector: { text: {} }
-  },
-  {
-    name: 'content',
-    label: 'Note ou texte explicatif libre (optionnel)',
-    selector: { text: { multiline: true } }
-  },
-  {
-    name: 'toggle_entity',
-    label: 'Entité externe synchronisée (optionnel)',
-    selector: { entity: { domain: 'input_boolean' } }
-  }
+  { name: 'label_on', selector: { text: {} } },
+  { name: 'label_off', selector: { text: {} } },
+  { name: 'content', selector: { text: { multiline: true } } },
+  { name: 'toggle_entity', selector: { entity: { domain: 'input_boolean' } } }
 ];
 
 export class HaloSeparatorCardEditor extends HTMLElement {
   private _config!: HaloSeparatorCardConfig;
   private _hass!: HomeAssistant;
+  private _lang = "en";
+
+  private get _t() {
+    return useLocalize(this._hass);
+  }
 
   public setConfig(config: HaloSeparatorCardConfig) {
     this._config = {
@@ -109,12 +71,16 @@ export class HaloSeparatorCardEditor extends HTMLElement {
 
   public set hass(hass: HomeAssistant) {
     this._hass = hass;
+    if (this._config && this.querySelector('ha-form') && getLang(hass) !== this._lang) {
+      this.innerHTML = '';
+      this._render();
+      return;
+    }
     const form = this.querySelector('ha-form') as any;
     if (form) {
       form.hass = hass;
     }
   }
-
   private _formData(): Record<string, any> {
     if (!this._config) return {};
     const data: Record<string, any> = { ...this._config };
@@ -176,8 +142,8 @@ export class HaloSeparatorCardEditor extends HTMLElement {
     const items = this._getItems();
     items.push({
       icon: 'mdi:information-outline',
-      label: 'Nouvel élément',
-      desc: 'Description',
+      label: this._t('editor.separator.new_label'),
+      desc: this._t('editor.separator.new_desc'),
       color: ''
     });
     this._config = {
@@ -230,12 +196,13 @@ export class HaloSeparatorCardEditor extends HTMLElement {
     if (!container) return;
 
     const items = this._getItems();
+    const t = (k: string) => this._t(`editor.separator.${k}`);
 
     if (items.length === 0) {
       container.innerHTML = `
         <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; color: var(--secondary-text-color); font-size: 13px;">
-          Aucun élément de légende personnalisé défini.<br>
-          <small>Cliquez sur "Ajouter un élément" pour personnaliser le volet.</small>
+          ${t("no_items")}<br>
+          <small>${t("no_items_hint")}</small>
         </div>
       `;
       return;
@@ -261,7 +228,7 @@ export class HaloSeparatorCardEditor extends HTMLElement {
       headerRow.innerHTML = `
         <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px;">
           <ha-icon icon="${it.icon || 'mdi:circle-small'}" style="color: ${it.color || 'var(--primary-color)'}; --mdc-icon-size: 18px;"></ha-icon>
-          <span>${it.label || `Élément #${idx + 1}`}</span>
+          <span>${it.label || this._t("editor.separator.item_n", "n", String(idx + 1))}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 4px;">
           <button type="button" class="btn-up" style="background: none; border: none; color: var(--primary-text-color); cursor: pointer; padding: 2px 6px; font-size: 14px;" ${idx === 0 ? 'disabled' : ''}>▲</button>
@@ -279,14 +246,14 @@ export class HaloSeparatorCardEditor extends HTMLElement {
       row1.style.cssText = 'display: flex; align-items: flex-end; gap: 8px; width: 100%; box-sizing: border-box;';
       row1.innerHTML = `
         <div style="flex: 1; min-width: 0;">
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Icône MDI (ex: mdi:power)</label>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">${t("f_icon")}</label>
           <input type="text" class="input-icon" value="${it.icon || ''}" placeholder="mdi:tag" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
         <div style="display: flex; align-items: center; justify-content: center; height: 31px; padding: 0 1px;">
-          <span style="font-size: 10px; font-weight: 700; color: var(--secondary-text-color); background: rgba(255, 255, 255, 0.08); padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); letter-spacing: 0.5px; user-select: none;">OU</span>
+          <span style="font-size: 10px; font-weight: 700; color: var(--secondary-text-color); background: rgba(255, 255, 255, 0.08); padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); letter-spacing: 0.5px; user-select: none;">${t("or")}</span>
         </div>
         <div style="width: 130px; min-width: 130px;">
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px; white-space: nowrap;">Badge <span style="font-size: 10px; opacity: 0.8;">(max 2-3 car.)</span></label>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px; white-space: nowrap;">${t("f_badge")} <span style="font-size: 10px; opacity: 0.8;">${t("f_badge_hint")}</span></label>
           <input type="text" class="input-badge" value="${it.badge || ''}" maxlength="3" placeholder="%, K, °C" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px; text-align: center; font-weight: 700;">
         </div>
       `;
@@ -298,12 +265,12 @@ export class HaloSeparatorCardEditor extends HTMLElement {
       row2.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px;';
       row2.innerHTML = `
         <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Libellé / Titre (en gras)</label>
-          <input type="text" class="input-label" value="${it.label || ''}" placeholder="ex: Appui court" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">${t("f_label")}</label>
+          <input type="text" class="input-label" value="${it.label || ''}" placeholder="${t("f_label_ph")}" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
         <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Description</label>
-          <input type="text" class="input-desc" value="${it.desc || ''}" placeholder="ex: Allumage" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">${t("f_desc")}</label>
+          <input type="text" class="input-desc" value="${it.desc || ''}" placeholder="${t("f_desc_ph")}" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
       `;
       row2.querySelector('.input-label')?.addEventListener('change', (e: any) => this._updateItemField(idx, 'label', e.target.value));
@@ -314,7 +281,7 @@ export class HaloSeparatorCardEditor extends HTMLElement {
       row3.style.cssText = 'display: grid; grid-template-columns: 1fr; gap: 8px;';
       row3.innerHTML = `
         <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Couleur personnalisée HEX (optionnel, hérite de la carte si vide)</label>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">${t("f_color")}</label>
           <input type="text" class="input-color" value="${it.color || ''}" placeholder="ex: #38bdf8" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
       `;
@@ -332,21 +299,23 @@ export class HaloSeparatorCardEditor extends HTMLElement {
     if (!this._config) return;
 
     const isCollapsible = Boolean(this._config?.collapsible || this._config?.show_legend);
-    const schema = isCollapsible ? [...BASE_SCHEMA, ...ACCORDION_SCHEMA] : BASE_SCHEMA;
+    const schema = isCollapsible ? [...BASE_SCHEMA, ...buildAccordionSchema(this._t)] : BASE_SCHEMA;
+    const t = (k: string) => this._t(`editor.separator.${k}`);
 
     let form = this.querySelector('ha-form') as any;
     if (!form) {
+      this._lang = getLang(this._hass);
       this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
           <div id="legend-items-manager" style="display: ${isCollapsible ? 'block' : 'none'}; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
               <div>
-                <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">Éléments de Légende & Guide</span>
-                <span style="display: block; font-size: 11px; color: var(--secondary-text-color);">Configurez les tuiles explicatives du volet repliable</span>
+                <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">${t("items_title")}</span>
+                <span style="display: block; font-size: 11px; color: var(--secondary-text-color);">${t("items_subtitle")}</span>
               </div>
               <button type="button" id="btn-add-item" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; background: var(--primary-color, #0288d1); color: #fff; border: none; cursor: pointer; font-size: 12px; font-weight: 600;">
-                <span>+ Ajouter un élément</span>
+                <span>${t("add_item")}</span>
               </button>
             </div>
             <div id="items-container"></div>
@@ -355,7 +324,7 @@ export class HaloSeparatorCardEditor extends HTMLElement {
       `;
       form = this.querySelector('#form') as any;
       if (form) {
-        form.schema = schema;
+        applyFormI18n(form, this._hass, "separator", schema);
         form.data = this._formData();
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
@@ -366,7 +335,7 @@ export class HaloSeparatorCardEditor extends HTMLElement {
         this._renderItemsManager();
       }
     } else {
-      form.schema = schema;
+      applyFormI18n(form, this._hass, "separator", schema);
       form.data = this._formData();
       if (this._hass) form.hass = this._hass;
 
