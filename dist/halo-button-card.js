@@ -60,12 +60,24 @@ var HaloButtonCard = (function (exports) {
         if (Array.isArray(color))
             return rgbToHex(color);
         if (typeof color === 'string') {
-            if (HOLM_PALETTE[color])
-                return HOLM_PALETTE[color];
-            if (color.startsWith('#'))
-                return color;
-            if (color.startsWith('rgb'))
-                return color;
+            const trimmed = color.trim();
+            if (HOLM_PALETTE[trimmed])
+                return HOLM_PALETTE[trimmed];
+            if (trimmed.startsWith('#')) {
+                const clean = trimmed.replace('#', '');
+                if (clean.length === 3) {
+                    return '#' + clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
+                }
+                if (clean.length >= 6) {
+                    return '#' + clean.substring(0, 6);
+                }
+            }
+            if (trimmed.startsWith('rgb')) {
+                const match = trimmed.match(/\d+/g);
+                if (match && match.length >= 3) {
+                    return rgbToHex([parseInt(match[0], 10), parseInt(match[1], 10), parseInt(match[2], 10)]);
+                }
+            }
         }
         return fallback;
     }
@@ -341,11 +353,13 @@ var HaloButtonCard = (function (exports) {
      *                    et support complet des sous-boutons interactifs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
+     * 📦 Version      : 1.2.1
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🩹 v1.2.1 (2026-10-30) : Ajout du contour net (border 1.5px solid) et
+     *                              du halo lumineux permanent (box-shadow) sur ha-card.
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de halo-button-card polyvalente.
      * ==============================================================================
      */
@@ -488,12 +502,19 @@ var HaloButtonCard = (function (exports) {
           display: flex;
           box-sizing: border-box;
           border-radius: 16px;
+          border: 1.5px solid transparent;
           background: linear-gradient(160deg, rgba(20, 28, 38, 0.85), rgba(10, 15, 22, 0.92));
           backdrop-filter: blur(20px) saturate(180%);
           -webkit-backdrop-filter: blur(20px) saturate(180%);
-          transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease;
+          transition: border 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      transform 0.15s ease,
+                      filter 0.15s ease;
           overflow: hidden;
           cursor: pointer;
+        }
+        ha-card:hover {
+          filter: brightness(1.05);
         }
         ha-card:active {
           transform: scale(0.985);
@@ -669,8 +690,14 @@ var HaloButtonCard = (function (exports) {
             // Classes & Layout
             this._cardEl.className = isVertical ? 'layout-vertical' : 'layout-horizontal';
             // Card styling (Border & Glowing Specular Halo)
-            this._cardEl.style.borderColor = `${color}40`;
-            this._cardEl.style.boxShadow = `inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 14px ${color}26`;
+            const cardBorder = `1.5px solid ${color}`;
+            const cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            if (this._cardEl.style.border !== cardBorder) {
+                this._cardEl.style.border = cardBorder;
+            }
+            if (this._cardEl.style.boxShadow !== cardShadow) {
+                this._cardEl.style.boxShadow = cardShadow;
+            }
             // Icon button styling
             if (this._iconBtnEl) {
                 this._iconBtnEl.style.background = `${color}1A`;
@@ -4834,11 +4861,13 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
+     * 📦 Version      : 1.2.1
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🩹 v1.2.1 (2026-10-30) : Correctif halo-button-card : contour net (border 1.5px solid)
+     *                              et halo lumineux permanent (box-shadow) assorti au bouton.
      *   - 💡 v1.2.0 (2026-10-30) : Suite majeure Liquid Glass & Composants modulaires :
      *                              - custom:halo-button-card (tuile universelle polyvalente).
      *                              - custom:halo-separator-card modulaire (mode adaptateur simple
@@ -4852,7 +4881,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.2.0';
+    const VERSION = '1.2.1';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({

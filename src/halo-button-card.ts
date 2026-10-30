@@ -7,11 +7,13 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
+ * 📦 Version      : 1.2.1
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🩹 v1.2.1 (2026-10-30) : Correctif halo-button-card : contour net (border 1.5px solid)
+ *                              et halo lumineux permanent (box-shadow) assorti au bouton.
  *   - 💡 v1.2.0 (2026-10-30) : Suite majeure Liquid Glass & Composants modulaires :
  *                              - custom:halo-button-card (tuile universelle polyvalente).
  *                              - custom:halo-separator-card modulaire (mode adaptateur simple
@@ -44,7 +46,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
