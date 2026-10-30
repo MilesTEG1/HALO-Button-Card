@@ -19,10 +19,11 @@
 import { HomeAssistant, HaloCoverColorCardConfig } from '../types';
 import { resolveThemeColor, toHexColor } from '../core/theme-helper';
 import { fireHaptic, fireEvent } from '../core/action-handler';
+import { useLocalize, localizeHolm } from '../localize/localize';
 
 interface StateTileDef {
   key: 'closed' | 'partial' | 'open' | 'moving';
-  defaultTitle: string;
+  titleKey: string;
   defaultEntity: string;
   defaultHex: string;
   defaultIcon: string;
@@ -31,28 +32,28 @@ interface StateTileDef {
 const TILE_DEFINITIONS: StateTileDef[] = [
   {
     key: 'closed',
-    defaultTitle: 'Volet Fermé',
+    titleKey: 'cover_color.closed',
     defaultEntity: 'input_text.couleur_volet_ferme',
     defaultHex: '#E2E8F0',
     defaultIcon: 'mdi:window-shutter'
   },
   {
     key: 'partial',
-    defaultTitle: 'Volet Partiel',
+    titleKey: 'cover_color.partial',
     defaultEntity: 'input_text.couleur_volet_partiel',
     defaultHex: '#38BDF8',
     defaultIcon: 'mdi:window-shutter-open'
   },
   {
     key: 'open',
-    defaultTitle: 'Volet Ouvert',
+    titleKey: 'cover_color.open',
     defaultEntity: 'input_text.couleur_volet_ouvert',
     defaultHex: '#2F86FF',
     defaultIcon: 'mdi:window-shutter-open'
   },
   {
     key: 'moving',
-    defaultTitle: 'Mouvement',
+    titleKey: 'cover_color.moving',
     defaultEntity: 'input_text.couleur_volet_en_mouvement',
     defaultHex: '#F59E0B',
     defaultIcon: 'mdi:swap-vertical'
@@ -62,6 +63,10 @@ const TILE_DEFINITIONS: StateTileDef[] = [
 export class HaloCoverColorCard extends HTMLElement {
   private _config!: HaloCoverColorCardConfig;
   private _hass!: HomeAssistant;
+
+  private get _t() {
+    return useLocalize(this._hass);
+  }
   private _root: ShadowRoot;
 
   // Persistent DOM references
@@ -82,7 +87,6 @@ export class HaloCoverColorCard extends HTMLElement {
 
   public static getStubConfig(): Record<string, any> {
     return {
-      title: "Couleurs d'États des Volets",
       icon: 'mdi:window-shutter-cog'
     };
   }
@@ -92,7 +96,6 @@ export class HaloCoverColorCard extends HTMLElement {
       throw new Error('Invalid configuration for halo-cover-color-card');
     }
     this._config = {
-      title: "Couleurs d'États des Volets",
       icon: 'mdi:window-shutter-cog',
       ...config
     };
@@ -339,7 +342,7 @@ export class HaloCoverColorCard extends HTMLElement {
       this._buildDom();
     }
 
-    const title = this._config.title || "Couleurs d'États des Volets";
+    const title = this._config.title || this._t('cover_color.title');
     const icon = this._config.icon || 'mdi:window-shutter-cog';
     const headerColor = resolveThemeColor(
       this._hass,
@@ -370,7 +373,7 @@ export class HaloCoverColorCard extends HTMLElement {
         const titleKey = `${def.key}_name` as keyof HaloCoverColorCardConfig;
         const iconKey = `${def.key}_icon` as keyof HaloCoverColorCardConfig;
 
-        const tileTitle = (this._config[titleKey] as string) || def.defaultTitle;
+        const tileTitle = (this._config[titleKey] as string) || this._t(def.titleKey);
         const tileIcon = (this._config[iconKey] as string) || def.defaultIcon;
         const hex = this._getTileHex(def);
 
