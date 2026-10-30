@@ -112,9 +112,10 @@ export interface HaloButtonCardConfig {
 export interface LegendItemConfig {
   icon?: string;
   badge?: string;
-  label: string;
+  label?: string;
   desc?: string;
   color?: string | [number, number, number];
+  tap_action?: ActionConfig;
 }
 
 export interface HaloSeparatorCardConfig {
@@ -130,6 +131,8 @@ export interface HaloSeparatorCardConfig {
   label_on?: string;
   label_off?: string;
   toggle_entity?: string;
+  columns?: number | string;
+  content?: string;
   legend_items?: boolean | LegendItemConfig[];
 }
 
