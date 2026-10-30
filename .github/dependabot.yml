@@ -1,0 +1,15 @@
+# Configuration Dependabot — HALO-Button-Card
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Surveillance hebdomadaire des dépendances npm (package.json / package-lock.json)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    ignore:
+      # TypeScript 7 (compilateur Go natif) ne supporte pas encore l'API programmatique JS utilisée par @rollup/plugin-typescript
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
