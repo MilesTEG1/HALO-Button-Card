@@ -7,11 +7,14 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.0
+ * 📦 Version      : 1.4.0
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) en/fr de toute la suite :
+ *                              src/localize/, éditeurs ha-form (computeLabel/computeHelper),
+ *                              panneaux Liquid Glass et états des cartes traduits.
  *   - ✨ v1.3.0 (2026-10-30) : Personnalisation visuelle avancée :
  *                              - Réglage de l'épaisseur de bordure (0 à 3 px, pas 0.25) sur
  *                                halo-button-card, halo-cover-card et halo-light-card.
@@ -55,7 +58,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.3.1';
+const VERSION = '1.4.0';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,

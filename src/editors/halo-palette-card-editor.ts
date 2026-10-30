@@ -14,39 +14,20 @@
  */
 
 import { HomeAssistant, HaloPaletteCardConfig } from '../types';
+import { getLang } from '../localize/localize';
+import { applyFormI18n } from './editor-common';
 
 const SCHEMA = [
-  {
-    name: 'entity',
-    label: 'Entité sélecteur de thème (défaut: input_select.couleur_theme_eclairages)',
-    selector: { entity: { domain: 'input_select' } }
-  },
-  {
-    name: 'title',
-    label: 'Titre de la section (optionnel)',
-    selector: { text: {} }
-  },
-  {
-    name: 'icon',
-    label: 'Icône MDI (optionnel)',
-    selector: { icon: {} }
-  },
-  {
-    name: 'columns',
-    label: 'Nombre de colonnes',
-    selector: {
-      number: {
-        min: 1,
-        max: 4,
-        mode: 'box'
-      }
-    }
-  }
+  { name: 'entity', selector: { entity: { domain: 'input_select' } } },
+  { name: 'title', selector: { text: {} } },
+  { name: 'icon', selector: { icon: {} } },
+  { name: 'columns', selector: { number: { min: 1, max: 4, mode: 'box' } } }
 ];
 
 export class HaloPaletteCardEditor extends HTMLElement {
   private _config!: HaloPaletteCardConfig;
   private _hass!: HomeAssistant;
+  private _lang = "en";
 
   public setConfig(config: HaloPaletteCardConfig) {
     this._config = {
@@ -59,12 +40,16 @@ export class HaloPaletteCardEditor extends HTMLElement {
 
   public set hass(hass: HomeAssistant) {
     this._hass = hass;
+    if (this._config && this.querySelector('ha-form') && getLang(hass) !== this._lang) {
+      this.innerHTML = '';
+      this._render();
+      return;
+    }
     const form = this.querySelector('ha-form') as any;
     if (form) {
       form.hass = hass;
     }
   }
-
   private _valueChanged(ev: CustomEvent) {
     if (!this._config || !ev.detail.value) return;
     this._config = {
@@ -84,6 +69,7 @@ export class HaloPaletteCardEditor extends HTMLElement {
 
     let form = this.querySelector('ha-form') as any;
     if (!form) {
+      this._lang = getLang(this._hass);
       this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
@@ -91,7 +77,7 @@ export class HaloPaletteCardEditor extends HTMLElement {
       `;
       form = this.querySelector('#form') as any;
       if (form) {
-        form.schema = SCHEMA;
+        applyFormI18n(form, this._hass, "palette", SCHEMA);
         form.data = this._config;
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
