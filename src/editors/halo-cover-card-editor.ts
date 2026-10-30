@@ -25,12 +25,14 @@
 import { HomeAssistant, HaloCoverCardConfig } from '../types';
 import { HOLM_PALETTE, toHexColor } from '../core/theme-helper';
 import { COMMON_EDITOR_STYLES } from './editor-styles';
+import { useLocalize, getLang } from '../localize/localize';
+import { applyFormI18n, stylePanelHtml, borderBadge, buildChips, colorDisplayName } from './editor-common';
 
 type CoverColorKey = 'color_closed' | 'color_open' | 'color_partial' | 'color_moving';
 
 interface CoverStateDef {
   key: CoverColorKey;
-  label: string;
+  tk: string;
   icon: string;
   fallback: string;
   stateEntityKey: string;
@@ -39,50 +41,43 @@ interface CoverStateDef {
 const COVER_STATES: CoverStateDef[] = [
   {
     key: 'color_closed',
-    label: 'Fermé',
+    tk: 'closed',
     icon: 'mdi:window-shutter',
     fallback: '#FFB69C',
     stateEntityKey: 'input_text.couleur_volet_ferme'
   },
   {
     key: 'color_open',
-    label: 'Ouvert',
+    tk: 'open',
     icon: 'mdi:window-shutter-open',
     fallback: '#96E1FF',
     stateEntityKey: 'input_text.couleur_volet_ouvert'
   },
   {
     key: 'color_partial',
-    label: 'Partiel',
+    tk: 'partial',
     icon: 'mdi:window-shutter-cog',
     fallback: '#38bdf8',
     stateEntityKey: 'input_text.couleur_volet_partiel'
   },
   {
     key: 'color_moving',
-    label: 'En mouvement',
+    tk: 'moving',
     icon: 'mdi:arrow-up-down',
     fallback: '#f59e0b',
     stateEntityKey: 'input_text.couleur_volet_en_mouvement'
   }
 ];
 
-const SCHEMA = [
-  {
-    name: 'entity',
-    label: 'Entité Volet ou Groupe',
-    selector: { entity: { domain: 'cover' } }
-  },
-  {
-    name: 'name',
-    label: 'Nom personnalisé (optionnel)',
-    selector: { text: {} }
-  }
+const buildSchema = (_t: ReturnType<typeof useLocalize>) => [
+  { name: 'entity', selector: { entity: { domain: 'cover' } } },
+  { name: 'name', selector: { text: {} } }
 ];
 
 export class HaloCoverCardEditor extends HTMLElement {
   private _config!: HaloCoverCardConfig;
   private _hass!: HomeAssistant;
+  private _lang = "en";
   private _activeStateKey: CoverColorKey = 'color_closed';
 
   // Références DOM
@@ -105,13 +100,17 @@ export class HaloCoverCardEditor extends HTMLElement {
 
   public set hass(hass: HomeAssistant) {
     this._hass = hass;
+    if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+      this.innerHTML = '';
+      this._render();
+      return;
+    }
     const form = this.querySelector('#form') as any;
     if (form) {
       form.hass = hass;
     }
     this._syncStylePanel();
   }
-
   private _fireConfigChanged() {
     const event = new CustomEvent('config-changed', {
       detail: { config: this._config },
@@ -138,17 +137,8 @@ export class HaloCoverCardEditor extends HTMLElement {
   }
 
   private _getColorDisplayName(key: CoverColorKey): string {
-    const raw = this._config?.[key];
-    if (!raw) return 'Défaut HOLM';
-    if (typeof raw === 'string') {
-      if (HOLM_PALETTE[raw]) return raw;
-      for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-        if (hex.toLowerCase() === raw.toLowerCase()) return name;
-      }
-    }
-    return 'Couleur personnalisée';
+    return colorDisplayName(this._hass, this._config?.[key], 'editor.color_default_holm');
   }
-
   private _updateColor(colorValue: string) {
     this._config = {
       ...this._config,
@@ -196,7 +186,7 @@ export class HaloCoverCardEditor extends HTMLElement {
     const activeName = this._getColorDisplayName(this._activeStateKey);
 
     if (this._stateTitleEl) {
-      this._stateTitleEl.textContent = `Couleur : ${activeDef.label}`;
+      this._stateTitleEl.textContent = useLocalize(this._hass)('editor.state_color', 'state', useLocalize(this._hass)(`state.${activeDef.tk}`));
     }
     if (this._swatchCircleEl) {
       this._swatchCircleEl.style.background = activeHex;
@@ -231,10 +221,7 @@ export class HaloCoverCardEditor extends HTMLElement {
       this._borderSliderEl.value = String(bw);
     }
     if (this._borderValBadgeEl) {
-      let desc = `${bw} px`;
-      if (bw === 0) desc = '0 px (Off)';
-      else if (bw === 1.5) desc = '1.5 px (Défaut)';
-      this._borderValBadgeEl.textContent = desc;
+      this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
     }
   }
 
@@ -263,6 +250,9 @@ export class HaloCoverCardEditor extends HTMLElement {
 
     let form = this.querySelector('#form') as any;
     if (!form) {
+      const t = useLocalize(this._hass);
+      this._lang = getLang(this._hass);
+      const first = this._getStateDef(this._activeStateKey);
       this.innerHTML = `
         <style>
           ${COMMON_EDITOR_STYLES}
@@ -270,75 +260,23 @@ export class HaloCoverCardEditor extends HTMLElement {
 
         <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
-
-          <div class="halo-style-section">
-            <div class="halo-section-header">
-              <ha-icon icon="mdi:palette-swatch"></ha-icon>
-              <span>Personnalisation Visuelle (Halo, Couleurs & Bordure)</span>
-            </div>
-
-            <!-- Onglets de sélection des 4 états du volet -->
-            <div class="halo-state-tabs">
-              ${COVER_STATES.map(s => `
-                <div class="halo-state-tab ${s.key === this._activeStateKey ? 'active' : ''}" id="tab-${s.key}" data-key="${s.key}">
-                  <span class="halo-state-tab-dot" id="tab-dot-${s.key}"></span>
-                  <ha-icon icon="${s.icon}"></ha-icon>
-                  <span>${s.label}</span>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="halo-style-grid">
-              <!-- GAUCHE : Couleur de l'état actif (Option A + B) -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title" id="state-title">Couleur : Fermé</span>
-                </div>
-
-                <!-- Option A : Médaillon Swatch interactif -->
-                <div class="halo-swatch-card" id="swatch-card">
-                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="Ouvrir la palette libre">
-                    <div class="halo-swatch-circle" id="swatch-circle"></div>
-                    <input type="color" id="native-color-input" class="hidden-color-input" />
-                  </div>
-                  <div class="halo-swatch-meta">
-                    <span class="halo-color-title" id="swatch-name">Défaut HOLM</span>
-                    <span class="halo-color-hex" id="swatch-hex">#FFB69C</span>
-                  </div>
-                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="Ouvrir la roue chromatique">
-                    <ha-icon icon="mdi:eyedropper"></ha-icon>
-                  </button>
-                </div>
-
-                <!-- Option B : Nuancier rapide HOLM -->
-                <div class="halo-chips-label">Nuancier officiel HOLM (Sélection rapide) :</div>
-                <div class="halo-chips-grid" id="chips-grid"></div>
-              </div>
-
-              <!-- DROITE : Curseur UNIQUE d'épaisseur de bordure -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title">Épaisseur de bordure (Unique)</span>
-                  <span class="halo-badge-val" id="border-val-text">1.5 px</span>
-                </div>
-
-                <div class="halo-border-card">
-                  <input type="range" id="border-slider-input" min="0" max="3" step="0.25" value="1.5" class="halo-range-slider" />
-                  <div class="slider-ticks">
-                    <span>0 px<br><small style="opacity: 0.6;">Sans bordure</small></span>
-                    <span style="text-align: center;">1.5 px<br><small style="opacity: 0.6;">Défaut</small></span>
-                    <span style="text-align: right;">3.0 px<br><small style="opacity: 0.6;">Maxi</small></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ${stylePanelHtml(t, {
+            title: t('editor.style_title_colors'),
+            tabs: COVER_STATES.map(s => ({
+              key: s.key,
+              icon: s.icon,
+              label: t(`state.${s.tk}`),
+              active: s.key === this._activeStateKey
+            })),
+            leftTitle: t('editor.state_color', 'state', t(`state.${first.tk}`)),
+            borderTitle: t('editor.border_title_single')
+          })}
         </div>
       `;
 
       form = this.querySelector('#form') as any;
       if (form) {
-        form.schema = SCHEMA;
+        applyFormI18n(form, this._hass, "cover", buildSchema(useLocalize(this._hass)));
         form.data = this._formMetadata();
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
@@ -386,20 +324,7 @@ export class HaloCoverCardEditor extends HTMLElement {
 
     // 3. Génération des chips HOLM (Option B)
     if (this._chipsContainerEl) {
-      this._chipsContainerEl.innerHTML = '';
-      for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-        const chip = document.createElement('div');
-        chip.className = 'halo-chip';
-        chip.setAttribute('data-name', name);
-        chip.setAttribute('data-hex', hex);
-        chip.setAttribute('title', `${name} (${hex})`);
-        chip.style.backgroundColor = hex;
-        chip.style.color = hex;
-        chip.addEventListener('click', () => {
-          this._updateColor(name);
-        });
-        this._chipsContainerEl.appendChild(chip);
-      }
+      buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
     }
 
     // 4. Slider unique de bordure

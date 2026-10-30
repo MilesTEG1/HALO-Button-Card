@@ -25,12 +25,14 @@
 import { HomeAssistant, HaloLightCardConfig } from '../types';
 import { HOLM_PALETTE, toHexColor, resolveThemeColor } from '../core/theme-helper';
 import { COMMON_EDITOR_STYLES } from './editor-styles';
+import { useLocalize, getLang } from '../localize/localize';
+import { applyFormI18n, stylePanelHtml, borderBadge, buildChips, colorDisplayName } from './editor-common';
 
 type LightColorKey = 'color_on' | 'color_off';
 
 interface LightStateDef {
   key: LightColorKey;
-  label: string;
+  tk: string;
   icon: string;
   fallback: string;
 }
@@ -38,68 +40,32 @@ interface LightStateDef {
 const LIGHT_STATES: LightStateDef[] = [
   {
     key: 'color_on',
-    label: 'Allumé',
+    tk: 'on',
     icon: 'mdi:lightbulb-on',
     fallback: '#26c6da'
   },
   {
     key: 'color_off',
-    label: 'Éteint',
+    tk: 'off',
     icon: 'mdi:lightbulb-off',
     fallback: '#64748b'
   }
 ];
 
-const SCHEMA = [
-  {
-    name: 'entity',
-    label: 'Entité Lumière ou Groupe d’éclairages',
-    selector: { entity: { domain: 'light' } }
-  },
-  {
-    name: 'name',
-    label: 'Nom personnalisé (optionnel)',
-    selector: { text: {} }
-  },
-  {
-    name: 'icon',
-    label: 'Icône personnalisée (optionnel)',
-    selector: { icon: {} }
-  },
-  {
-    name: 'sub_toggle_entity',
-    label: 'Entité dédiée pour le bouton Power (optionnel)',
-    selector: { entity: {} }
-  },
-  {
-    name: 'use_light_color',
-    label: 'Teinter la tuile avec la couleur réelle de l’ampoule (RGB / Kelvin)',
-    selector: { boolean: {} }
-  },
-  {
-    name: 'theme_entity',
-    label: 'Entité sélecteur de thème (défaut : input_select.couleur_theme_eclairages)',
-    selector: { entity: { domain: 'input_select' } }
-  },
+const buildSchema = (_t: ReturnType<typeof useLocalize>) => [
+  { name: 'entity', selector: { entity: { domain: 'light' } } },
+  { name: 'name', selector: { text: {} } },
+  { name: 'icon', selector: { icon: {} } },
+  { name: 'sub_toggle_entity', selector: { entity: {} } },
+  { name: 'use_light_color', selector: { boolean: {} } },
+  { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } },
   {
     type: 'grid',
     name: '',
     schema: [
-      {
-        name: 'show_brightness',
-        label: 'Sous-bouton Luminosité (%)',
-        selector: { boolean: {} }
-      },
-      {
-        name: 'show_kelvin',
-        label: 'Sous-bouton Température (K)',
-        selector: { boolean: {} }
-      },
-      {
-        name: 'show_toggle',
-        label: 'Sous-bouton Power (On/Off)',
-        selector: { boolean: {} }
-      }
+      { name: 'show_brightness', selector: { boolean: {} } },
+      { name: 'show_kelvin', selector: { boolean: {} } },
+      { name: 'show_toggle', selector: { boolean: {} } }
     ]
   }
 ];
@@ -107,6 +73,7 @@ const SCHEMA = [
 export class HaloLightCardEditor extends HTMLElement {
   private _config!: HaloLightCardConfig;
   private _hass!: HomeAssistant;
+  private _lang = "en";
   private _activeStateKey: LightColorKey = 'color_on';
 
   // Références DOM
@@ -133,13 +100,17 @@ export class HaloLightCardEditor extends HTMLElement {
 
   public set hass(hass: HomeAssistant) {
     this._hass = hass;
+    if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+      this.innerHTML = '';
+      this._render();
+      return;
+    }
     const form = this.querySelector('#form') as any;
     if (form) {
       form.hass = hass;
     }
     this._syncStylePanel();
   }
-
   private _fireConfigChanged() {
     const event = new CustomEvent('config-changed', {
       detail: { config: this._config },
@@ -172,17 +143,12 @@ export class HaloLightCardEditor extends HTMLElement {
   }
 
   private _getColorDisplayName(key: LightColorKey): string {
-    const raw = this._config?.[key];
-    if (!raw) return key === 'color_on' ? 'Thème HOLM actif' : 'Défaut (#64748B)';
-    if (typeof raw === 'string') {
-      if (HOLM_PALETTE[raw]) return raw;
-      for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-        if (hex.toLowerCase() === raw.toLowerCase()) return name;
-      }
-    }
-    return 'Couleur personnalisée';
+    return colorDisplayName(
+      this._hass,
+      this._config?.[key],
+      key === 'color_on' ? 'editor.color_active_theme' : 'editor.color_default_grey'
+    );
   }
-
   private _updateColor(colorValue: string) {
     this._config = {
       ...this._config,
@@ -230,7 +196,7 @@ export class HaloLightCardEditor extends HTMLElement {
     const activeName = this._getColorDisplayName(this._activeStateKey);
 
     if (this._stateTitleEl) {
-      this._stateTitleEl.textContent = `Couleur : ${activeDef.label}`;
+      this._stateTitleEl.textContent = useLocalize(this._hass)('editor.state_color', 'state', useLocalize(this._hass)(`state.${activeDef.tk}`));
     }
     if (this._swatchCircleEl) {
       this._swatchCircleEl.style.background = activeHex;
@@ -265,10 +231,7 @@ export class HaloLightCardEditor extends HTMLElement {
       this._borderSliderEl.value = String(bw);
     }
     if (this._borderValBadgeEl) {
-      let desc = `${bw} px`;
-      if (bw === 0) desc = '0 px (Off)';
-      else if (bw === 1.5) desc = '1.5 px (Défaut)';
-      this._borderValBadgeEl.textContent = desc;
+      this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
     }
   }
 
@@ -295,6 +258,9 @@ export class HaloLightCardEditor extends HTMLElement {
 
     let form = this.querySelector('#form') as any;
     if (!form) {
+      const t = useLocalize(this._hass);
+      this._lang = getLang(this._hass);
+      const first = this._getStateDef(this._activeStateKey);
       this.innerHTML = `
         <style>
           ${COMMON_EDITOR_STYLES}
@@ -302,75 +268,23 @@ export class HaloLightCardEditor extends HTMLElement {
 
         <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
-
-          <div class="halo-style-section">
-            <div class="halo-section-header">
-              <ha-icon icon="mdi:palette-swatch"></ha-icon>
-              <span>Personnalisation Visuelle (Halo, Couleurs & Bordure)</span>
-            </div>
-
-            <!-- Onglets de sélection des états de la lumière -->
-            <div class="halo-state-tabs">
-              ${LIGHT_STATES.map(s => `
-                <div class="halo-state-tab ${s.key === this._activeStateKey ? 'active' : ''}" id="tab-${s.key}" data-key="${s.key}">
-                  <span class="halo-state-tab-dot" id="tab-dot-${s.key}"></span>
-                  <ha-icon icon="${s.icon}"></ha-icon>
-                  <span>${s.label}</span>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="halo-style-grid">
-              <!-- GAUCHE : Couleur de l'état actif (Option A + B) -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title" id="state-title">Couleur : Allumé</span>
-                </div>
-
-                <!-- Option A : Médaillon Swatch interactif -->
-                <div class="halo-swatch-card" id="swatch-card">
-                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="Ouvrir la palette libre">
-                    <div class="halo-swatch-circle" id="swatch-circle"></div>
-                    <input type="color" id="native-color-input" class="hidden-color-input" />
-                  </div>
-                  <div class="halo-swatch-meta">
-                    <span class="halo-color-title" id="swatch-name">Thème HOLM actif</span>
-                    <span class="halo-color-hex" id="swatch-hex">#26C6DA</span>
-                  </div>
-                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="Ouvrir la roue chromatique">
-                    <ha-icon icon="mdi:eyedropper"></ha-icon>
-                  </button>
-                </div>
-
-                <!-- Option B : Nuancier rapide HOLM -->
-                <div class="halo-chips-label">Nuancier officiel HOLM (Sélection rapide) :</div>
-                <div class="halo-chips-grid" id="chips-grid"></div>
-              </div>
-
-              <!-- DROITE : Curseur UNIQUE d'épaisseur de bordure -->
-              <div class="halo-col">
-                <div class="halo-col-header">
-                  <span class="halo-col-title">Épaisseur de bordure (Unique)</span>
-                  <span class="halo-badge-val" id="border-val-text">1.5 px</span>
-                </div>
-
-                <div class="halo-border-card">
-                  <input type="range" id="border-slider-input" min="0" max="3" step="0.25" value="1.5" class="halo-range-slider" />
-                  <div class="slider-ticks">
-                    <span>0 px<br><small style="opacity: 0.6;">Sans bordure</small></span>
-                    <span style="text-align: center;">1.5 px<br><small style="opacity: 0.6;">Défaut</small></span>
-                    <span style="text-align: right;">3.0 px<br><small style="opacity: 0.6;">Maxi</small></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ${stylePanelHtml(t, {
+            title: t('editor.style_title_colors'),
+            tabs: LIGHT_STATES.map(s => ({
+              key: s.key,
+              icon: s.icon,
+              label: t(`state.${s.tk}`),
+              active: s.key === this._activeStateKey
+            })),
+            leftTitle: t('editor.state_color', 'state', t(`state.${first.tk}`)),
+            borderTitle: t('editor.border_title_single')
+          })}
         </div>
       `;
 
       form = this.querySelector('#form') as any;
       if (form) {
-        form.schema = SCHEMA;
+        applyFormI18n(form, this._hass, "light", buildSchema(useLocalize(this._hass)));
         form.data = this._formMetadata();
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
@@ -418,20 +332,7 @@ export class HaloLightCardEditor extends HTMLElement {
 
     // 3. Génération des chips HOLM (Option B)
     if (this._chipsContainerEl) {
-      this._chipsContainerEl.innerHTML = '';
-      for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-        const chip = document.createElement('div');
-        chip.className = 'halo-chip';
-        chip.setAttribute('data-name', name);
-        chip.setAttribute('data-hex', hex);
-        chip.setAttribute('title', `${name} (${hex})`);
-        chip.style.backgroundColor = hex;
-        chip.style.color = hex;
-        chip.addEventListener('click', () => {
-          this._updateColor(name);
-        });
-        this._chipsContainerEl.appendChild(chip);
-      }
+      buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
     }
 
     // 4. Slider unique de bordure

@@ -19,6 +19,7 @@
 import { HomeAssistant, HaloPaletteCardConfig } from '../types';
 import { HOLM_PALETTE, resolveThemeColor } from '../core/theme-helper';
 import { fireHaptic } from '../core/action-handler';
+import { useLocalize, localizeHolm } from '../localize/localize';
 
 interface ColorEntry {
   name: string;
@@ -355,7 +356,7 @@ export class HaloPaletteCard extends HTMLElement {
           <div class="tile-left">
             <span class="tile-dot" style="background: ${hex}; box-shadow: 0 0 10px ${hex}88;"></span>
             <div class="tile-texts">
-              <span class="tile-name">${color.name}</span>
+              <span class="tile-name">${localizeHolm(this._hass, color.name)}</span>
               <span class="tile-hex" style="color: ${hex};">${hex.toLowerCase()}</span>
             </div>
           </div>
