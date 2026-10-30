@@ -17,6 +17,10 @@
  *                                halo-button-card, halo-cover-card et halo-light-card.
  *                              - Sélecteur de couleur Mix A+B (Halo Swatch médaillon interactif
  *                                + Nuancier rapide HOLM 16 teintes) dans l'éditeur de carte.
+ *   - ✨ v1.3.1 (2026-10-30) : Généralisation du sélecteur Mix A+B (avec onglets d'états
+ *                              et curseur unique de bordure) à halo-cover-card et halo-light-card.
+ *   - ✨ v1.3.0 (2026-10-30) : Sélecteur de couleur Mix A+B sur halo-button-card et réglage
+ *                              interactif de l'épaisseur de bordure (0 à 3 px) sur toute la suite.
  *   - 🩹 v1.2.1 (2026-10-30) : Correctif halo-button-card : contour net (border 1.5px solid)
  *                              et halo lumineux permanent (box-shadow) assorti au bouton.
  *   - 💡 v1.2.0 (2026-10-30) : Suite majeure Liquid Glass & Composants modulaires :
@@ -51,7 +55,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
