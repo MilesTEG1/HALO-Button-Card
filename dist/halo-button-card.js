@@ -864,6 +864,12 @@ var HaloButtonCard = (function (exports) {
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
      * 📦 Version      : 1.3.1
      * 📅 Date         : 2026-10-30
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.3.1 (2026-10-30) : Standardisation des styles d'éditeurs partagés
+     *                              (Mix A+B Nuancier HOLM & curseur de bordure)
+     *                              pour halo-button-card, halo-cover-card et halo-light-card.
      * ==============================================================================
      */
     const COMMON_EDITOR_STYLES = `
