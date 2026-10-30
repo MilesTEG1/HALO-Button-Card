@@ -144,16 +144,20 @@ export function getCoverColors(
 export function getHaloCardStyles(
   accentCol: string,
   isUnavail: boolean,
-  isMoving: boolean
+  isMoving: boolean,
+  borderWidth?: number
 ): {
   background: string;
   border: string;
   boxShadow: string;
 } {
+  const bw = (typeof borderWidth === 'number' && !isNaN(borderWidth)) ? borderWidth : 1.5;
+  const borderStr = (color: string) => bw > 0 ? `${bw}px solid ${color}` : 'none';
+
   if (isUnavail) {
     return {
       background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(20, 28, 38, 0.90))',
-      border: '1.5px solid #f59e0b',
+      border: borderStr('#f59e0b'),
       boxShadow: '0 0 18px rgba(245, 158, 11, 0.55), 0 0 6px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)'
     };
   }
@@ -161,14 +165,14 @@ export function getHaloCardStyles(
   if (isMoving) {
     return {
       background: `linear-gradient(135deg, ${accentCol}26, rgba(20, 28, 38, 0.90))`,
-      border: `1.5px solid ${accentCol}`,
+      border: borderStr(accentCol),
       boxShadow: `0 0 22px ${accentCol}77, 0 0 8px ${accentCol}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`
     };
   }
 
   return {
     background: `linear-gradient(135deg, ${accentCol}1A, rgba(20, 28, 38, 0.88))`,
-    border: `1.5px solid ${accentCol}`,
+    border: borderStr(accentCol),
     boxShadow: `0 0 18px ${accentCol}60, 0 0 6px ${accentCol}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`
   };
 }

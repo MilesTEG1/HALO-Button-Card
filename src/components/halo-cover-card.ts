@@ -434,7 +434,7 @@ export class HaloCoverCard extends HTMLElement {
       iconName = 'mdi:window-shutter';
     }
 
-    const cardStyles = getHaloCardStyles(accentCol, isUnavail, isMoving);
+    const cardStyles = getHaloCardStyles(accentCol, isUnavail, isMoving, this._config.border_width);
 
     // Update card body styling
     if (this._cardEl) {
