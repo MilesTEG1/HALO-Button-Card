@@ -1,7 +1,18 @@
 /**
- * HALO Button Card — Halo Separator Card UI Editor
- * Visual GUI editor powered by native Home Assistant <ha-form>.
- * (c) 2026 MilesTEG1 — MIT License
+ * ==============================================================================
+ * 📌 Nom du fichier : src/editors/halo-separator-card-editor.ts
+ * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-separator-card
+ *                    avec support des options accordéon / volet légende.
+ * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+ * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+ * 📦 Version      : 1.2.0
+ * 📅 Date         : 2026-10-30
+ * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+ * ==============================================================================
+ * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.2.0 (2026-10-30) : Ajout des contrôles accordéon (collapsible, labels, toggle_entity).
+ *   - 💡 v1.0.0 (2026-10-29) : Création initiale de l'éditeur séparateur.
+ * ==============================================================================
  */
 
 import { HomeAssistant, HaloSeparatorCardConfig } from '../types';
@@ -15,8 +26,33 @@ const SCHEMA = [
   },
   {
     name: 'icon',
-    label: 'Icône',
+    label: 'Icône MDI',
     selector: { icon: {} }
+  },
+  {
+    name: 'collapsible',
+    label: 'Activer le volet accordéon escamotable',
+    selector: { boolean: {} }
+  },
+  {
+    name: 'initial_collapsed',
+    label: 'Initialement replié / masqué',
+    selector: { boolean: {} }
+  },
+  {
+    name: 'label_on',
+    label: 'Libellé bouton quand ouvert (ex: Masquer)',
+    selector: { text: {} }
+  },
+  {
+    name: 'label_off',
+    label: 'Libellé bouton quand fermé (ex: Afficher)',
+    selector: { text: {} }
+  },
+  {
+    name: 'toggle_entity',
+    label: 'Entité externe synchronisée (optionnel)',
+    selector: { entity: { domain: 'input_boolean' } }
   },
   {
     name: 'color',
