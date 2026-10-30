@@ -7,11 +7,14 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.0
+ * 📦 Version      : 1.3.1
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.3.1 (2026-10-30) : Découplage complet séparateur simple vs accordéon :
+ *                              interrupteur collapsible conditionnant l'affichage du
+ *                              volet et masquage total des contrôles de légende dans l'éditeur.
  *   - 💡 v1.3.0 (2026-10-30) : Modularisation du volet accordéon de custom:halo-separator-card
  *                              (grille 1/2/3 colonnes responsive, gestionnaire UI des légendes,
  *                              alignement typographique, badges, halos et interactions tactiles).
@@ -43,7 +46,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,

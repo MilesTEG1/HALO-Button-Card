@@ -837,7 +837,7 @@ var HaloButtonCard = (function (exports) {
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-button-card.
      * ==============================================================================
      */
-    const SCHEMA$5 = [
+    const SCHEMA$4 = [
         {
             name: 'name',
             label: 'Titre principal',
@@ -950,7 +950,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA$5;
+                    form.schema = SCHEMA$4;
                     form.data = this._formData();
                     if (this._hass)
                         form.hass = this._hass;
@@ -1708,7 +1708,7 @@ var HaloButtonCard = (function (exports) {
      * (c) 2026 MilesTEG1 — MIT License
      */
     const COLOR_KEYS$1 = ['color_closed', 'color_open', 'color_partial', 'color_moving'];
-    const SCHEMA$4 = [
+    const SCHEMA$3 = [
         {
             name: 'entity',
             label: 'Entité Volet ou Groupe',
@@ -1803,7 +1803,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA$4;
+                    form.schema = SCHEMA$3;
                     form.data = this._formData();
                     if (this._hass)
                         form.hass = this._hass;
@@ -2831,7 +2831,7 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      */
     const COLOR_KEYS = ['color_on', 'color_off'];
-    const SCHEMA$3 = [
+    const SCHEMA$2 = [
         {
             name: 'entity',
             label: 'Entité Lumière ou Groupe d’éclairages',
@@ -2963,7 +2963,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA$3;
+                    form.schema = SCHEMA$2;
                     form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
                 }
             }
@@ -2984,11 +2984,14 @@ var HaloButtonCard = (function (exports) {
      *                    alignement vertical, badges/icônes, halos et actions tactiles).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.0
+     * 📦 Version      : 1.3.1
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.1 (2026-10-30) : Séparation stricte du mode séparateur pur (collapsible: false)
+     *                              et accordéon actif (collapsible: true). Masquage total
+     *                              du volet et du bouton toggle si l'accordéon n'est pas activé.
      *   - 💡 v1.3.0 (2026-10-30) : Modularisation complète du volet repliable accordéon :
      *                              • Grille responsive dynamique paramétrable (1, 2 ou 3 colonnes).
      *                              • Alignement typographique parfait (icône centrée sur la 1ère ligne).
@@ -3025,10 +3028,9 @@ var HaloButtonCard = (function (exports) {
         }
         static getStubConfig() {
             return {
-                name: 'Guide & Légendes',
-                icon: 'mdi:book-open-variant',
-                collapsible: true,
-                columns: 2
+                name: 'Section',
+                icon: 'mdi:bookmark',
+                collapsible: false
             };
         }
         setConfig(config) {
@@ -3039,6 +3041,7 @@ var HaloButtonCard = (function (exports) {
                 label_on: 'Masquer',
                 label_off: 'Afficher',
                 columns: 2,
+                collapsible: false,
                 ...config
             };
             if (config.initial_collapsed) {
@@ -3066,10 +3069,10 @@ var HaloButtonCard = (function (exports) {
             return this._isExpanded && this._isCollapsible() ? 2 : 1;
         }
         _isCollapsible() {
-            return Boolean(this._config?.collapsible ||
-                this._config?.legend_items ||
-                this._config?.content ||
-                this._config?.toggle_entity);
+            if (this._config?.collapsible === false || this._config?.show_legend === false) {
+                return false;
+            }
+            return Boolean(this._config?.collapsible || this._config?.show_legend);
         }
         _hasChanged(oldHass, newHass) {
             if (!oldHass || !newHass || !this._config)
@@ -3461,9 +3464,15 @@ var HaloButtonCard = (function (exports) {
             // Tiroir Accordéon
             if (this._accordionEl) {
                 if (isCollapsible && this._isExpanded) {
+                    this._accordionEl.style.display = 'block';
                     this._accordionEl.className = 'halo-accordion-drawer expanded';
                 }
+                else if (isCollapsible) {
+                    this._accordionEl.style.display = 'block';
+                    this._accordionEl.className = 'halo-accordion-drawer';
+                }
                 else {
+                    this._accordionEl.style.display = 'none';
                     this._accordionEl.className = 'halo-accordion-drawer';
                 }
             }
@@ -3539,16 +3548,20 @@ var HaloButtonCard = (function (exports) {
     /**
      * ==============================================================================
      * 📌 Nom du fichier : src/editors/halo-separator-card-editor.ts
-     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-separator-card
-     *                    avec support des options accordéon, colonnes (1/2/3) et
-     *                    gestionnaire visuel d'éléments de légendes.
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-separator-card.
+     *                    Mode adaptatif conditionnel : séparateur simple par défaut,
+     *                    et affichage des options de volet repliable/légendes uniquement
+     *                    si l'accordéon est explicitement activé.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.0
+     * 📦 Version      : 1.3.1
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.1 (2026-10-30) : Affichage conditionnel strict : masquage complet des
+     *                              options et du gestionnaire de légendes si collapsible
+     *                              n'est pas coché. Séparateur simple et épuré par défaut.
      *   - 💡 v1.3.0 (2026-10-30) : Support complet des colonnes (1, 2, 3) et gestionnaire
      *                              dynamique des éléments de légende (ajout, édition,
      *                              réordonnancement, suppression).
@@ -3556,7 +3569,7 @@ var HaloButtonCard = (function (exports) {
      *   - 💡 v1.0.0 (2026-10-29) : Création initiale de l'éditeur séparateur.
      * ==============================================================================
      */
-    const SCHEMA$2 = [
+    const BASE_SCHEMA = [
         {
             name: 'name',
             label: 'Titre de la section',
@@ -3568,10 +3581,22 @@ var HaloButtonCard = (function (exports) {
             selector: { icon: {} }
         },
         {
-            name: 'collapsible',
-            label: 'Activer le volet accordéon escamotable',
-            selector: { boolean: {} }
+            name: 'color',
+            label: 'Couleur personnalisée (optionnel)',
+            selector: { color_rgb: {} }
         },
+        {
+            name: 'theme_entity',
+            label: 'Entité sélecteur de thème (optionnel)',
+            selector: { entity: { domain: 'input_select' } }
+        },
+        {
+            name: 'collapsible',
+            label: 'Activer le volet repliable de légende (Accordéon)',
+            selector: { boolean: {} }
+        }
+    ];
+    const ACCORDION_SCHEMA = [
         {
             name: 'initial_collapsed',
             label: 'Initialement replié / masqué',
@@ -3609,22 +3634,13 @@ var HaloButtonCard = (function (exports) {
             name: 'toggle_entity',
             label: 'Entité externe synchronisée (optionnel)',
             selector: { entity: { domain: 'input_boolean' } }
-        },
-        {
-            name: 'color',
-            label: 'Couleur personnalisée (optionnel)',
-            selector: { color_rgb: {} }
-        },
-        {
-            name: 'theme_entity',
-            label: 'Entité sélecteur de thème (optionnel)',
-            selector: { entity: { domain: 'input_select' } }
         }
     ];
     class HaloSeparatorCardEditor extends HTMLElement {
         setConfig(config) {
             this._config = {
                 columns: 2,
+                collapsible: false,
                 ...config
             };
             this._render();
@@ -3642,6 +3658,9 @@ var HaloButtonCard = (function (exports) {
             const data = { ...this._config };
             if (data.columns !== undefined) {
                 data.columns = String(data.columns);
+            }
+            if (data.collapsible === undefined) {
+                data.collapsible = Boolean(data.show_legend);
             }
             if (data.color && typeof data.color === 'string') {
                 const rgb = hexToRgb(data.color);
@@ -3668,11 +3687,17 @@ var HaloButtonCard = (function (exports) {
             if (val.color && Array.isArray(val.color)) {
                 val.color = rgbToHex(val.color);
             }
+            const previousCollapsible = Boolean(this._config.collapsible || this._config.show_legend);
+            const newCollapsible = Boolean(val.collapsible !== undefined ? val.collapsible : previousCollapsible);
             this._config = {
                 ...this._config,
                 ...val
             };
             this._fireChanged();
+            // Actualiser le formulaire et l'affichage si le mode accordéon a basculé
+            if (previousCollapsible !== newCollapsible) {
+                this._render();
+            }
         }
         _getItems() {
             if (Array.isArray(this._config.legend_items)) {
@@ -3825,14 +3850,19 @@ var HaloButtonCard = (function (exports) {
         _render() {
             if (!this._config)
                 return;
+            const isCollapsible = Boolean(this._config?.collapsible || this._config?.show_legend);
+            const schema = isCollapsible ? [...BASE_SCHEMA, ...ACCORDION_SCHEMA] : BASE_SCHEMA;
             let form = this.querySelector('ha-form');
             if (!form) {
                 this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
-          <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
+          <div id="legend-items-manager" style="display: ${isCollapsible ? 'block' : 'none'}; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">Éléments de Légende & Guide</span>
+              <div>
+                <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">Éléments de Légende & Guide</span>
+                <span style="display: block; font-size: 11px; color: var(--secondary-text-color);">Configurez les tuiles explicatives du volet repliable</span>
+              </div>
               <button type="button" id="btn-add-item" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; background: var(--primary-color, #0288d1); color: #fff; border: none; cursor: pointer; font-size: 12px; font-weight: 600;">
                 <span>+ Ajouter un élément</span>
               </button>
@@ -3843,20 +3873,29 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    form.schema = SCHEMA$2;
+                    form.schema = schema;
                     form.data = this._formData();
                     if (this._hass)
                         form.hass = this._hass;
                     form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
                 }
                 this.querySelector('#btn-add-item')?.addEventListener('click', () => this._addItem());
-                this._renderItemsManager();
+                if (isCollapsible) {
+                    this._renderItemsManager();
+                }
             }
             else {
+                form.schema = schema;
                 form.data = this._formData();
                 if (this._hass)
                     form.hass = this._hass;
-                this._renderItemsManager();
+                const managerEl = this.querySelector('#legend-items-manager');
+                if (managerEl) {
+                    managerEl.style.display = isCollapsible ? 'block' : 'none';
+                }
+                if (isCollapsible) {
+                    this._renderItemsManager();
+                }
             }
         }
     }
@@ -4790,11 +4829,14 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.0
+     * 📦 Version      : 1.3.1
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.1 (2026-10-30) : Découplage complet séparateur simple vs accordéon :
+     *                              interrupteur collapsible conditionnant l'affichage du
+     *                              volet et masquage total des contrôles de légende dans l'éditeur.
      *   - 💡 v1.3.0 (2026-10-30) : Modularisation du volet accordéon de custom:halo-separator-card
      *                              (grille 1/2/3 colonnes responsive, gestionnaire UI des légendes,
      *                              alignement typographique, badges, halos et interactions tactiles).
@@ -4807,7 +4849,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.3.0';
+    const VERSION = '1.3.1';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
