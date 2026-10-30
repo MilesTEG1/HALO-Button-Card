@@ -1,16 +1,20 @@
 /**
  * ==============================================================================
  * 📌 Nom du fichier : src/editors/halo-separator-card-editor.ts
- * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-separator-card
- *                    avec support des options accordéon, colonnes (1/2/3) et
- *                    gestionnaire visuel d'éléments de légendes.
+ * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-separator-card.
+ *                    Mode adaptatif conditionnel : séparateur simple par défaut,
+ *                    et affichage des options de volet repliable/légendes uniquement
+ *                    si l'accordéon est explicitement activé.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.0
+ * 📦 Version      : 1.3.1
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.3.1 (2026-10-30) : Affichage conditionnel strict : masquage complet des
+ *                              options et du gestionnaire de légendes si collapsible
+ *                              n'est pas coché. Séparateur simple et épuré par défaut.
  *   - 💡 v1.3.0 (2026-10-30) : Support complet des colonnes (1, 2, 3) et gestionnaire
  *                              dynamique des éléments de légende (ajout, édition,
  *                              réordonnancement, suppression).
@@ -22,7 +26,7 @@
 import { HomeAssistant, HaloSeparatorCardConfig, LegendItemConfig } from '../types';
 import { hexToRgb, rgbToHex } from '../core/theme-helper';
 
-const SCHEMA = [
+const BASE_SCHEMA = [
   {
     name: 'name',
     label: 'Titre de la section',
@@ -34,10 +38,23 @@ const SCHEMA = [
     selector: { icon: {} }
   },
   {
-    name: 'collapsible',
-    label: 'Activer le volet accordéon escamotable',
-    selector: { boolean: {} }
+    name: 'color',
+    label: 'Couleur personnalisée (optionnel)',
+    selector: { color_rgb: {} }
   },
+  {
+    name: 'theme_entity',
+    label: 'Entité sélecteur de thème (optionnel)',
+    selector: { entity: { domain: 'input_select' } }
+  },
+  {
+    name: 'collapsible',
+    label: 'Activer le volet repliable de légende (Accordéon)',
+    selector: { boolean: {} }
+  }
+];
+
+const ACCORDION_SCHEMA = [
   {
     name: 'initial_collapsed',
     label: 'Initialement replié / masqué',
@@ -75,16 +92,6 @@ const SCHEMA = [
     name: 'toggle_entity',
     label: 'Entité externe synchronisée (optionnel)',
     selector: { entity: { domain: 'input_boolean' } }
-  },
-  {
-    name: 'color',
-    label: 'Couleur personnalisée (optionnel)',
-    selector: { color_rgb: {} }
-  },
-  {
-    name: 'theme_entity',
-    label: 'Entité sélecteur de thème (optionnel)',
-    selector: { entity: { domain: 'input_select' } }
   }
 ];
 
@@ -95,6 +102,7 @@ export class HaloSeparatorCardEditor extends HTMLElement {
   public setConfig(config: HaloSeparatorCardConfig) {
     this._config = {
       columns: 2,
+      collapsible: false,
       ...config
     };
     this._render();
@@ -113,6 +121,9 @@ export class HaloSeparatorCardEditor extends HTMLElement {
     const data: Record<string, any> = { ...this._config };
     if (data.columns !== undefined) {
       data.columns = String(data.columns);
+    }
+    if (data.collapsible === undefined) {
+      data.collapsible = Boolean(data.show_legend);
     }
     if (data.color && typeof data.color === 'string') {
       const rgb = hexToRgb(data.color);
@@ -139,11 +150,20 @@ export class HaloSeparatorCardEditor extends HTMLElement {
     if (val.color && Array.isArray(val.color)) {
       val.color = rgbToHex(val.color);
     }
+
+    const previousCollapsible = Boolean(this._config.collapsible || this._config.show_legend);
+    const newCollapsible = Boolean(val.collapsible !== undefined ? val.collapsible : previousCollapsible);
+
     this._config = {
       ...this._config,
       ...val
     };
     this._fireChanged();
+
+    // Actualiser le formulaire et l'affichage si le mode accordéon a basculé
+    if (previousCollapsible !== newCollapsible) {
+      this._render();
+    }
   }
 
   private _getItems(): LegendItemConfig[] {
@@ -309,14 +329,20 @@ export class HaloSeparatorCardEditor extends HTMLElement {
   private _render() {
     if (!this._config) return;
 
+    const isCollapsible = Boolean(this._config?.collapsible || this._config?.show_legend);
+    const schema = isCollapsible ? [...BASE_SCHEMA, ...ACCORDION_SCHEMA] : BASE_SCHEMA;
+
     let form = this.querySelector('ha-form') as any;
     if (!form) {
       this.innerHTML = `
         <div style="padding: 8px 0;">
           <ha-form id="form"></ha-form>
-          <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
+          <div id="legend-items-manager" style="display: ${isCollapsible ? 'block' : 'none'}; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">Éléments de Légende & Guide</span>
+              <div>
+                <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">Éléments de Légende & Guide</span>
+                <span style="display: block; font-size: 11px; color: var(--secondary-text-color);">Configurez les tuiles explicatives du volet repliable</span>
+              </div>
               <button type="button" id="btn-add-item" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; background: var(--primary-color, #0288d1); color: #fff; border: none; cursor: pointer; font-size: 12px; font-weight: 600;">
                 <span>+ Ajouter un élément</span>
               </button>
@@ -327,18 +353,28 @@ export class HaloSeparatorCardEditor extends HTMLElement {
       `;
       form = this.querySelector('#form') as any;
       if (form) {
-        form.schema = SCHEMA;
+        form.schema = schema;
         form.data = this._formData();
         if (this._hass) form.hass = this._hass;
         form.addEventListener('value-changed', (ev: CustomEvent) => this._valueChanged(ev));
       }
 
       this.querySelector('#btn-add-item')?.addEventListener('click', () => this._addItem());
-      this._renderItemsManager();
+      if (isCollapsible) {
+        this._renderItemsManager();
+      }
     } else {
+      form.schema = schema;
       form.data = this._formData();
       if (this._hass) form.hass = this._hass;
-      this._renderItemsManager();
+
+      const managerEl = this.querySelector('#legend-items-manager') as HTMLElement;
+      if (managerEl) {
+        managerEl.style.display = isCollapsible ? 'block' : 'none';
+      }
+      if (isCollapsible) {
+        this._renderItemsManager();
+      }
     }
   }
 }
