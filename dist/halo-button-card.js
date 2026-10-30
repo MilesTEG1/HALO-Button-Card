@@ -2984,11 +2984,13 @@ var HaloButtonCard = (function (exports) {
      *                    alignement vertical, badges/icônes, halos et actions tactiles).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.1
+     * 📦 Version      : 1.3.2
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.2 (2026-10-30) : Calibrage précis du badge court (max 2-3 caractères,
+     *                              ajustement dynamique de la taille de police et troncature stricte).
      *   - 💡 v1.3.1 (2026-10-30) : Séparation stricte du mode séparateur pur (collapsible: false)
      *                              et accordéon actif (collapsible: true). Masquage total
      *                              du volet et du bouton toggle si l'accordéon n'est pas activé.
@@ -3512,7 +3514,15 @@ var HaloButtonCard = (function (exports) {
                     div.className = 'legend-item';
                     let badgeContent = '';
                     if (it.badge) {
-                        badgeContent = `<span class="legend-badge-text" style="color: ${itemCol};">${it.badge}</span>`;
+                        const badgeText = String(it.badge).trim().slice(0, 3);
+                        let badgeFontSize = '11px';
+                        if (badgeText.length >= 3) {
+                            badgeFontSize = '9.5px';
+                        }
+                        else if (badgeText.length === 2) {
+                            badgeFontSize = '10.5px';
+                        }
+                        badgeContent = `<span class="legend-badge-text" style="color: ${itemCol}; font-size: ${badgeFontSize};">${badgeText}</span>`;
                     }
                     else if (it.icon) {
                         badgeContent = `<ha-icon icon="${it.icon}" style="color: ${itemCol};"></ha-icon>`;
@@ -3554,11 +3564,14 @@ var HaloButtonCard = (function (exports) {
      *                    si l'accordéon est explicitement activé.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.1
+     * 📦 Version      : 1.3.2
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.2 (2026-10-30) : Amélioration ergonomique de la sélection d'indicateur :
+     *                              mention visuelle 'OU' entre l'icône et le badge court,
+     *                              champ badge calibré avec limite stricte de 3 caractères (maxlength 3).
      *   - 💡 v1.3.1 (2026-10-30) : Affichage conditionnel strict : masquage complet des
      *                              options et du gestionnaire de légendes si collapsible
      *                              n'est pas coché. Séparateur simple et épuré par défaut.
@@ -3800,17 +3813,20 @@ var HaloButtonCard = (function (exports) {
                 headerRow.querySelector('.btn-up')?.addEventListener('click', () => this._moveItem(idx, 'up'));
                 headerRow.querySelector('.btn-down')?.addEventListener('click', () => this._moveItem(idx, 'down'));
                 headerRow.querySelector('.btn-del')?.addEventListener('click', () => this._removeItem(idx));
-                // Fields row 1 (Icon & Badge)
+                // Fields row 1 (Icon OU Badge court)
                 const row1 = document.createElement('div');
-                row1.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px;';
+                row1.style.cssText = 'display: flex; align-items: flex-end; gap: 8px; width: 100%; box-sizing: border-box;';
                 row1.innerHTML = `
-        <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Icône (ex: mdi:power)</label>
-          <input type="text" class="input-icon" value="${it.icon || ''}" placeholder="mdi:tag" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        <div style="flex: 1; min-width: 0;">
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Icône MDI (ex: mdi:power)</label>
+          <input type="text" class="input-icon" value="${it.icon || ''}" placeholder="mdi:tag" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
         </div>
-        <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Badge court (ex: %, K, °C)</label>
-          <input type="text" class="input-badge" value="${it.badge || ''}" placeholder="%, K..." style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        <div style="display: flex; align-items: center; justify-content: center; height: 31px; padding: 0 1px;">
+          <span style="font-size: 10px; font-weight: 700; color: var(--secondary-text-color); background: rgba(255, 255, 255, 0.08); padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); letter-spacing: 0.5px; user-select: none;">OU</span>
+        </div>
+        <div style="width: 130px; min-width: 130px;">
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px; white-space: nowrap;">Badge <span style="font-size: 10px; opacity: 0.8;">(max 2-3 car.)</span></label>
+          <input type="text" class="input-badge" value="${it.badge || ''}" maxlength="3" placeholder="%, K, °C" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px; text-align: center; font-weight: 700;">
         </div>
       `;
                 row1.querySelector('.input-icon')?.addEventListener('change', (e) => this._updateItemField(idx, 'icon', e.target.value));
@@ -4829,11 +4845,13 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.1
+     * 📦 Version      : 1.3.2
      * 📅 Date         : 2026-10-30
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.3.2 (2026-10-30) : Mention OU stylisée entre icône et badge court dans
+     *                              l'éditeur, et calibrage de taille de police (max 3 car.).
      *   - 💡 v1.3.1 (2026-10-30) : Découplage complet séparateur simple vs accordéon :
      *                              interrupteur collapsible conditionnant l'affichage du
      *                              volet et masquage total des contrôles de légende dans l'éditeur.
@@ -4849,7 +4867,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.3.1';
+    const VERSION = '1.3.2';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
