@@ -8,10 +8,15 @@
 import { HomeAssistant, HaloCoverCardConfig, HassEntity } from '../types';
 import { voletHelperInstance } from '../core/volet-helper';
 import { getCoverColors, getHaloCardStyles } from '../core/theme-helper';
+import { useLocalize, localizeHolm } from '../localize/localize';
 
 export class HaloCoverCard extends HTMLElement {
   private _config!: HaloCoverCardConfig;
   private _hass!: HomeAssistant;
+
+  private get _t() {
+    return useLocalize(this._hass);
+  }
   private _root: ShadowRoot;
   public _updateTimerMS = 0;
 
@@ -314,13 +319,13 @@ export class HaloCoverCard extends HTMLElement {
         </div>
 
         <div class="halo-buttons">
-          <button class="halo-btn" id="btn-down" title="Descendre" type="button">
+          <button class="halo-btn" id="btn-down" title="${this._t('cover.down')}" type="button">
             <ha-icon icon="mdi:arrow-down"></ha-icon>
           </button>
-          <button class="halo-btn" id="btn-stop" title="Arrêter" type="button">
+          <button class="halo-btn" id="btn-stop" title="${this._t('cover.stop')}" type="button">
             <ha-icon icon="mdi:stop"></ha-icon>
           </button>
-          <button class="halo-btn" id="btn-up" title="Monter" type="button">
+          <button class="halo-btn" id="btn-up" title="${this._t('cover.up')}" type="button">
             <ha-icon icon="mdi:arrow-up"></ha-icon>
           </button>
         </div>
@@ -353,7 +358,7 @@ export class HaloCoverCard extends HTMLElement {
 
     if (!entity) {
       if (this._unavailEl) {
-        this._unavailEl.textContent = `Entité non trouvée : ${id}`;
+        this._unavailEl.textContent = this._t('cover.not_found', 'id', id);
         this._unavailEl.style.display = 'block';
       }
       if (this._cardEl) {
@@ -396,27 +401,30 @@ export class HaloCoverCard extends HTMLElement {
     }
 
     // Friendly name
-    let name = this._config.name || attrs.friendly_name || 'Volet';
+    let name = this._config.name || attrs.friendly_name || this._t('cover.default_name');
     name = name.replace(/^Volet\s+roulant\s+/i, '');
 
     // Status label
-    let statusText = 'Fermé';
+    const t = this._t;
+    let statusText = t('state.closed');
     if (isUnavail) {
-      statusText = 'Indisponible';
+      statusText = t('state.unavailable');
     } else if (isMoving) {
       if (isGroup) {
-        statusText = movingCount > 1 ? `${movingCount} volets en mouvement…` : moveDir === 'closing' ? 'Fermeture…' : 'Ouverture…';
+        statusText = movingCount > 1
+          ? t('cover.moving_n', 'count', String(movingCount))
+          : moveDir === 'closing' ? t('cover.closing') : t('cover.opening');
       } else {
         statusText = moveDir === 'closing'
-          ? (p != null ? `Fermeture… ${100 - p} %` : 'Fermeture…')
-          : (p != null ? `Ouverture… ${p} %` : 'Ouverture…');
+          ? (p != null ? t('cover.closing_pct', 'pct', String(100 - p)) : t('cover.closing'))
+          : (p != null ? t('cover.opening_pct', 'pct', String(p)) : t('cover.opening'));
       }
     } else if (isClosed) {
-      statusText = 'Fermé';
+      statusText = t('state.closed');
     } else if (isOpen) {
-      statusText = 'Ouvert';
+      statusText = t('state.open');
     } else if (isPartial) {
-      statusText = `Partiel (${p}%)`;
+      statusText = t('cover.partial_pct', 'pct', String(p));
     }
 
     // Closure percentage
