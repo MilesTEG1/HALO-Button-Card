@@ -7,22 +7,18 @@
  *                    si l'accordéon est explicitement activé.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.2
+ * 📦 Version      : 1.2.0
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 💡 v1.3.2 (2026-10-30) : Amélioration ergonomique de la sélection d'indicateur :
- *                              mention visuelle 'OU' entre l'icône et le badge court,
- *                              champ badge calibré avec limite stricte de 3 caractères (maxlength 3).
- *   - 💡 v1.3.1 (2026-10-30) : Affichage conditionnel strict : masquage complet des
- *                              options et du gestionnaire de légendes si collapsible
- *                              n'est pas coché. Séparateur simple et épuré par défaut.
- *   - 💡 v1.3.0 (2026-10-30) : Support complet des colonnes (1, 2, 3) et gestionnaire
- *                              dynamique des éléments de légende (ajout, édition,
- *                              réordonnancement, suppression).
- *   - 💡 v1.2.0 (2026-10-30) : Ajout des contrôles accordéon (collapsible, labels, toggle_entity).
- *   - 💡 v1.0.0 (2026-10-29) : Création initiale de l'éditeur séparateur.
+ *   - 💡 v1.2.0 (2026-10-30) : Éditeur adaptatif modulaire complet :
+ *                              • Masquage strict des options de volet/légendes si collapsible est désactivé.
+ *                              • Répéteur dynamique des éléments de légende (ajout, édition, réordonnancement, suppression).
+ *                              • Support sélecteur colonnes (1, 2, 3).
+ *                              • Mention visuelle "OU" stylisée entre sélecteur d'icône et badge court.
+ *                              • Champ badge court calibré avec limite stricte (maxlength="3").
+ *   - 🆕 v1.0.0 (2026-10-29) : Création initiale de l'éditeur séparateur.
  * ==============================================================================
  */
 

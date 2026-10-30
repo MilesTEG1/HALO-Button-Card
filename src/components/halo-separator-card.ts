@@ -8,26 +8,19 @@
  *                    alignement vertical, badges/icônes, halos et actions tactiles).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.2
+ * 📦 Version      : 1.2.0
  * 📅 Date         : 2026-10-30
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 💡 v1.3.2 (2026-10-30) : Calibrage précis du badge court (max 2-3 caractères,
- *                              ajustement dynamique de la taille de police et troncature stricte).
- *   - 💡 v1.3.1 (2026-10-30) : Séparation stricte du mode séparateur pur (collapsible: false)
- *                              et accordéon actif (collapsible: true). Masquage total
- *                              du volet et du bouton toggle si l'accordéon n'est pas activé.
- *   - 💡 v1.3.0 (2026-10-30) : Modularisation complète du volet repliable accordéon :
+ *   - 💡 v1.2.0 (2026-10-30) : Refonte modulaire majeure :
+ *                              • Mode adaptatif : séparateur épuré (collapsible: false) ou accordéon (collapsible: true).
  *                              • Grille responsive dynamique paramétrable (1, 2 ou 3 colonnes).
- *                              • Alignement typographique parfait (icône centrée sur la 1ère ligne).
+ *                              • Alignement optique vertical au pixel près entre icône/badge et libellé.
+ *                              • Support double icône MDI ou badge court (max 2-3 car. avec calibrage dynamique).
  *                              • Rétro-éclairage et halo spéculaire paramétrables par item.
- *                              • Support double icône MDI ou badge court (%, K, °C, etc.).
- *                              • Prise en charge du contenu libre Markdown/texte.
- *                              • Support des interactions tactiles optionnelles (tap_action).
- *   - 💡 v1.2.0 (2026-10-30) : Évolution accordéon intégrée (volet repliable avec
- *                              transition CSS fluide et bouton pill Masquer/Afficher).
- *   - 💡 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
+ *                              • Support du contenu libre et interactions tactiles optionnelles.
+ *   - 🆕 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
  * ==============================================================================
  */
 
