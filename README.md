@@ -1,21 +1,23 @@
-# 🌟 HALO Button Card
+# HALO Button Card by [@MilesTEG1](https://github.com/MilesTEG1) <!-- omit in toc -->
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/01-hero-dashboard-volets.png" alt="HALO Button Card — Liquid Glass Dashboard" width="100%" />
-</p>
+[![Stable][releases-shield]][releases] [![Beta][releases-dev-shield]][releases-dev] [![HACS Badge][hacs-badge]][hacs-link] ![Project Maintenance][maintenance-shield] <br/> ![Downloads][downloads] [![GitHub Activity][commits-shield]][commits] [![License][license-shield]](LICENSE) ![Co-Engineered with Antigravity][antigravity-shield]
 
-<p align="center">
-  <a href="https://github.com/MilesTEG1/HALO-Button-Card/releases/latest"><img src="https://img.shields.io/github/v/release/MilesTEG1/HALO-Button-Card.svg?color=26c6da" alt="Stable Release" /></a>
-  <a href="https://github.com/MilesTEG1/HALO-Button-Card/releases"><img src="https://img.shields.io/github/v/release/MilesTEG1/HALO-Button-Card?include_prereleases&label=release%40dev&color=f59e0b" alt="Dev Prerelease" /></a>
-  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=MilesTEG1&repository=HALO-Button-Card&category=plugin"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/MilesTEG1/HALO-Button-Card.svg" alt="License: MIT" /></a>
-  <a href="https://github.com/MilesTEG1/HALO-Button-Card/commits/main"><img src="https://img.shields.io/github/commit-activity/m/MilesTEG1/HALO-Button-Card.svg" alt="GitHub Activity" /></a>
-  <img src="https://img.shields.io/badge/Co--Engineered%20with-Google%20DeepMind%20Antigravity-4285F4?logo=google&logoColor=white" alt="Co-Engineered with Antigravity" />
-</p>
+[commits-shield]: https://img.shields.io/github/commit-activity/y/MilesTEG1/HALO-Button-Card.svg
+[commits]: https://github.com/MilesTEG1/HALO-Button-Card/commits/main
+[license-shield]: https://img.shields.io/github/license/MilesTEG1/HALO-Button-Card.svg
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2026.svg
+[releases-shield]: https://img.shields.io/github/release/MilesTEG1/HALO-Button-Card.svg
+[releases]: https://github.com/MilesTEG1/HALO-Button-Card/releases/latest
+[releases-dev-shield]: https://img.shields.io/github/package-json/v/MilesTEG1/HALO-Button-Card/dev?label=release%40dev
+[releases-dev]: https://github.com/MilesTEG1/HALO-Button-Card/releases
+[hacs-badge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg
+[downloads]: https://img.shields.io/github/downloads/MilesTEG1/HALO-Button-Card/total
+[hacs-link]: https://my.home-assistant.io/redirect/hacs_repository/?owner=MilesTEG1&repository=HALO-Button-Card&category=plugin
+[antigravity-shield]: https://img.shields.io/badge/Co--Engineered%20with-Google%20DeepMind%20Antigravity-4285F4?logo=google&logoColor=white
 
-<p align="center">
-  <b>English</b> | <a href="README.fr.md">Français 🇫🇷</a> | <a href="https://github.com/MilesTEG1/HALO-Button-Card/wiki">Wiki Documentation 📖</a>
-</p>
+**English** | [Français 🇫🇷](README.fr.md) | [Wiki Documentation 📖](https://github.com/MilesTEG1/HALO-Button-Card/wiki)
+
+![HALO Button Card — Liquid Glass Dashboard](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/01-hero-dashboard-volets.png)
 
 ---
 
@@ -46,10 +48,10 @@ Each card state is highlighted by an ambient glow, illustrated below using custo
 
 | State | Status | Sample Color | Visual Preview |
 | :--- | :--- | :---: | :---: |
-| **Closed** | Position `0%` | `#e2e8f0` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/02-state-closed.png" alt="Volet Fermé" width="280"/> |
-| **Open** | Position `100%` | `#6ad2e6` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/03-state-open.png" alt="Volet Ouvert" width="280"/> |
-| **Partial** | Position `1% - 99%` | `#d4fb78` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/04-state-partial.png" alt="Volet Partiel" width="280"/> |
-| **Moving** | Opening / Closing travel | `#f59e0b` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/05-state-moving.png" alt="Volet en Mouvement" width="280"/> |
+| **Closed** | Position `0%` | `#e2e8f0` | ![Volet Fermé](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/02-state-closed.png) |
+| **Open** | Position `100%` | `#6ad2e6` | ![Volet Ouvert](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/03-state-open.png) |
+| **Partial** | Position `1% - 99%` | `#d4fb78` | ![Volet Partiel](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/04-state-partial.png) |
+| **Moving** | Opening / Closing travel | `#f59e0b` | ![Volet en Mouvement](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/05-state-moving.png) |
 
 ---
 
@@ -57,9 +59,7 @@ Each card state is highlighted by an ambient glow, illustrated below using custo
 
 HALO cards are engineered from the ground up for high-density, touch-optimized interaction across smartphones, tablets, and wall-mounted dashboards:
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/10-mobile-view-volets.png" alt="HALO Button Card Mobile View" width="55%" />
-</p>
+![HALO Button Card Mobile View](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/10-mobile-view-volets.png)
 
 - **Calibrated Height (68px)**: Consistent tile footprint preventing layout shifts and flickering in Lovelace `sections` or `grid` views.
 - **Finger-Friendly Micro-Controls**: Distinct touch zones for Down, Stop, and Up commands with instant tactile feedback.
@@ -256,28 +256,22 @@ Every card in the suite includes an integrated graphical editor built on Home As
 
 HALO cards register with `window.customCards` for seamless discovery in the native Home Assistant card picker:
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/09-card-picker-discovery.png" alt="HALO Cards in Lovelace Card Picker" width="90%" />
-</p>
+![HALO Cards in Lovelace Card Picker](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/09-card-picker-discovery.png)
 
 ### 🎛️ Visual Editors & Precision 2D Color Wheel
 
 Configuring cards is completely visual—no need to memorize configuration keys or write hex codes manually:
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/06-editor-cover-card-general.png" alt="Cover Card Editor" width="48%" />
-  &nbsp;
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/07-editor-cover-color-wheel.png" alt="2D Color Wheel Dialog" width="48%" />
-</p>
+![Cover Card Editor](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/06-editor-cover-card-general.png)
+
+![2D Color Wheel Dialog](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/07-editor-cover-color-wheel.png)
 
 1. **Cover Card Editor (`halo-cover-card`)**: Select target `cover` entities or groups with automatic domain filtering, customize labels, and tune individual state colors.
 2. **Precision 2D Color Wheel**: Tap any color swatch to launch Home Assistant's native 2D color picker with hue/saturation navigation, brightness slider, discrete RGB primary channels (0-255), and hexadecimal inputs.
 
 ### 📑 Section Divider Editor (`halo-separator-card`)
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/08-editor-separator-card.png" alt="Separator Card Editor" width="80%" />
-</p>
+![Separator Card Editor](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/08-editor-separator-card.png)
 
 - **Section Title**: Frosted typography heading.
 - **Interactive Icon Picker**: Live Material Design Icons search (`mdi:...`).

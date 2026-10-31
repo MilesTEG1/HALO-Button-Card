@@ -1,21 +1,23 @@
-# 🌟 HALO Button Card
+# HALO Button Card par [@MilesTEG1](https://github.com/MilesTEG1) <!-- omit in toc -->
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/01-hero-dashboard-volets.png" alt="HALO Button Card — Tableau de bord Liquid Glass" width="100%" />
-</p>
+[![Stable][releases-shield]][releases] [![Beta][releases-dev-shield]][releases-dev] [![Badge HACS][hacs-badge]][hacs-link] ![Maintenance du Projet][maintenance-shield] <br/> ![Téléchargements][downloads] [![Activité GitHub][commits-shield]][commits] [![Licence][license-shield]](LICENSE) ![Co-Développé avec Antigravity][antigravity-shield]
 
-<p align="center">
-  <a href="https://github.com/MilesTEG1/HALO-Button-Card/releases/latest"><img src="https://img.shields.io/github/v/release/MilesTEG1/HALO-Button-Card.svg?color=26c6da" alt="Release Stable" /></a>
-  <a href="https://github.com/MilesTEG1/HALO-Button-Card/releases"><img src="https://img.shields.io/github/v/release/MilesTEG1/HALO-Button-Card?include_prereleases&label=release%40dev&color=f59e0b" alt="Prerelease Dev" /></a>
-  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=MilesTEG1&repository=HALO-Button-Card&category=plugin"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/MilesTEG1/HALO-Button-Card.svg" alt="Licence : MIT" /></a>
-  <a href="https://github.com/MilesTEG1/HALO-Button-Card/commits/main"><img src="https://img.shields.io/github/commit-activity/m/MilesTEG1/HALO-Button-Card.svg" alt="Activité GitHub" /></a>
-  <img src="https://img.shields.io/badge/Co--Développé%20avec-Google%20DeepMind%20Antigravity-4285F4?logo=google&logoColor=white" alt="Co-développé avec Antigravity" />
-</p>
+[commits-shield]: https://img.shields.io/github/commit-activity/y/MilesTEG1/HALO-Button-Card.svg
+[commits]: https://github.com/MilesTEG1/HALO-Button-Card/commits/main
+[license-shield]: https://img.shields.io/github/license/MilesTEG1/HALO-Button-Card.svg
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2026.svg
+[releases-shield]: https://img.shields.io/github/release/MilesTEG1/HALO-Button-Card.svg
+[releases]: https://github.com/MilesTEG1/HALO-Button-Card/releases/latest
+[releases-dev-shield]: https://img.shields.io/github/package-json/v/MilesTEG1/HALO-Button-Card/dev?label=release%40dev
+[releases-dev]: https://github.com/MilesTEG1/HALO-Button-Card/releases
+[hacs-badge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg
+[downloads]: https://img.shields.io/github/downloads/MilesTEG1/HALO-Button-Card/total
+[hacs-link]: https://my.home-assistant.io/redirect/hacs_repository/?owner=MilesTEG1&repository=HALO-Button-Card&category=plugin
+[antigravity-shield]: https://img.shields.io/badge/Co--Développé%20avec-Google%20DeepMind%20Antigravity-4285F4?logo=google&logoColor=white
 
-<p align="center">
-  <a href="README.md">English 🇬🇧</a> | <b>Français 🇫🇷</b> | <a href="https://github.com/MilesTEG1/HALO-Button-Card/wiki">Documentation Wiki 📖</a>
-</p>
+[English 🇬🇧](README.md) | **Français 🇫🇷** | [Documentation Wiki 📖](https://github.com/MilesTEG1/HALO-Button-Card/wiki)
+
+![HALO Button Card — Tableau de bord Liquid Glass](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/01-hero-dashboard-volets.png)
 
 ---
 
@@ -46,10 +48,10 @@ Chaque état dispose d'un halo coloré distinctif, illustré ici avec les couleu
 
 | État | Position / Statut | Exemple de Couleur | Rendu Visuel |
 | :--- | :--- | :---: | :---: |
-| **Fermé** | Position `0 %` | `#e2e8f0` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/02-state-closed.png" alt="Volet Fermé" width="280"/> |
-| **Ouvert** | Position `100 %` | `#6ad2e6` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/03-state-open.png" alt="Volet Ouvert" width="280"/> |
-| **Partiel** | Position `1 % à 99 %` | `#d4fb78` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/04-state-partial.png" alt="Volet Partiel" width="280"/> |
-| **En mouvement** | Course en montée ou descente | `#f59e0b` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/05-state-moving.png" alt="Volet en Mouvement" width="280"/> |
+| **Fermé** | Position `0 %` | `#e2e8f0` | ![Volet Fermé](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/02-state-closed.png) |
+| **Ouvert** | Position `100 %` | `#6ad2e6` | ![Volet Ouvert](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/03-state-open.png) |
+| **Partiel** | Position `1 % à 99 %` | `#d4fb78` | ![Volet Partiel](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/04-state-partial.png) |
+| **En mouvement** | Course en montée ou descente | `#f59e0b` | ![Volet en Mouvement](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/05-state-moving.png) |
 
 ---
 
@@ -57,9 +59,7 @@ Chaque état dispose d'un halo coloré distinctif, illustré ici avec les couleu
 
 Les cartes HALO ont été conçues dès l'origine pour une manipulation tactile fluide et une densité d'information optimale sur smartphone, tablette et écran mural tactile :
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/10-mobile-view-volets.png" alt="Aperçu mobile HALO Button Card" width="55%" />
-</p>
+![Aperçu mobile HALO Button Card](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/10-mobile-view-volets.png)
 
 - **Hauteur calibrée (68 px)** : Encombrement vertical constant éliminant les sauts d'affichage (*layout shifts*) en vue `sections` ou `grid`.
 - **Micro-boutons tactiles dédiés** : Zones d'appui ergonomiques pour les commandes Descendre, Arrêter et Monter avec retour tactile instantané.
@@ -273,28 +273,22 @@ Toutes les cartes de la collection intègrent un éditeur visuel complet basé s
 
 Les composants s'enregistrent automatiquement dans `window.customCards` avec aperçu en direct dans la boîte de dialogue officielle d'ajout de carte :
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/09-card-picker-discovery.png" alt="Découverte des cartes HALO dans Lovelace" width="90%" />
-</p>
+![Découverte des cartes HALO dans Lovelace](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/09-card-picker-discovery.png)
 
 ### 🎛️ Éditeurs Visuels et Roue Chromatique 2D
 
 La personnalisation visuelle se fait entièrement à la souris ou au doigt :
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/06-editor-cover-card-general.png" alt="Éditeur de la carte Volet" width="48%" />
-  &nbsp;
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/07-editor-cover-color-wheel.png" alt="Dialogue de la roue chromatique 2D" width="48%" />
-</p>
+![Éditeur de la carte Volet](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/06-editor-cover-card-general.png)
+
+![Dialogue de la roue chromatique 2D](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/07-editor-cover-color-wheel.png)
 
 1. **Éditeur de la Carte Volet (`halo-cover-card`)** : Sélection d'entités `cover` ou de groupes avec filtrage automatique de domaine, personnalisation des noms et réglage fin des couleurs d'état.
 2. **Roue Chromatique 2D Haute Précision** : Cliquez sur n'importe quel champ de couleur pour ouvrir le sélecteur natif Home Assistant avec spectre 2D de saturation, curseur d'intensité lumineuse, canaux primaires RVB (0 à 255) et saisie directe de code Hexadécimal.
 
 ### 📑 Éditeur du Séparateur de Section (`halo-separator-card`)
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/08-editor-separator-card.png" alt="Éditeur du séparateur de section" width="80%" />
-</p>
+![Éditeur du séparateur de section](https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/08-editor-separator-card.png)
 
 - **Titre de la section** : Libellé blanc givré semi-gras.
 - **Sélecteur interactif d'icônes** : Recherche instantanée dans la bibliothèque Material Design Icons (`mdi:...`).
