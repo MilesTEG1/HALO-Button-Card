@@ -7,11 +7,13 @@
  *                    et sous-boutons d'icônes d'état (alignement pixel-perfect capture).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`localizeHalo`).
  *   - 💡 v1.2.0 (2026-10-30) : Création initiale de la carte cover color.
  * ==============================================================================
  */
@@ -19,7 +21,7 @@
 import { HomeAssistant, HaloCoverColorCardConfig } from '../types';
 import { resolveThemeColor, toHexColor } from '../core/theme-helper';
 import { fireHaptic, fireEvent } from '../core/action-handler';
-import { useLocalize, localizeHolm } from '../localize/localize';
+import { useLocalize, localizeHalo } from '../localize/localize';
 
 interface StateTileDef {
   key: 'closed' | 'partial' | 'open' | 'moving';

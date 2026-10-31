@@ -1,7 +1,7 @@
 {
   "name": "halo-button-card",
   "version": "1.4.2",
-  "description": "Turnkey Home Assistant Lovelace cards featuring HOLM Liquid Glass style and dynamic glowing halos.",
+  "description": "Turnkey Home Assistant Lovelace cards featuring HALO Liquid Glass style and dynamic glowing halos.",
   "type": "module",
   "main": "dist/halo-button-card.js",
   "module": "dist/halo-button-card.js",
@@ -19,7 +19,7 @@
     "lovelace",
     "custom-card",
     "halo",
-    "holm",
+    "halo-button-card",
     "liquid-glass",
     "hacs"
   ],

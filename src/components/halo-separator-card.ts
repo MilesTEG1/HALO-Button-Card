@@ -8,11 +8,13 @@
  *                    alignement vertical, badges/icônes, halos et actions tactiles).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`localizeHalo`).
  *   - 💡 v1.2.0 (2026-10-30) : Refonte modulaire majeure :
  *                              • Mode adaptatif : séparateur épuré (collapsible: false) ou accordéon (collapsible: true).
  *                              • Grille responsive dynamique paramétrable (1, 2 ou 3 colonnes).
@@ -20,14 +22,14 @@
  *                              • Support double icône MDI ou badge court (max 2-3 car. avec calibrage dynamique).
  *                              • Rétro-éclairage et halo spéculaire paramétrables par item.
  *                              • Support du contenu libre et interactions tactiles optionnelles.
- *   - 🆕 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
+ *   - 🆕 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HALO.
  * ==============================================================================
  */
 
 import { HomeAssistant, HaloSeparatorCardConfig, LegendItemConfig } from '../types';
 import { resolveThemeColor, toHexColor } from '../core/theme-helper';
 import { handleAction, fireHaptic } from '../core/action-handler';
-import { useLocalize, localizeHolm } from '../localize/localize';
+import { useLocalize, localizeHalo } from '../localize/localize';
 
 export class HaloSeparatorCard extends HTMLElement {
   private _config!: HaloSeparatorCardConfig;

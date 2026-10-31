@@ -1,6 +1,22 @@
 /**
- * HALO Button Card — Theme & Styling Engine
- * (c) 2026 MilesTEG1 — MIT License
+ * ==============================================================================
+ * 📌 Nom du fichier : src/core/theme-helper.ts
+ * 📝 Description   : Moteur de thème en cascade et de style Liquid Glass HALO.
+ *                    Résolution des teintes (Hex, RGB, noms de palette HALO,
+ *                    entités Home Assistant `input_select` / `input_text`) et
+ *                    génération dynamique des feuilles CSS des cartes.
+ * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+ * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
+ * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+ * ==============================================================================
+ * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`HALO_PALETTE`) et renommage de la teinte `Cyan`.
+ *   - ✨ v1.3.0 (2026-10-30) : Support de l'épaisseur de bordure paramétrable (`border_width`).
+ *   - 🆕 v1.0.0 (2026-10-29) : Création initiale du moteur de thème et de styles.
+ * ==============================================================================
  */
 
 import { HomeAssistant, HaloCoverCardConfig } from '../types';
@@ -12,8 +28,8 @@ export interface CoverColors {
   moving: string;
 }
 
-export const HOLM_PALETTE: Record<string, string> = {
-  'Cyan HOLM': '#26c6da',
+export const HALO_PALETTE: Record<string, string> = {
+  'Cyan': '#26c6da',
   'Bleu Céleste': '#38bdf8',
   'Saphir Océan': '#2f86ff',
   'Menthe Givrée': '#00e5a3',
@@ -33,8 +49,8 @@ export const HOLM_PALETTE: Record<string, string> = {
 
 export function hexToRgb(hex: string): [number, number, number] | undefined {
   if (!hex || typeof hex !== 'string') return undefined;
-  if (HOLM_PALETTE[hex]) {
-    hex = HOLM_PALETTE[hex];
+  if (HALO_PALETTE[hex]) {
+    hex = HALO_PALETTE[hex];
   }
   const clean = hex.replace('#', '').trim();
   if (clean.length === 3) {
@@ -67,7 +83,7 @@ export function toHexColor(color: any, fallback: string): string {
   if (Array.isArray(color)) return rgbToHex(color);
   if (typeof color === 'string') {
     const trimmed = color.trim();
-    if (HOLM_PALETTE[trimmed]) return HOLM_PALETTE[trimmed];
+    if (HALO_PALETTE[trimmed]) return HALO_PALETTE[trimmed];
     if (trimmed.startsWith('#')) {
       const clean = trimmed.replace('#', '');
       if (clean.length === 3) {
@@ -99,7 +115,7 @@ export function resolveThemeColor(
   const states = hass?.states || {};
   if (themeEntity && states[themeEntity]?.state) {
     const val = states[themeEntity].state;
-    if (HOLM_PALETTE[val]) return HOLM_PALETTE[val];
+    if (HALO_PALETTE[val]) return HALO_PALETTE[val];
     if (val.startsWith('#')) return val;
   }
   const commonEntities = [
@@ -111,7 +127,7 @@ export function resolveThemeColor(
   ];
   for (const ent of commonEntities) {
     const st = states[ent]?.state;
-    if (st && HOLM_PALETTE[st]) return HOLM_PALETTE[st];
+    if (st && HALO_PALETTE[st]) return HALO_PALETTE[st];
   }
   return fallback;
 }

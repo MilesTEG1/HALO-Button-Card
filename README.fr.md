@@ -23,7 +23,7 @@
 
 ## 💎 Présentation Générale
 
-**HALO Button Card** est une suite de cartes Lovelace clé en main et open-source pour [Home Assistant](https://www.home-assistant.io/). Inspirée par la philosophie visuelle **Liquid Glass / HOLM**, elle allie le raffinement du glassmorphism translucide à des bordures lumineuses dynamiques réactives à l'état des appareils (**HALO**).
+**HALO Button Card** est une suite de cartes Lovelace clé en main et open-source pour [Home Assistant](https://www.home-assistant.io/). Conçue autour de la philosophie visuelle **Liquid Glass / HALO**, elle allie le raffinement du glassmorphism translucide à des bordures lumineuses dynamiques réactives à l'état des appareils (**HALO**).
 
 Contrairement aux configurations lourdes basées sur de multiples modèles YAML dépassant 50 lignes par tuile, les cartes HALO sont des **Web Components natifs** intégrant un **Éditeur Visuel Complet (`<ha-form>`)**. Aucune écriture manuelle de code YAML n'est requise, tout en conservant une flexibilité déclarative totale pour les utilisateurs avancés.
 
@@ -168,7 +168,7 @@ color: '#26c6da'
 | :--- | :---: | :---: | :--- |
 | `name` | `string` | `Section` | Titre de la section. |
 | `icon` | `string` | `mdi:bookmark`| Icône MDI d'en-tête. |
-| `color` | `string` | `#26c6da` | Couleur de la ligne néon dégradée (Hex ou nom de palette HOLM). |
+| `color` | `string` | `#26c6da` | Couleur de la ligne néon dégradée (Hex ou nom de palette HALO). |
 | `theme_entity` | `string` | *auto* | Entité optionnelle `input_select` pilotant la couleur de vue. |
 | `collapsible` | `boolean` | `false` | Active le bouton pill escamotable (*Masquer ⌃* / *Afficher ⌄*) et le volet accordéon. |
 | `initial_collapsed` | `boolean` | `false` | Initialement masqué / replié si activé. |
@@ -209,7 +209,7 @@ type: custom:halo-button-card
 name: Ambiance Cinéma
 label: Salon TV (40% • 2200K)
 icon: mdi:movie-open
-color: Cyan HOLM
+color: Cyan
 layout: vertical
 tap_action:
   action: call-service
@@ -227,7 +227,7 @@ tap_action:
 | `icon` | `string` | `mdi:gesture-tap-button` | Icône MDI affichée dans le bouton carré Liquid Glass. |
 | `layout` | `string` | `horizontal` | Disposition : `horizontal` (large) ou `vertical` (ambiance compacte). |
 | `text_align` | `string` | *auto* | Alignement : `left`, `center`, `right` (`left` par défaut en horizontal, `center` en vertical). |
-| `color` / `halo_color` | `string` | *thème* | Couleur de l'icône, du bouton et du halo spéculaire (nom HOLM ou Hex). |
+| `color` / `halo_color` | `string` | *thème* | Couleur de l'icône, du bouton et du halo spéculaire (nom HALO ou Hex). |
 | `entity` | `string` | *optionnel* | Entité liée optionnelle (pour état, nom ou bascule). |
 | `tap_action` | `object` | *toggle* | Action au clic simple sur la carte. |
 | `hold_action` | `object` | *none* | Action au clic long (500 ms) sur la carte. |
@@ -255,7 +255,7 @@ moving_entity: input_text.couleur_volet_en_mouvement
 
 ### 6. `custom:halo-palette-card`
 
-Nuancier interactif officiel des 16 teintes HOLM / HALO en grille 2 colonnes × 8 lignes avec halo spéculaire et badge de sélection active ✓.
+Nuancier interactif officiel des 16 teintes HALO en grille 2 colonnes × 8 lignes avec halo spéculaire et badge de sélection active ✓.
 
 ```yaml
 type: custom:halo-palette-card
@@ -301,8 +301,14 @@ La personnalisation visuelle se fait entièrement à la souris ou au doigt :
 
 Ce projet est le fruit d'une co-ingénierie collaborative entre direction architecturale humaine et exécution agentique autonome :
 
-- 👤 **Architecte & Lead** : **Pierrick (MilesTEG1)** — Vision du projet, design UI/UX HOLM, validation et intégration matérielle en conditions réelles.
+- 👤 **Architecte & Lead** : **Pierrick (MilesTEG1)** — Vision du projet, design UI/UX HALO, validation et intégration matérielle en conditions réelles.
 - 🤖 **Co-Ingénieur** : **IDA / Agent Antigravity (Google DeepMind)** — Architecture Web Components TypeScript, moteur de rendu persistant et algorithmes asynchrones NodOn Zigbee.
+
+### 🙏 Inspirations et Remerciements
+
+Nous tenons à saluer la paternité des idées ayant inspiré la genèse de cette suite :
+- **[Kaaribou](https://github.com/kaaribou)** et ses cartes **HOLM** pour l'inspiration esthétique initiale (*Liquid Glass*, glassmorphism sombre et halos lumineux).
+- **[RomRider](https://github.com/custom-cards/button-card)** et l'incontournable **[`custom:button-card`](https://github.com/custom-cards/button-card)**, qui a servi de socle de prototypage initial avant la réécriture intégrale de nos cartes en Web Components TypeScript natifs autonomes.
 
 ---
 
