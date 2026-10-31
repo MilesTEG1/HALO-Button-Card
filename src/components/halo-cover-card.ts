@@ -1,14 +1,28 @@
 /**
- * HALO Button Card — Halo Cover Card Component
- * Turnkey roller shutter tile with HOLM Liquid Glass styling and dynamic halo.
- * High-performance persistent DOM architecture (zero flicker, zero lost clicks).
- * (c) 2026 MilesTEG1 — MIT License
+ * ==============================================================================
+ * 📌 Nom du fichier : src/components/halo-cover-card.ts
+ * 📝 Description   : Composant Web custom:halo-cover-card.
+ *                    Tuile de volet roulant clé en main avec style Liquid Glass HALO,
+ *                    halo lumineux dynamique par état, barre de progression et
+ *                    architecture Persistent DOM haute performance.
+ * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+ * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
+ * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+ * ==============================================================================
+ * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`localizeHalo`) et mise en conformité de l'en-tête.
+ *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) des états du volet.
+ *   - 🆕 v1.0.0 (2026-10-29) : Création initiale de halo-cover-card.
+ * ==============================================================================
  */
 
 import { HomeAssistant, HaloCoverCardConfig, HassEntity } from '../types';
 import { voletHelperInstance } from '../core/volet-helper';
 import { getCoverColors, getHaloCardStyles } from '../core/theme-helper';
-import { useLocalize, localizeHolm } from '../localize/localize';
+import { useLocalize, localizeHalo } from '../localize/localize';
 
 export class HaloCoverCard extends HTMLElement {
   private _config!: HaloCoverCardConfig;

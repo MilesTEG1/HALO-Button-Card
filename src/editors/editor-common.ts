@@ -3,21 +3,24 @@
  * 📌 Nom du fichier : src/editors/editor-common.ts
  * 📝 Description   : Utilitaires partagés des éditeurs visuels HALO (i18n) :
  *                    câblage computeLabel/computeHelper des <ha-form>, gabarit HTML
- *                    du panneau Liquid Glass, badge de bordure, nuancier HOLM et
+ *                    du panneau Liquid Glass, badge de bordure, nuancier HALO et
  *                    nom d'affichage des couleurs.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`HALO_PALETTE`, `localizeHalo`, `color_default_halo`)
+ *                              et renommage de la teinte `Cyan`.
  *   - 🆕 v1.4.0 (2026-10-30) : Création initiale (factorisation i18n des éditeurs).
  * ==============================================================================
  */
 
-import { HOLM_PALETTE } from '../core/theme-helper';
-import { LocalizeFunc, localizeHolm, useLocalize } from '../localize/localize';
+import { HALO_PALETTE } from '../core/theme-helper';
+import { LocalizeFunc, localizeHalo, useLocalize } from '../localize/localize';
 
 /**
  * Assigne schéma, computeLabel et computeHelper d'un <ha-form> :
@@ -46,7 +49,7 @@ export interface StylePanelOptions {
   borderTitle: string;
 }
 
-/** Gabarit HTML du panneau de style Liquid Glass (médaillon, nuancier HOLM, bordure). */
+/** Gabarit HTML du panneau de style Liquid Glass (médaillon, nuancier HALO, bordure). */
 export function stylePanelHtml(t: LocalizeFunc, o: StylePanelOptions): string {
   const tabs = o.tabs
     ? `<div class="halo-state-tabs">${o.tabs.map(s => `
@@ -110,15 +113,15 @@ export function borderBadge(t: LocalizeFunc, bw: number): string {
   return `${bw} px`;
 }
 
-/** Génère les pastilles du nuancier rapide HOLM (info-bulle traduite). */
+/** Génère les pastilles du nuancier rapide HALO (info-bulle traduite). */
 export function buildChips(container: HTMLElement, hass: any, onPick: (name: string) => void) {
   container.innerHTML = '';
-  for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
+  for (const [name, hex] of Object.entries(HALO_PALETTE)) {
     const chip = document.createElement('div');
     chip.className = 'halo-chip';
     chip.setAttribute('data-name', name);
     chip.setAttribute('data-hex', hex);
-    chip.setAttribute('title', `${localizeHolm(hass, name)} (${hex})`);
+    chip.setAttribute('title', `${localizeHalo(hass, name)} (${hex})`);
     chip.style.backgroundColor = hex;
     chip.style.color = hex;
     chip.addEventListener('click', () => onPick(name));
@@ -126,14 +129,14 @@ export function buildChips(container: HTMLElement, hass: any, onPick: (name: str
   }
 }
 
-/** Nom d'affichage traduit d'une couleur (nuance HOLM, personnalisée ou défaut). */
+/** Nom d'affichage traduit d'une couleur (nuance HALO, personnalisée ou défaut). */
 export function colorDisplayName(hass: any, raw: any, emptyKey: string): string {
   const t = useLocalize(hass);
   if (!raw) return t(emptyKey);
   if (typeof raw === 'string') {
-    if (HOLM_PALETTE[raw]) return localizeHolm(hass, raw);
-    for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
-      if (hex.toLowerCase() === raw.toLowerCase()) return localizeHolm(hass, name);
+    if (HALO_PALETTE[raw]) return localizeHalo(hass, raw);
+    for (const [name, hex] of Object.entries(HALO_PALETTE)) {
+      if (hex.toLowerCase() === raw.toLowerCase()) return localizeHalo(hass, name);
     }
   }
   return t('editor.color_custom');
