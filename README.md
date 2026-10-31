@@ -23,7 +23,7 @@
 
 ## 💎 Overview
 
-**HALO Button Card** is an open-source, turnkey Lovelace card collection for [Home Assistant](https://www.home-assistant.io/). Inspired by the **Liquid Glass / HOLM** visual design philosophy, it blends translucent glassmorphism with dynamic, state-reactive glowing **HALO** borders.
+**HALO Button Card** is an open-source, turnkey Lovelace card collection for [Home Assistant](https://www.home-assistant.io/). Built around the **Liquid Glass / HALO** visual design philosophy, it blends translucent glassmorphism with dynamic, state-reactive glowing **HALO** borders.
 
 Unlike complex multi-template setups requiring 50+ lines of YAML per tile, HALO cards are **native Web Components** with complete **Visual UI Editor (`<ha-form>`)** support. No manual YAML is required, while power users retain full declarative flexibility.
 
@@ -169,7 +169,7 @@ color: '#26c6da'
 | :--- | :---: | :---: | :--- |
 | `name` | `string` | `Section` | Section title. |
 | `icon` | `string` | `mdi:bookmark`| Section leading MDI icon. |
-| `color` | `string` | `#26c6da` | Neon gradient accent color (Hex or HOLM palette name). |
+| `color` | `string` | `#26c6da` | Neon gradient accent color (Hex or HALO palette name). |
 | `theme_entity` | `string` | *auto* | Optional `input_select` entity driving view/dashboard colors. |
 | `collapsible` | `boolean` | `false` | Enables collapsible drawer and pill toggle button (*Hide ⌃* / *Show ⌄*). |
 | `initial_collapsed` | `boolean` | `false` | Initially collapsed/hidden when collapsible is true. |
@@ -209,7 +209,7 @@ type: custom:halo-button-card
 name: Cinema Mood
 label: TV Room (40% • 2200K)
 icon: mdi:movie-open
-color: Cyan HOLM
+color: Cyan
 layout: vertical
 tap_action:
   action: call-service
@@ -238,7 +238,7 @@ moving_entity: input_text.couleur_volet_en_mouvement
 
 ### 6. `custom:halo-palette-card`
 
-Official HOLM / HALO 16-color theme palette selector in a responsive 2×8 grid with active check badges and instant `input_select` synchronization.
+Official HALO 16-color theme palette selector in a responsive 2×8 grid with active check badges and instant `input_select` synchronization.
 
 ```yaml
 type: custom:halo-palette-card
@@ -284,8 +284,14 @@ Configuring cards is completely visual—no need to memorize configuration keys 
 
 This project is co-engineered through pair-programming between human architectural direction and autonomous AI agent execution:
 
-- 👤 **Architect & Lead**: **Pierrick (MilesTEG1)** — Project vision, UI/UX HOLM styling, validation, and real-world hardware integration.
+- 👤 **Architect & Lead**: **Pierrick (MilesTEG1)** — Project vision, UI/UX HALO styling, validation, and real-world hardware integration.
 - 🤖 **Co-Engineer**: **IDA / Antigravity Agent (Google DeepMind)** — TypeScript Web Components architecture, persistent DOM performance engine, and NodOn Zigbee travel algorithms.
+
+### 🙏 Acknowledgments & Inspirations
+
+Special thanks to the projects that inspired the initial concept of this card suite:
+- **[Kaaribou](https://github.com/kaaribou)** and his **HOLM** cards for the initial *Liquid Glass* visual inspiration, dark glassmorphism aesthetics, and glowing accents.
+- **[RomRider](https://github.com/custom-cards/button-card)** and the iconic **[`custom:button-card`](https://github.com/custom-cards/button-card)**, which served as our original prototyping foundation before re-engineering the entire suite into standalone native TypeScript Web Components.
 
 ---
 

@@ -5,25 +5,27 @@
  *                    Combine le composant natif <ha-form> pour les métadonnées et un
  *                    panneau Liquid Glass avec sélecteur d'états (Fermé, Ouvert,
  *                    Partiel, Mouvement), médaillon halo interactif (Option A),
- *                    nuancier rapide HOLM 16 teintes (Option B) et curseur unique
+ *                    nuancier rapide HALO 16 teintes (Option B) et curseur unique
  *                    d'épaisseur de bordure.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.3.1
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`HALO_PALETTE`).
  *   - ✨ v1.3.1 (2026-10-30) : Intégration du sélecteur Mix A+B pour les 4 états
  *                              du volet avec onglets d'états, pastille halo dynamique,
- *                              nuancier rapide HOLM et curseur unique d'épaisseur.
+ *                              nuancier rapide HALO et curseur unique d'épaisseur.
  *   - 💡 v1.3.0 (2026-10-30) : Ajout du curseur d'épaisseur de bordure (0 à 3 px).
  *   - 💡 v1.0.0 (2026-10-26) : Création initiale de l'éditeur halo-cover-card.
  * ==============================================================================
  */
 
 import { HomeAssistant, HaloCoverCardConfig } from '../types';
-import { HOLM_PALETTE, toHexColor } from '../core/theme-helper';
+import { HALO_PALETTE, toHexColor } from '../core/theme-helper';
 import { COMMON_EDITOR_STYLES } from './editor-styles';
 import { useLocalize, getLang } from '../localize/localize';
 import { applyFormI18n, stylePanelHtml, borderBadge, buildChips, colorDisplayName } from './editor-common';
@@ -137,7 +139,7 @@ export class HaloCoverCardEditor extends HTMLElement {
   }
 
   private _getColorDisplayName(key: CoverColorKey): string {
-    return colorDisplayName(this._hass, this._config?.[key], 'editor.color_default_holm');
+    return colorDisplayName(this._hass, this._config?.[key], 'editor.color_default_halo');
   }
   private _updateColor(colorValue: string) {
     this._config = {
@@ -322,7 +324,7 @@ export class HaloCoverCardEditor extends HTMLElement {
       if (val) this._updateColor(val);
     });
 
-    // 3. Génération des chips HOLM (Option B)
+    // 3. Génération des chips HALO (Option B)
     if (this._chipsContainerEl) {
       buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
     }

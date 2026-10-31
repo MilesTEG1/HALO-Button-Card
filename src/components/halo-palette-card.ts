@@ -2,24 +2,26 @@
  * ==============================================================================
  * 📌 Nom du fichier : src/components/halo-palette-card.ts
  * 📝 Description   : Composant Web custom:halo-palette-card.
- *                    Sélecteur interactif de la palette officielle des 16 teintes HOLM
+ *                    Sélecteur interactif de la palette officielle des 16 teintes HALO
  *                    (grille 2x8), avec pastilles lumineuses, bordures de focus,
  *                    badges de sélection ✓ et synchronisation temps-réel input_select.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 💡 v1.2.0 (2026-10-30) : Création initiale de la carte nuancier HOLM 16 teintes.
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`HALO_PALETTE`, `localizeHalo`) et renommage de la teinte `Cyan`.
+ *   - 💡 v1.2.0 (2026-10-30) : Création initiale de la carte nuancier HALO 16 teintes.
  * ==============================================================================
  */
 
 import { HomeAssistant, HaloPaletteCardConfig } from '../types';
-import { HOLM_PALETTE, resolveThemeColor } from '../core/theme-helper';
+import { HALO_PALETTE, resolveThemeColor } from '../core/theme-helper';
 import { fireHaptic } from '../core/action-handler';
-import { useLocalize, localizeHolm } from '../localize/localize';
+import { useLocalize, localizeHalo } from '../localize/localize';
 
 interface ColorEntry {
   name: string;
@@ -29,7 +31,7 @@ interface ColorEntry {
 // Ordonnancement exact 2 colonnes x 8 lignes de la capture 22.00.20
 const DEFAULT_PALETTE_ORDER: ColorEntry[] = [
   // Ligne 1
-  { name: 'Cyan HOLM', hex: '#26c6da' },
+  { name: 'Cyan', hex: '#26c6da' },
   { name: 'Bleu Céleste', hex: '#38bdf8' },
   // Ligne 2
   { name: 'Saphir Océan', hex: '#2f86ff' },
@@ -300,8 +302,8 @@ export class HaloPaletteCard extends HTMLElement {
     }
 
     const entityId = this._config.entity || 'input_select.couleur_theme_eclairages';
-    const currentState = this._hass?.states?.[entityId]?.state || 'Cyan HOLM';
-    const activeColorHex = HOLM_PALETTE[currentState] || '#26c6da';
+    const currentState = this._hass?.states?.[entityId]?.state || 'Cyan';
+    const activeColorHex = HALO_PALETTE[currentState] || '#26c6da';
 
     // En-tête optionnel
     if (this._headerEl) {
@@ -356,7 +358,7 @@ export class HaloPaletteCard extends HTMLElement {
           <div class="tile-left">
             <span class="tile-dot" style="background: ${hex}; box-shadow: 0 0 10px ${hex}88;"></span>
             <div class="tile-texts">
-              <span class="tile-name">${localizeHolm(this._hass, color.name)}</span>
+              <span class="tile-name">${localizeHalo(this._hass, color.name)}</span>
               <span class="tile-hex" style="color: ${hex};">${hex.toLowerCase()}</span>
             </div>
           </div>

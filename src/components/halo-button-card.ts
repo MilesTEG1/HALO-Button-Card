@@ -7,11 +7,12 @@
  *                    et support complet des sous-boutons interactifs.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.1
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO.
  *   - 🩹 v1.2.1 (2026-10-30) : Ajout du contour net (border 1.5px solid) et
  *                              du halo lumineux permanent (box-shadow) sur ha-card.
  *   - 💡 v1.2.0 (2026-10-30) : Création initiale de halo-button-card polyvalente.
@@ -57,7 +58,7 @@ export class HaloButtonCard extends HTMLElement {
       label: 'Description du bouton',
       icon: 'mdi:gesture-tap-button',
       layout: 'horizontal',
-      color: 'Cyan HOLM',
+      color: 'Cyan',
       tap_action: {
         action: 'toggle'
       }
@@ -139,7 +140,7 @@ export class HaloButtonCard extends HTMLElement {
       }
     }
 
-    // Thèmes globaux HOLM
+    // Thèmes globaux HALO
     const commonThemeEntities = [
       'input_select.couleur_theme_eclairages',
       'input_select.couleur_theme_ouvertures',
