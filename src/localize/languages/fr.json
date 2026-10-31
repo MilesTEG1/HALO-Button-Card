@@ -51,8 +51,8 @@
     "lg_name": "Nom tuile",
     "lg_name_d": " : Détails lampe"
   },
-  "holm": {
-    "Cyan HOLM": "Cyan HOLM",
+  "halo": {
+    "Cyan": "Cyan",
     "Bleu Céleste": "Bleu Céleste",
     "Saphir Océan": "Saphir Océan",
     "Menthe Givrée": "Menthe Givrée",
@@ -76,7 +76,7 @@
     "state_color": "Couleur : {state}",
     "open_palette": "Ouvrir la palette libre",
     "open_wheel": "Ouvrir la roue chromatique",
-    "chips_label": "Nuancier officiel HOLM (Sélection rapide) :",
+    "chips_label": "Nuancier officiel HALO (Sélection rapide) :",
     "border_title": "Épaisseur de bordure",
     "border_title_single": "Épaisseur de bordure (Unique)",
     "border_none": "Sans bordure",
@@ -85,9 +85,9 @@
     "border_badge_off": "0 px (Off)",
     "border_badge_default": "{v} px (Défaut)",
     "color_custom": "Couleur personnalisée",
-    "color_default_holm": "Défaut HOLM",
-    "color_default_cyan": "Cyan HOLM (Défaut)",
-    "color_active_theme": "Thème HOLM actif",
+    "color_default_halo": "Défaut HALO",
+    "color_default_cyan": "Cyan (Défaut)",
+    "color_active_theme": "Thème HALO actif",
     "color_default_grey": "Défaut (#64748B)",
     "button": {
       "name": "Titre principal",

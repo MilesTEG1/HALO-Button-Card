@@ -7,11 +7,13 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO,
+ *                              renommage de la teinte `Cyan` et synchronisation de version.
  *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) en/fr de toute la suite :
  *                              src/localize/, éditeurs ha-form (computeLabel/computeHelper),
  *                              panneaux Liquid Glass et états des cartes traduits.
@@ -19,7 +21,7 @@
  *                              - Réglage de l'épaisseur de bordure (0 à 3 px, pas 0.25) sur
  *                                halo-button-card, halo-cover-card et halo-light-card.
  *                              - Sélecteur de couleur Mix A+B (Halo Swatch médaillon interactif
- *                                + Nuancier rapide HOLM 16 teintes) dans l'éditeur de carte.
+ *                                + Nuancier rapide HALO 16 teintes) dans l'éditeur de carte.
  *   - ✨ v1.3.1 (2026-10-30) : Généralisation du sélecteur Mix A+B (avec onglets d'états
  *                              et curseur unique de bordure) à halo-cover-card et halo-light-card.
  *   - ✨ v1.3.0 (2026-10-30) : Sélecteur de couleur Mix A+B sur halo-button-card et réglage
@@ -32,7 +34,7 @@
  *                                ou accordéon repliable, grille 1/2/3 colonnes responsive,
  *                                légendes dynamiques, mention "OU" stylisée et badge court auto-calibré).
  *                              - custom:halo-cover-color-card (palette 2x2 états volets).
- *                              - custom:halo-palette-card (nuancier officiel 16 teintes HOLM).
+ *                              - custom:halo-palette-card (nuancier officiel 16 teintes HALO).
  *                              - Remédiation Spook & zéro entités fantômes.
  *   - 💡 v1.1.0 (2026-10-30) : Intégration de custom:halo-light-card, éditeur visuel UI,
  *                              calibrage 64px et bundle lisible/non-minifié.
@@ -58,7 +60,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.4.0';
+const VERSION = '1.4.2';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -90,7 +92,7 @@ window.customCards.push({
 window.customCards.push({
   type: 'halo-light-card',
   name: 'HALO Light Card',
-  description: 'Turnkey unified lighting tile with HOLM glass styling, dynamic halo, brightness and kelvin sub-buttons.',
+  description: 'Turnkey unified lighting tile with HALO glass styling, dynamic halo, brightness and kelvin sub-buttons.',
   preview: true
 });
 
@@ -118,7 +120,7 @@ window.customCards.push({
 window.customCards.push({
   type: 'halo-palette-card',
   name: 'HALO Palette Card',
-  description: 'Official 16-color HOLM / HALO theme palette picker with glowing halos and active check badges.',
+  description: 'Official 16-color HALO theme palette picker with glowing halos and active check badges.',
   preview: true
 });
 
