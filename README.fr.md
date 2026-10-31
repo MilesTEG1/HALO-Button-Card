@@ -5,10 +5,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/hacs/default"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge" alt="HACS Custom" /></a>
-  <a href="https://github.com/MilesTEG1/HALO-Button-Card/releases"><img src="https://img.shields.io/github/v/release/MilesTEG1/HALO-Button-Card?style=for-the-badge&color=26c6da" alt="Release GitHub" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="Licence : MIT" /></a>
-  <img src="https://img.shields.io/badge/Co--Développé%20avec-Google%20DeepMind%20Antigravity-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Co-développé avec Antigravity" />
+  <a href="https://github.com/MilesTEG1/HALO-Button-Card/releases/latest"><img src="https://img.shields.io/github/v/release/MilesTEG1/HALO-Button-Card.svg?color=26c6da" alt="Release Stable" /></a>
+  <a href="https://github.com/MilesTEG1/HALO-Button-Card/releases"><img src="https://img.shields.io/github/v/release/MilesTEG1/HALO-Button-Card?include_prereleases&label=release%40dev&color=f59e0b" alt="Prerelease Dev" /></a>
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=MilesTEG1&repository=HALO-Button-Card&category=plugin"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/MilesTEG1/HALO-Button-Card.svg" alt="Licence : MIT" /></a>
+  <a href="https://github.com/MilesTEG1/HALO-Button-Card/commits/main"><img src="https://img.shields.io/github/commit-activity/m/MilesTEG1/HALO-Button-Card.svg" alt="Activité GitHub" /></a>
+  <img src="https://img.shields.io/badge/Co--Développé%20avec-Google%20DeepMind%20Antigravity-4285F4?logo=google&logoColor=white" alt="Co-développé avec Antigravity" />
 </p>
 
 <p align="center">
@@ -69,6 +71,9 @@ Les cartes HALO ont été conçues dès l'origine pour une manipulation tactile 
 
 ### Méthode 1 : Via HACS (Recommandé)
 
+[![Ouvrir votre instance Home Assistant et ouvrir le dépôt dans le Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MilesTEG1&repository=HALO-Button-Card&category=plugin)
+
+#### Ajout manuel du dépôt personnalisé HACS :
 1. Ouvrez **HACS** dans votre interface Home Assistant.
 2. Cliquez sur les trois petits points verticaux (**⋮**) en haut à droite puis sur **Dépôts personnalisés** (*Custom repositories*).
 3. Renseignez les informations :
