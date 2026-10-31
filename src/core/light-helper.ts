@@ -6,11 +6,13 @@
  *                    de la référence tuile_avec_sous_boutons (dashboard-eclairage/lights).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.1.0
- * 📅 Date         : 2026-10-29
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              dans la documentation et la résolution des couleurs.
  *   - 💡 v1.1.0 (2026-10-29) : Alignement 1:1 strict avec tuile_avec_sous_boutons.
  *   - 💡 v1.0.0 (2026-10-29) : Création initiale du moteur light-helper.
  * ==============================================================================
@@ -222,7 +224,7 @@ export function formatLightStatus(
 
 /**
  * Résout la couleur d'accentuation dynamique de la tuile selon la configuration,
- * l'état réel de l'ampoule et le sélecteur de thème HOLM.
+ * l'état réel de l'ampoule et le sélecteur de thème HALO.
  */
 export function getLightAccentColor(
   hass: HomeAssistant,
@@ -255,7 +257,7 @@ export function getLightAccentColor(
     return toHexColor(config.color_on, '#26c6da');
   }
 
-  // 3. Sélecteur de thème HOLM
+  // 3. Sélecteur de thème HALO
   return resolveThemeColor(
     hass,
     undefined,

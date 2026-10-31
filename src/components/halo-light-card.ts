@@ -8,11 +8,13 @@
  *                    Persistent DOM, zéro scintillement, réactivité instantanée.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.1.1
- * 📅 Date         : 2026-10-29
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`localizeHalo`).
  *   - 💡 v1.1.1 (2026-10-29) : Hauteur de carte calibrée à 64px constants (padding
  *                              9px 12px) et centrage vertical absolu des icônes
  *                              des sous-boutons (luminosité, kelvin, power toggle).
@@ -36,7 +38,7 @@ import {
   getLightAccentColor,
   getLightCardStyles
 } from '../core/light-helper';
-import { useLocalize, localizeHolm } from '../localize/localize';
+import { useLocalize, localizeHalo } from '../localize/localize';
 
 export class HaloLightCard extends HTMLElement {
   private _config!: HaloLightCardConfig;
@@ -130,7 +132,7 @@ export class HaloLightCard extends HTMLElement {
       if (oldHass.states[te] !== newHass.states[te]) return true;
     }
 
-    // Sélecteur de thème d'éclairages global HOLM
+    // Sélecteur de thème d'éclairages global HALO
     const commonThemeEntities = [
       'input_select.couleur_theme_eclairages',
       'input_select.couleur_theme_eclairage',

@@ -51,8 +51,8 @@
     "lg_name": "Tile name",
     "lg_name_d": " : Light details"
   },
-  "holm": {
-    "Cyan HOLM": "HOLM Cyan",
+  "halo": {
+    "Cyan": "Cyan",
     "Bleu Céleste": "Sky Blue",
     "Saphir Océan": "Ocean Sapphire",
     "Menthe Givrée": "Frosted Mint",
@@ -76,7 +76,7 @@
     "state_color": "Color: {state}",
     "open_palette": "Open the free palette",
     "open_wheel": "Open the color wheel",
-    "chips_label": "Official HOLM palette (quick pick):",
+    "chips_label": "Official HALO palette (quick pick):",
     "border_title": "Border thickness",
     "border_title_single": "Border thickness (single)",
     "border_none": "No border",
@@ -85,9 +85,9 @@
     "border_badge_off": "0 px (Off)",
     "border_badge_default": "{v} px (Default)",
     "color_custom": "Custom color",
-    "color_default_holm": "Default HOLM",
-    "color_default_cyan": "HOLM Cyan (Default)",
-    "color_active_theme": "Active HOLM theme",
+    "color_default_halo": "Default HALO",
+    "color_default_cyan": "Cyan (Default)",
+    "color_active_theme": "Active HALO theme",
     "color_default_grey": "Default (#64748B)",
     "button": {
       "name": "Main title",

@@ -7,11 +7,13 @@
  *                    une clé pointée avec repli déterministe vers l'anglais.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`localizeHalo`, espace de noms `halo.*`).
  *   - 🆕 v1.4.0 (2026-10-30) : Création initiale (dictionnaires en/fr, fallback EN).
  * ==============================================================================
  */
@@ -69,7 +71,7 @@ export function useLocalize(hass?: any): LocalizeFunc {
   return (key, search, replace) => localize(hass, key, search, replace);
 }
 
-/** Traduit le nom d'une nuance HOLM (la valeur stockée en configuration reste inchangée). */
-export function localizeHolm(hass: any, name: string): string {
-  return localize(hass, `holm.${name}`) === `holm.${name}` ? name : localize(hass, `holm.${name}`);
+/** Traduit le nom d'une nuance HALO (la valeur stockée en configuration reste inchangée). */
+export function localizeHalo(hass: any, name: string): string {
+  return localize(hass, `halo.${name}`) === `halo.${name}` ? name : localize(hass, `halo.${name}`);
 }
