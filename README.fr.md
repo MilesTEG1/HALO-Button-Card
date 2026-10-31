@@ -1,7 +1,7 @@
 # 🌟 HALO Button Card
 
 <p align="center">
-  <img src="docs/screenshots/01-hero-dashboard-volets.png" alt="HALO Button Card — Tableau de bord Liquid Glass" width="100%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/01-hero-dashboard-volets.png" alt="HALO Button Card — Tableau de bord Liquid Glass" width="100%" />
 </p>
 
 <p align="center">
@@ -46,10 +46,10 @@ Chaque état dispose d'un halo coloré distinctif, illustré ici avec les couleu
 
 | État | Position / Statut | Exemple de Couleur | Rendu Visuel |
 | :--- | :--- | :---: | :---: |
-| **Fermé** | Position `0 %` | `#e2e8f0` | <img src="docs/screenshots/02-state-closed.png" alt="Volet Fermé" width="280"/> |
-| **Ouvert** | Position `100 %` | `#6ad2e6` | <img src="docs/screenshots/03-state-open.png" alt="Volet Ouvert" width="280"/> |
-| **Partiel** | Position `1 % à 99 %` | `#d4fb78` | <img src="docs/screenshots/04-state-partial.png" alt="Volet Partiel" width="280"/> |
-| **En mouvement** | Course en montée ou descente | `#f59e0b` | <img src="docs/screenshots/05-state-moving.png" alt="Volet en Mouvement" width="280"/> |
+| **Fermé** | Position `0 %` | `#e2e8f0` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/02-state-closed.png" alt="Volet Fermé" width="280"/> |
+| **Ouvert** | Position `100 %` | `#6ad2e6` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/03-state-open.png" alt="Volet Ouvert" width="280"/> |
+| **Partiel** | Position `1 % à 99 %` | `#d4fb78` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/04-state-partial.png" alt="Volet Partiel" width="280"/> |
+| **En mouvement** | Course en montée ou descente | `#f59e0b` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/05-state-moving.png" alt="Volet en Mouvement" width="280"/> |
 
 ---
 
@@ -58,7 +58,7 @@ Chaque état dispose d'un halo coloré distinctif, illustré ici avec les couleu
 Les cartes HALO ont été conçues dès l'origine pour une manipulation tactile fluide et une densité d'information optimale sur smartphone, tablette et écran mural tactile :
 
 <p align="center">
-  <img src="docs/screenshots/10-mobile-view-volets.png" alt="Aperçu mobile HALO Button Card" width="55%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/10-mobile-view-volets.png" alt="Aperçu mobile HALO Button Card" width="55%" />
 </p>
 
 - **Hauteur calibrée (68 px)** : Encombrement vertical constant éliminant les sauts d'affichage (*layout shifts*) en vue `sections` ou `grid`.
@@ -274,7 +274,7 @@ Toutes les cartes de la collection intègrent un éditeur visuel complet basé s
 Les composants s'enregistrent automatiquement dans `window.customCards` avec aperçu en direct dans la boîte de dialogue officielle d'ajout de carte :
 
 <p align="center">
-  <img src="docs/screenshots/09-card-picker-discovery.png" alt="Découverte des cartes HALO dans Lovelace" width="90%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/09-card-picker-discovery.png" alt="Découverte des cartes HALO dans Lovelace" width="90%" />
 </p>
 
 ### 🎛️ Éditeurs Visuels et Roue Chromatique 2D
@@ -282,9 +282,9 @@ Les composants s'enregistrent automatiquement dans `window.customCards` avec ape
 La personnalisation visuelle se fait entièrement à la souris ou au doigt :
 
 <p align="center">
-  <img src="docs/screenshots/06-editor-cover-card-general.png" alt="Éditeur de la carte Volet" width="48%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/06-editor-cover-card-general.png" alt="Éditeur de la carte Volet" width="48%" />
   &nbsp;
-  <img src="docs/screenshots/07-editor-cover-color-wheel.png" alt="Dialogue de la roue chromatique 2D" width="48%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/07-editor-cover-color-wheel.png" alt="Dialogue de la roue chromatique 2D" width="48%" />
 </p>
 
 1. **Éditeur de la Carte Volet (`halo-cover-card`)** : Sélection d'entités `cover` ou de groupes avec filtrage automatique de domaine, personnalisation des noms et réglage fin des couleurs d'état.
@@ -293,7 +293,7 @@ La personnalisation visuelle se fait entièrement à la souris ou au doigt :
 ### 📑 Éditeur du Séparateur de Section (`halo-separator-card`)
 
 <p align="center">
-  <img src="docs/screenshots/08-editor-separator-card.png" alt="Éditeur du séparateur de section" width="80%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/08-editor-separator-card.png" alt="Éditeur du séparateur de section" width="80%" />
 </p>
 
 - **Titre de la section** : Libellé blanc givré semi-gras.
