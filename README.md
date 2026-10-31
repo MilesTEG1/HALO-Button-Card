@@ -1,7 +1,7 @@
 # 🌟 HALO Button Card
 
 <p align="center">
-  <img src="docs/screenshots/01-hero-dashboard-volets.png" alt="HALO Button Card — Liquid Glass Dashboard" width="100%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/01-hero-dashboard-volets.png" alt="HALO Button Card — Liquid Glass Dashboard" width="100%" />
 </p>
 
 <p align="center">
@@ -46,10 +46,10 @@ Each card state is highlighted by an ambient glow, illustrated below using custo
 
 | State | Status | Sample Color | Visual Preview |
 | :--- | :--- | :---: | :---: |
-| **Closed** | Position `0%` | `#e2e8f0` | <img src="docs/screenshots/02-state-closed.png" alt="Volet Fermé" width="280"/> |
-| **Open** | Position `100%` | `#6ad2e6` | <img src="docs/screenshots/03-state-open.png" alt="Volet Ouvert" width="280"/> |
-| **Partial** | Position `1% - 99%` | `#d4fb78` | <img src="docs/screenshots/04-state-partial.png" alt="Volet Partiel" width="280"/> |
-| **Moving** | Opening / Closing travel | `#f59e0b` | <img src="docs/screenshots/05-state-moving.png" alt="Volet en Mouvement" width="280"/> |
+| **Closed** | Position `0%` | `#e2e8f0` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/02-state-closed.png" alt="Volet Fermé" width="280"/> |
+| **Open** | Position `100%` | `#6ad2e6` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/03-state-open.png" alt="Volet Ouvert" width="280"/> |
+| **Partial** | Position `1% - 99%` | `#d4fb78` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/04-state-partial.png" alt="Volet Partiel" width="280"/> |
+| **Moving** | Opening / Closing travel | `#f59e0b` | <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/05-state-moving.png" alt="Volet en Mouvement" width="280"/> |
 
 ---
 
@@ -58,7 +58,7 @@ Each card state is highlighted by an ambient glow, illustrated below using custo
 HALO cards are engineered from the ground up for high-density, touch-optimized interaction across smartphones, tablets, and wall-mounted dashboards:
 
 <p align="center">
-  <img src="docs/screenshots/10-mobile-view-volets.png" alt="HALO Button Card Mobile View" width="55%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/10-mobile-view-volets.png" alt="HALO Button Card Mobile View" width="55%" />
 </p>
 
 - **Calibrated Height (68px)**: Consistent tile footprint preventing layout shifts and flickering in Lovelace `sections` or `grid` views.
@@ -257,7 +257,7 @@ Every card in the suite includes an integrated graphical editor built on Home As
 HALO cards register with `window.customCards` for seamless discovery in the native Home Assistant card picker:
 
 <p align="center">
-  <img src="docs/screenshots/09-card-picker-discovery.png" alt="HALO Cards in Lovelace Card Picker" width="90%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/09-card-picker-discovery.png" alt="HALO Cards in Lovelace Card Picker" width="90%" />
 </p>
 
 ### 🎛️ Visual Editors & Precision 2D Color Wheel
@@ -265,9 +265,9 @@ HALO cards register with `window.customCards` for seamless discovery in the nati
 Configuring cards is completely visual—no need to memorize configuration keys or write hex codes manually:
 
 <p align="center">
-  <img src="docs/screenshots/06-editor-cover-card-general.png" alt="Cover Card Editor" width="48%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/06-editor-cover-card-general.png" alt="Cover Card Editor" width="48%" />
   &nbsp;
-  <img src="docs/screenshots/07-editor-cover-color-wheel.png" alt="2D Color Wheel Dialog" width="48%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/07-editor-cover-color-wheel.png" alt="2D Color Wheel Dialog" width="48%" />
 </p>
 
 1. **Cover Card Editor (`halo-cover-card`)**: Select target `cover` entities or groups with automatic domain filtering, customize labels, and tune individual state colors.
@@ -276,7 +276,7 @@ Configuring cards is completely visual—no need to memorize configuration keys 
 ### 📑 Section Divider Editor (`halo-separator-card`)
 
 <p align="center">
-  <img src="docs/screenshots/08-editor-separator-card.png" alt="Separator Card Editor" width="80%" />
+  <img src="https://raw.githubusercontent.com/MilesTEG1/HALO-Button-Card/main/docs/screenshots/08-editor-separator-card.png" alt="Separator Card Editor" width="80%" />
 </p>
 
 - **Section Title**: Frosted typography heading.
