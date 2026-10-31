@@ -2,11 +2,27 @@ var HaloButtonCard = (function (exports) {
     'use strict';
 
     /**
-     * HALO Button Card — Theme & Styling Engine
-     * (c) 2026 MilesTEG1 — MIT License
+     * ==============================================================================
+     * 📌 Nom du fichier : src/core/theme-helper.ts
+     * 📝 Description   : Moteur de thème en cascade et de style Liquid Glass HALO.
+     *                    Résolution des teintes (Hex, RGB, noms de palette HALO,
+     *                    entités Home Assistant `input_select` / `input_text`) et
+     *                    génération dynamique des feuilles CSS des cartes.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`HALO_PALETTE`) et renommage de la teinte `Cyan`.
+     *   - ✨ v1.3.0 (2026-10-30) : Support de l'épaisseur de bordure paramétrable (`border_width`).
+     *   - 🆕 v1.0.0 (2026-10-29) : Création initiale du moteur de thème et de styles.
+     * ==============================================================================
      */
-    const HOLM_PALETTE = {
-        'Cyan HOLM': '#26c6da',
+    const HALO_PALETTE = {
+        'Cyan': '#26c6da',
         'Bleu Céleste': '#38bdf8',
         'Saphir Océan': '#2f86ff',
         'Menthe Givrée': '#00e5a3',
@@ -26,8 +42,8 @@ var HaloButtonCard = (function (exports) {
     function hexToRgb(hex) {
         if (!hex || typeof hex !== 'string')
             return undefined;
-        if (HOLM_PALETTE[hex]) {
-            hex = HOLM_PALETTE[hex];
+        if (HALO_PALETTE[hex]) {
+            hex = HALO_PALETTE[hex];
         }
         const clean = hex.replace('#', '').trim();
         if (clean.length === 3) {
@@ -61,8 +77,8 @@ var HaloButtonCard = (function (exports) {
             return rgbToHex(color);
         if (typeof color === 'string') {
             const trimmed = color.trim();
-            if (HOLM_PALETTE[trimmed])
-                return HOLM_PALETTE[trimmed];
+            if (HALO_PALETTE[trimmed])
+                return HALO_PALETTE[trimmed];
             if (trimmed.startsWith('#')) {
                 const clean = trimmed.replace('#', '');
                 if (clean.length === 3) {
@@ -88,8 +104,8 @@ var HaloButtonCard = (function (exports) {
         const states = hass?.states || {};
         if (themeEntity && states[themeEntity]?.state) {
             const val = states[themeEntity].state;
-            if (HOLM_PALETTE[val])
-                return HOLM_PALETTE[val];
+            if (HALO_PALETTE[val])
+                return HALO_PALETTE[val];
             if (val.startsWith('#'))
                 return val;
         }
@@ -102,8 +118,8 @@ var HaloButtonCard = (function (exports) {
         ];
         for (const ent of commonEntities) {
             const st = states[ent]?.state;
-            if (st && HOLM_PALETTE[st])
-                return HOLM_PALETTE[st];
+            if (st && HALO_PALETTE[st])
+                return HALO_PALETTE[st];
         }
         return fallback;
     }
@@ -142,7 +158,7 @@ var HaloButtonCard = (function (exports) {
 
     var themeHelper = /*#__PURE__*/Object.freeze({
         __proto__: null,
-        HOLM_PALETTE: HOLM_PALETTE,
+        HALO_PALETTE: HALO_PALETTE,
         getCoverColors: getCoverColors,
         getHaloCardStyles: getHaloCardStyles,
         hexToRgb: hexToRgb,
@@ -355,11 +371,12 @@ var HaloButtonCard = (function (exports) {
      *                    et support complet des sous-boutons interactifs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.1
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO.
      *   - 🩹 v1.2.1 (2026-10-30) : Ajout du contour net (border 1.5px solid) et
      *                              du halo lumineux permanent (box-shadow) sur ha-card.
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de halo-button-card polyvalente.
@@ -392,7 +409,7 @@ var HaloButtonCard = (function (exports) {
                 label: 'Description du bouton',
                 icon: 'mdi:gesture-tap-button',
                 layout: 'horizontal',
-                color: 'Cyan HOLM',
+                color: 'Cyan',
                 tap_action: {
                     action: 'toggle'
                 }
@@ -463,7 +480,7 @@ var HaloButtonCard = (function (exports) {
                     }
                 }
             }
-            // Thèmes globaux HOLM
+            // Thèmes globaux HALO
             const commonThemeEntities = [
                 'input_select.couleur_theme_eclairages',
                 'input_select.couleur_theme_ouvertures',
@@ -862,13 +879,14 @@ var HaloButtonCard = (function (exports) {
      *                    halo-light-card).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.1
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO.
      *   - ✨ v1.3.1 (2026-10-30) : Standardisation des styles d'éditeurs partagés
-     *                              (Mix A+B Nuancier HOLM & curseur de bordure)
+     *                              (Mix A+B Nuancier HALO & curseur de bordure)
      *                              pour halo-button-card, halo-cover-card et halo-light-card.
      * ==============================================================================
      */
@@ -1181,8 +1199,8 @@ var HaloButtonCard = (function (exports) {
         "lg_name": "Tile name",
         "lg_name_d": " : Light details"
       },
-      "holm": {
-        "Cyan HOLM": "HOLM Cyan",
+      "halo": {
+        "Cyan": "Cyan",
         "Bleu Céleste": "Sky Blue",
         "Saphir Océan": "Ocean Sapphire",
         "Menthe Givrée": "Frosted Mint",
@@ -1206,7 +1224,7 @@ var HaloButtonCard = (function (exports) {
         "state_color": "Color: {state}",
         "open_palette": "Open the free palette",
         "open_wheel": "Open the color wheel",
-        "chips_label": "Official HOLM palette (quick pick):",
+        "chips_label": "Official HALO palette (quick pick):",
         "border_title": "Border thickness",
         "border_title_single": "Border thickness (single)",
         "border_none": "No border",
@@ -1215,9 +1233,9 @@ var HaloButtonCard = (function (exports) {
         "border_badge_off": "0 px (Off)",
         "border_badge_default": "{v} px (Default)",
         "color_custom": "Custom color",
-        "color_default_holm": "Default HOLM",
-        "color_default_cyan": "HOLM Cyan (Default)",
-        "color_active_theme": "Active HOLM theme",
+        "color_default_halo": "Default HALO",
+        "color_default_cyan": "Cyan (Default)",
+        "color_active_theme": "Active HALO theme",
         "color_default_grey": "Default (#64748B)",
         "button": {
           "name": "Main title",
@@ -1361,8 +1379,8 @@ var HaloButtonCard = (function (exports) {
         "lg_name": "Nom tuile",
         "lg_name_d": " : Détails lampe"
       },
-      "holm": {
-        "Cyan HOLM": "Cyan HOLM",
+      "halo": {
+        "Cyan": "Cyan",
         "Bleu Céleste": "Bleu Céleste",
         "Saphir Océan": "Saphir Océan",
         "Menthe Givrée": "Menthe Givrée",
@@ -1386,7 +1404,7 @@ var HaloButtonCard = (function (exports) {
         "state_color": "Couleur : {state}",
         "open_palette": "Ouvrir la palette libre",
         "open_wheel": "Ouvrir la roue chromatique",
-        "chips_label": "Nuancier officiel HOLM (Sélection rapide) :",
+        "chips_label": "Nuancier officiel HALO (Sélection rapide) :",
         "border_title": "Épaisseur de bordure",
         "border_title_single": "Épaisseur de bordure (Unique)",
         "border_none": "Sans bordure",
@@ -1395,9 +1413,9 @@ var HaloButtonCard = (function (exports) {
         "border_badge_off": "0 px (Off)",
         "border_badge_default": "{v} px (Défaut)",
         "color_custom": "Couleur personnalisée",
-        "color_default_holm": "Défaut HOLM",
-        "color_default_cyan": "Cyan HOLM (Défaut)",
-        "color_active_theme": "Thème HOLM actif",
+        "color_default_halo": "Défaut HALO",
+        "color_default_cyan": "Cyan (Défaut)",
+        "color_active_theme": "Thème HALO actif",
         "color_default_grey": "Défaut (#64748B)",
         "button": {
           "name": "Titre principal",
@@ -1497,11 +1515,13 @@ var HaloButtonCard = (function (exports) {
      *                    une clé pointée avec repli déterministe vers l'anglais.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.0
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`localizeHalo`, espace de noms `halo.*`).
      *   - 🆕 v1.4.0 (2026-10-30) : Création initiale (dictionnaires en/fr, fallback EN).
      * ==============================================================================
      */
@@ -1540,9 +1560,9 @@ var HaloButtonCard = (function (exports) {
     function useLocalize(hass) {
         return (key, search, replace) => localize(hass, key, search, replace);
     }
-    /** Traduit le nom d'une nuance HOLM (la valeur stockée en configuration reste inchangée). */
-    function localizeHolm(hass, name) {
-        return localize(hass, `holm.${name}`) === `holm.${name}` ? name : localize(hass, `holm.${name}`);
+    /** Traduit le nom d'une nuance HALO (la valeur stockée en configuration reste inchangée). */
+    function localizeHalo(hass, name) {
+        return localize(hass, `halo.${name}`) === `halo.${name}` ? name : localize(hass, `halo.${name}`);
     }
 
     /**
@@ -1550,15 +1570,18 @@ var HaloButtonCard = (function (exports) {
      * 📌 Nom du fichier : src/editors/editor-common.ts
      * 📝 Description   : Utilitaires partagés des éditeurs visuels HALO (i18n) :
      *                    câblage computeLabel/computeHelper des <ha-form>, gabarit HTML
-     *                    du panneau Liquid Glass, badge de bordure, nuancier HOLM et
+     *                    du panneau Liquid Glass, badge de bordure, nuancier HALO et
      *                    nom d'affichage des couleurs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.0
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`HALO_PALETTE`, `localizeHalo`, `color_default_halo`)
+     *                              et renommage de la teinte `Cyan`.
      *   - 🆕 v1.4.0 (2026-10-30) : Création initiale (factorisation i18n des éditeurs).
      * ==============================================================================
      */
@@ -1580,7 +1603,7 @@ var HaloButtonCard = (function (exports) {
     function selectOptions(t, card, pairs) {
         return pairs.map(([value, key]) => ({ value, label: t(`editor.${card}.${key}`) }));
     }
-    /** Gabarit HTML du panneau de style Liquid Glass (médaillon, nuancier HOLM, bordure). */
+    /** Gabarit HTML du panneau de style Liquid Glass (médaillon, nuancier HALO, bordure). */
     function stylePanelHtml(t, o) {
         const tabs = o.tabs
             ? `<div class="halo-state-tabs">${o.tabs.map(s => `
@@ -1644,32 +1667,32 @@ var HaloButtonCard = (function (exports) {
             return t('editor.border_badge_default', 'v', String(bw));
         return `${bw} px`;
     }
-    /** Génère les pastilles du nuancier rapide HOLM (info-bulle traduite). */
+    /** Génère les pastilles du nuancier rapide HALO (info-bulle traduite). */
     function buildChips(container, hass, onPick) {
         container.innerHTML = '';
-        for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
+        for (const [name, hex] of Object.entries(HALO_PALETTE)) {
             const chip = document.createElement('div');
             chip.className = 'halo-chip';
             chip.setAttribute('data-name', name);
             chip.setAttribute('data-hex', hex);
-            chip.setAttribute('title', `${localizeHolm(hass, name)} (${hex})`);
+            chip.setAttribute('title', `${localizeHalo(hass, name)} (${hex})`);
             chip.style.backgroundColor = hex;
             chip.style.color = hex;
             chip.addEventListener('click', () => onPick(name));
             container.appendChild(chip);
         }
     }
-    /** Nom d'affichage traduit d'une couleur (nuance HOLM, personnalisée ou défaut). */
+    /** Nom d'affichage traduit d'une couleur (nuance HALO, personnalisée ou défaut). */
     function colorDisplayName(hass, raw, emptyKey) {
         const t = useLocalize(hass);
         if (!raw)
             return t(emptyKey);
         if (typeof raw === 'string') {
-            if (HOLM_PALETTE[raw])
-                return localizeHolm(hass, raw);
-            for (const [name, hex] of Object.entries(HOLM_PALETTE)) {
+            if (HALO_PALETTE[raw])
+                return localizeHalo(hass, raw);
+            for (const [name, hex] of Object.entries(HALO_PALETTE)) {
                 if (hex.toLowerCase() === raw.toLowerCase())
-                    return localizeHolm(hass, name);
+                    return localizeHalo(hass, name);
             }
         }
         return t('editor.color_custom');
@@ -1681,16 +1704,18 @@ var HaloButtonCard = (function (exports) {
      * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-button-card.
      *                    Combine le composant natif <ha-form> pour les métadonnées et un
      *                    panneau Liquid Glass avec médaillon halo interactif, nuancier
-     *                    rapide HOLM et curseur d'épaisseur de bordure.
+     *                    rapide HALO et curseur d'épaisseur de bordure.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.1
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`HALO_PALETTE`, `color_default_halo`).
      *   - ✨ v1.2.1 (2026-10-30) : Sélecteur de couleur Mix A+B (Halo Swatch + Nuancier
-     *                              rapide HOLM 16 teintes) et curseur d'épaisseur de bordure
+     *                              rapide HALO 16 teintes) et curseur d'épaisseur de bordure
      *                              (0 à 3 px) côte à côte en grille responsive.
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-button-card.
      * ==============================================================================
@@ -1760,7 +1785,7 @@ var HaloButtonCard = (function (exports) {
             this.dispatchEvent(event);
         }
         _getColorHex() {
-            const raw = this._config?.color || 'Cyan HOLM';
+            const raw = this._config?.color || 'Cyan';
             return toHexColor(raw, '#26c6da');
         }
         _getColorDisplayName() {
@@ -1803,7 +1828,7 @@ var HaloButtonCard = (function (exports) {
             }
             // 2. Nuancier rapide Chips (Option B)
             if (this._chipsContainerEl) {
-                const activeRaw = this._config.color || 'Cyan HOLM';
+                const activeRaw = this._config.color || 'Cyan';
                 const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
                 chipButtons.forEach(btn => {
                     const chipName = btn.getAttribute('data-name');
@@ -1879,7 +1904,7 @@ var HaloButtonCard = (function (exports) {
                 if (val)
                     this._updateColor(val);
             });
-            // 2. Génération des chips HOLM (Option B)
+            // 2. Génération des chips HALO (Option B)
             if (this._chipsContainerEl) {
                 buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
             }
@@ -2176,10 +2201,24 @@ var HaloButtonCard = (function (exports) {
     const voletHelperInstance = new VoletHelper();
 
     /**
-     * HALO Button Card — Halo Cover Card Component
-     * Turnkey roller shutter tile with HOLM Liquid Glass styling and dynamic halo.
-     * High-performance persistent DOM architecture (zero flicker, zero lost clicks).
-     * (c) 2026 MilesTEG1 — MIT License
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-cover-card.ts
+     * 📝 Description   : Composant Web custom:halo-cover-card.
+     *                    Tuile de volet roulant clé en main avec style Liquid Glass HALO,
+     *                    halo lumineux dynamique par état, barre de progression et
+     *                    architecture Persistent DOM haute performance.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`localizeHalo`) et mise en conformité de l'en-tête.
+     *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) des états du volet.
+     *   - 🆕 v1.0.0 (2026-10-29) : Création initiale de halo-cover-card.
+     * ==============================================================================
      */
     class HaloCoverCard extends HTMLElement {
         get _t() {
@@ -2660,18 +2699,20 @@ var HaloButtonCard = (function (exports) {
      *                    Combine le composant natif <ha-form> pour les métadonnées et un
      *                    panneau Liquid Glass avec sélecteur d'états (Fermé, Ouvert,
      *                    Partiel, Mouvement), médaillon halo interactif (Option A),
-     *                    nuancier rapide HOLM 16 teintes (Option B) et curseur unique
+     *                    nuancier rapide HALO 16 teintes (Option B) et curseur unique
      *                    d'épaisseur de bordure.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.1
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`HALO_PALETTE`).
      *   - ✨ v1.3.1 (2026-10-30) : Intégration du sélecteur Mix A+B pour les 4 états
      *                              du volet avec onglets d'états, pastille halo dynamique,
-     *                              nuancier rapide HOLM et curseur unique d'épaisseur.
+     *                              nuancier rapide HALO et curseur unique d'épaisseur.
      *   - 💡 v1.3.0 (2026-10-30) : Ajout du curseur d'épaisseur de bordure (0 à 3 px).
      *   - 💡 v1.0.0 (2026-10-26) : Création initiale de l'éditeur halo-cover-card.
      * ==============================================================================
@@ -2767,7 +2808,7 @@ var HaloButtonCard = (function (exports) {
             return toHexColor(raw, fallback);
         }
         _getColorDisplayName(key) {
-            return colorDisplayName(this._hass, this._config?.[key], 'editor.color_default_holm');
+            return colorDisplayName(this._hass, this._config?.[key], 'editor.color_default_halo');
         }
         _updateColor(colorValue) {
             this._config = {
@@ -2939,7 +2980,7 @@ var HaloButtonCard = (function (exports) {
                 if (val)
                     this._updateColor(val);
             });
-            // 3. Génération des chips HOLM (Option B)
+            // 3. Génération des chips HALO (Option B)
             if (this._chipsContainerEl) {
                 buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
             }
@@ -2961,11 +3002,13 @@ var HaloButtonCard = (function (exports) {
      *                    de la référence tuile_avec_sous_boutons (dashboard-eclairage/lights).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.1.0
-     * 📅 Date         : 2026-10-29
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              dans la documentation et la résolution des couleurs.
      *   - 💡 v1.1.0 (2026-10-29) : Alignement 1:1 strict avec tuile_avec_sous_boutons.
      *   - 💡 v1.0.0 (2026-10-29) : Création initiale du moteur light-helper.
      * ==============================================================================
@@ -3173,7 +3216,7 @@ var HaloButtonCard = (function (exports) {
     }
     /**
      * Résout la couleur d'accentuation dynamique de la tuile selon la configuration,
-     * l'état réel de l'ampoule et le sélecteur de thème HOLM.
+     * l'état réel de l'ampoule et le sélecteur de thème HALO.
      */
     function getLightAccentColor(hass, config, entity) {
         const isUnavail = !entity || entity.state === 'unavailable' || entity.state === 'unknown';
@@ -3198,7 +3241,7 @@ var HaloButtonCard = (function (exports) {
         if (config.color_on) {
             return toHexColor(config.color_on, '#26c6da');
         }
-        // 3. Sélecteur de thème HOLM
+        // 3. Sélecteur de thème HALO
         return resolveThemeColor(hass, undefined, config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
     }
     /**
@@ -3257,11 +3300,13 @@ var HaloButtonCard = (function (exports) {
      *                    Persistent DOM, zéro scintillement, réactivité instantanée.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.1.1
-     * 📅 Date         : 2026-10-29
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`localizeHalo`).
      *   - 💡 v1.1.1 (2026-10-29) : Hauteur de carte calibrée à 64px constants (padding
      *                              9px 12px) et centrage vertical absolu des icônes
      *                              des sous-boutons (luminosité, kelvin, power toggle).
@@ -3349,7 +3394,7 @@ var HaloButtonCard = (function (exports) {
                 if (oldHass.states[te] !== newHass.states[te])
                     return true;
             }
-            // Sélecteur de thème d'éclairages global HOLM
+            // Sélecteur de thème d'éclairages global HALO
             const commonThemeEntities = [
                 'input_select.couleur_theme_eclairages',
                 'input_select.couleur_theme_eclairage',
@@ -3960,20 +4005,22 @@ var HaloButtonCard = (function (exports) {
      * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-light-card.
      *                    Combine le composant natif <ha-form> pour les métadonnées et un
      *                    panneau Liquid Glass avec sélecteur d'états (Allumé, Éteint),
-     *                    médaillon halo interactif (Option A), nuancier rapide HOLM
+     *                    médaillon halo interactif (Option A), nuancier rapide HALO
      *                    16 teintes (Option B) et curseur unique d'épaisseur de bordure.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.3.1
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`HALO_PALETTE`, `color_default_cyan`).
      *   - ✨ v1.3.1 (2026-10-30) : Intégration du sélecteur Mix A+B pour les états Allumé
-     *                              et Éteint, pastille halo dynamique, nuancier rapide HOLM
+     *                              et Éteint, pastille halo dynamique, nuancier rapide HALO
      *                              et curseur unique d'épaisseur de bordure.
      *   - 💡 v1.3.0 (2026-10-30) : Ajout du curseur d'épaisseur de bordure (0 à 3 px).
-     *   - 💡 v1.1.0 (2026-10-29) : Alignement des sélecteurs sur les sous-boutons HOLM.
+     *   - 💡 v1.1.0 (2026-10-29) : Alignement des sélecteurs sur les sous-boutons HALO.
      *   - 💡 v1.0.0 (2026-10-29) : Création initiale de halo-light-card-editor.
      * ==============================================================================
      */
@@ -4240,7 +4287,7 @@ var HaloButtonCard = (function (exports) {
                 if (val)
                     this._updateColor(val);
             });
-            // 3. Génération des chips HOLM (Option B)
+            // 3. Génération des chips HALO (Option B)
             if (this._chipsContainerEl) {
                 buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
             }
@@ -4264,11 +4311,13 @@ var HaloButtonCard = (function (exports) {
      *                    alignement vertical, badges/icônes, halos et actions tactiles).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`localizeHalo`).
      *   - 💡 v1.2.0 (2026-10-30) : Refonte modulaire majeure :
      *                              • Mode adaptatif : séparateur épuré (collapsible: false) ou accordéon (collapsible: true).
      *                              • Grille responsive dynamique paramétrable (1, 2 ou 3 colonnes).
@@ -4276,7 +4325,7 @@ var HaloButtonCard = (function (exports) {
      *                              • Support double icône MDI ou badge court (max 2-3 car. avec calibrage dynamique).
      *                              • Rétro-éclairage et halo spéculaire paramétrables par item.
      *                              • Support du contenu libre et interactions tactiles optionnelles.
-     *   - 🆕 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HOLM.
+     *   - 🆕 v1.0.0 (2026-10-29) : Création initiale du séparateur de section HALO.
      * ==============================================================================
      */
     class HaloSeparatorCard extends HTMLElement {
@@ -5165,11 +5214,13 @@ var HaloButtonCard = (function (exports) {
      *                    et sous-boutons d'icônes d'état (alignement pixel-perfect capture).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`localizeHalo`).
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de la carte cover color.
      * ==============================================================================
      */
@@ -5622,23 +5673,25 @@ var HaloButtonCard = (function (exports) {
      * ==============================================================================
      * 📌 Nom du fichier : src/components/halo-palette-card.ts
      * 📝 Description   : Composant Web custom:halo-palette-card.
-     *                    Sélecteur interactif de la palette officielle des 16 teintes HOLM
+     *                    Sélecteur interactif de la palette officielle des 16 teintes HALO
      *                    (grille 2x8), avec pastilles lumineuses, bordures de focus,
      *                    badges de sélection ✓ et synchronisation temps-réel input_select.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
-     *   - 💡 v1.2.0 (2026-10-30) : Création initiale de la carte nuancier HOLM 16 teintes.
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+     *                              (`HALO_PALETTE`, `localizeHalo`) et renommage de la teinte `Cyan`.
+     *   - 💡 v1.2.0 (2026-10-30) : Création initiale de la carte nuancier HALO 16 teintes.
      * ==============================================================================
      */
     // Ordonnancement exact 2 colonnes x 8 lignes de la capture 22.00.20
     const DEFAULT_PALETTE_ORDER = [
         // Ligne 1
-        { name: 'Cyan HOLM', hex: '#26c6da' },
+        { name: 'Cyan', hex: '#26c6da' },
         { name: 'Bleu Céleste', hex: '#38bdf8' },
         // Ligne 2
         { name: 'Saphir Océan', hex: '#2f86ff' },
@@ -5891,8 +5944,8 @@ var HaloButtonCard = (function (exports) {
                 this._buildDom();
             }
             const entityId = this._config.entity || 'input_select.couleur_theme_eclairages';
-            const currentState = this._hass?.states?.[entityId]?.state || 'Cyan HOLM';
-            const activeColorHex = HOLM_PALETTE[currentState] || '#26c6da';
+            const currentState = this._hass?.states?.[entityId]?.state || 'Cyan';
+            const activeColorHex = HALO_PALETTE[currentState] || '#26c6da';
             // En-tête optionnel
             if (this._headerEl) {
                 if (this._config.title) {
@@ -5942,7 +5995,7 @@ var HaloButtonCard = (function (exports) {
           <div class="tile-left">
             <span class="tile-dot" style="background: ${hex}; box-shadow: 0 0 10px ${hex}88;"></span>
             <div class="tile-texts">
-              <span class="tile-name">${localizeHolm(this._hass, color.name)}</span>
+              <span class="tile-name">${localizeHalo(this._hass, color.name)}</span>
               <span class="tile-hex" style="color: ${hex};">${hex.toLowerCase()}</span>
             </div>
           </div>
@@ -6056,11 +6109,13 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.0
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.4.2
+     * 📅 Date         : 2026-10-31
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO,
+     *                              renommage de la teinte `Cyan` et synchronisation de version.
      *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) en/fr de toute la suite :
      *                              src/localize/, éditeurs ha-form (computeLabel/computeHelper),
      *                              panneaux Liquid Glass et états des cartes traduits.
@@ -6068,7 +6123,7 @@ var HaloButtonCard = (function (exports) {
      *                              - Réglage de l'épaisseur de bordure (0 à 3 px, pas 0.25) sur
      *                                halo-button-card, halo-cover-card et halo-light-card.
      *                              - Sélecteur de couleur Mix A+B (Halo Swatch médaillon interactif
-     *                                + Nuancier rapide HOLM 16 teintes) dans l'éditeur de carte.
+     *                                + Nuancier rapide HALO 16 teintes) dans l'éditeur de carte.
      *   - ✨ v1.3.1 (2026-10-30) : Généralisation du sélecteur Mix A+B (avec onglets d'états
      *                              et curseur unique de bordure) à halo-cover-card et halo-light-card.
      *   - ✨ v1.3.0 (2026-10-30) : Sélecteur de couleur Mix A+B sur halo-button-card et réglage
@@ -6081,14 +6136,14 @@ var HaloButtonCard = (function (exports) {
      *                                ou accordéon repliable, grille 1/2/3 colonnes responsive,
      *                                légendes dynamiques, mention "OU" stylisée et badge court auto-calibré).
      *                              - custom:halo-cover-color-card (palette 2x2 états volets).
-     *                              - custom:halo-palette-card (nuancier officiel 16 teintes HOLM).
+     *                              - custom:halo-palette-card (nuancier officiel 16 teintes HALO).
      *                              - Remédiation Spook & zéro entités fantômes.
      *   - 💡 v1.1.0 (2026-10-30) : Intégration de custom:halo-light-card, éditeur visuel UI,
      *                              calibrage 64px et bundle lisible/non-minifié.
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.4.0';
+    const VERSION = '1.4.2';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
@@ -6100,7 +6155,7 @@ var HaloButtonCard = (function (exports) {
     window.customCards.push({
         type: 'halo-light-card',
         name: 'HALO Light Card',
-        description: 'Turnkey unified lighting tile with HOLM glass styling, dynamic halo, brightness and kelvin sub-buttons.',
+        description: 'Turnkey unified lighting tile with HALO glass styling, dynamic halo, brightness and kelvin sub-buttons.',
         preview: true
     });
     window.customCards.push({
@@ -6124,7 +6179,7 @@ var HaloButtonCard = (function (exports) {
     window.customCards.push({
         type: 'halo-palette-card',
         name: 'HALO Palette Card',
-        description: 'Official 16-color HOLM / HALO theme palette picker with glowing halos and active check badges.',
+        description: 'Official 16-color HALO theme palette picker with glowing halos and active check badges.',
         preview: true
     });
     // Register Web Component custom elements

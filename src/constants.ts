@@ -1,10 +1,24 @@
 /**
- * HALO Button Card — Constants & Color Palettes
- * (c) 2026 MilesTEG1 — MIT License
+ * ==============================================================================
+ * 📌 Nom du fichier : src/constants.ts
+ * 📝 Description   : Constantes globales, nuancier officiel des 16 teintes HALO
+ *                    et sélecteurs de thème Lovelace par défaut.
+ * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+ * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+ * 📦 Version      : 1.4.2
+ * 📅 Date         : 2026-10-31
+ * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+ * ==============================================================================
+ * 📋 CHANGELOG (antéchronologique)
+ *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
+ *                              (`HALO_COLORS`, `HALO_THEME_SELECTORS`) et renommage
+ *                              de la teinte `Cyan`.
+ *   - 🆕 v1.0.0 (2026-10-29) : Création initiale des constantes et palettes.
+ * ==============================================================================
  */
 
 export const HALO_COLORS: Record<string, string> = {
-  "Cyan HOLM": "#26c6da",
+  "Cyan": "#26c6da",
   "Bleu Céleste": "#38bdf8",
   "Saphir Océan": "#2f86ff",
   "Menthe Givrée": "#00e5a3",
