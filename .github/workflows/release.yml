@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Release Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Compile Rollup Bundle & Minify
+        run: |
+          npm run build
+          npm run build:min
+
+      - name: 🔍 Determine Release Version & Channel
+        id: vars
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" =~ ^refs/tags/v[0-9] ]]; then
+            TAG_NAME="v${VERSION}"
+            IS_PRERELEASE="false"
+            RELEASE_TITLE="Release v${VERSION}"
+          else
+            TAG_NAME="v${VERSION}-beta.${SHORT_SHA}"
+            IS_PRERELEASE="true"
+            RELEASE_TITLE="Pre-release v${VERSION}-dev (${SHORT_SHA})"
+          fi
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+          echo "release_title=${RELEASE_TITLE}" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Publish GitHub Release & Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag_name }}
+          name: ${{ steps.vars.outputs.release_title }}
+          prerelease: ${{ steps.vars.outputs.is_prerelease == 'true' }}
+          generate_release_notes: true
+          files: |
+            dist/halo-button-card.js
+            dist/halo-button-card.min.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
