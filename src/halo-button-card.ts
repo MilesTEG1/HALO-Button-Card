@@ -7,11 +7,14 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.2
- * 📅 Date         : 2026-10-31
+ * 📦 Version      : 1.5.0
+ * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.5.0 (2026-11-01) : Intégration de custom:halo-scene-card (ambiances multi-cibles
+ *                              lumières et volets sans script backend) et enrichissement de
+ *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
  *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO,
  *                              renommage de la teinte `Cyan` et synchronisation de version.
  *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) en/fr de toute la suite :
@@ -44,6 +47,8 @@
 
 import { HaloButtonCard } from './components/halo-button-card';
 import { HaloButtonCardEditor } from './editors/halo-button-card-editor';
+import { HaloSceneCard } from './components/halo-scene-card';
+import { HaloSceneCardEditor } from './editors/halo-scene-card-editor';
 import { HaloCoverCard } from './components/halo-cover-card';
 import { HaloCoverCardEditor } from './editors/halo-cover-card-editor';
 import { HaloLightCard } from './components/halo-light-card';
@@ -60,7 +65,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.4.2';
+const VERSION = '1.5.0';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -85,7 +90,14 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'halo-button-card',
   name: 'HALO Button Card',
-  description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts and sub-buttons.',
+  description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts, external entity linking and sub-buttons.',
+  preview: true
+});
+
+window.customCards.push({
+  type: 'halo-scene-card',
+  name: 'HALO Scene Card',
+  description: 'Turnkey Liquid Glass scene & ambiance tile for direct multi-target light and cover control without HA scripts.',
   preview: true
 });
 
@@ -132,6 +144,13 @@ if (!customElements.get('halo-button-card-editor')) {
   customElements.define('halo-button-card-editor', HaloButtonCardEditor);
 }
 
+if (!customElements.get('halo-scene-card')) {
+  customElements.define('halo-scene-card', HaloSceneCard);
+}
+if (!customElements.get('halo-scene-card-editor')) {
+  customElements.define('halo-scene-card-editor', HaloSceneCardEditor);
+}
+
 if (!customElements.get('halo-light-card')) {
   customElements.define('halo-light-card', HaloLightCard);
 }
@@ -171,6 +190,8 @@ if (!customElements.get('halo-palette-card-editor')) {
 export {
   HaloButtonCard,
   HaloButtonCardEditor,
+  HaloSceneCard,
+  HaloSceneCardEditor,
   HaloLightCard,
   HaloLightCardEditor,
   HaloCoverCard,
