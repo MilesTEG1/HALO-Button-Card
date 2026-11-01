@@ -4,11 +4,14 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.5.0
+ * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.5.0 (2026-11-01) : Ajout des types pour custom:halo-scene-card (targets, modes,
+ *                              luminosité, kelvin, couleur, volets) et extensions de
+ *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
  *   - 💡 v1.2.0 (2026-10-30) : Ajout des types pour custom:halo-button-card, accordéon
  *                              séparateur et cartes de personnalisation de couleurs.
  *   - 💡 v1.1.0 (2026-10-29) : Ajout du type HaloLightCardConfig pour custom:halo-light-card.
@@ -88,6 +91,9 @@ export interface SubButtonConfig {
 export interface HaloButtonCardConfig {
   type: string;
   entity?: string;
+  linked_entity?: string;
+  linked_attribute?: string;
+  display_format?: 'raw' | 'date_short' | 'date_long' | 'date_time_fr' | 'time_only' | 'relative';
   name?: string;
   title?: string;
   label?: string;
@@ -110,6 +116,37 @@ export interface HaloButtonCardConfig {
   icon_hold_action?: ActionConfig;
   icon_double_tap_action?: ActionConfig;
   sub_buttons?: SubButtonConfig[];
+}
+
+export interface HaloSceneTargetConfig {
+  entity: string;
+  domain?: 'light' | 'cover';
+  state?: 'on' | 'off';
+  brightness_pct?: number;
+  color_temp_kelvin?: number;
+  rgb_color?: [number, number, number];
+  position?: number;
+}
+
+export interface HaloSceneCardConfig {
+  type: string;
+  name?: string;
+  label?: string;
+  subtitle?: string;
+  icon?: string;
+  color?: string | [number, number, number];
+  halo_color?: string | [number, number, number];
+  accent_color?: string | [number, number, number];
+  theme_entity?: string;
+  border_width?: number;
+  layout?: 'horizontal' | 'vertical';
+  text_align?: 'left' | 'center' | 'right';
+  mode?: 'individual' | 'common';
+  targets?: HaloSceneTargetConfig[];
+  common_light_brightness?: number;
+  common_light_kelvin?: number;
+  common_light_rgb?: [number, number, number];
+  common_cover_position?: number;
 }
 
 export interface LegendItemConfig {

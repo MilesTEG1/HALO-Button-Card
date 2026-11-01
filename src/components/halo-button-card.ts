@@ -7,11 +7,15 @@
  *                    et support complet des sous-boutons interactifs.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.2
- * 📅 Date         : 2026-10-31
+ * 📦 Version      : 1.5.0
+ * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.5.0 (2026-11-01) : Support de `linked_entity`, `linked_attribute` et
+ *                              `display_format` (date_short, date_long, date_time_fr,
+ *                              time_only, relative) pour l'affichage de valeurs externes
+ *                              (ex. input_datetime) dans le sous-titre.
  *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO.
  *   - 🩹 v1.2.1 (2026-10-30) : Ajout du contour net (border 1.5px solid) et
  *                              du halo lumineux permanent (box-shadow) sur ha-card.
@@ -120,6 +124,13 @@ export class HaloButtonCard extends HTMLElement {
     // Entité principale
     if (this._config.entity) {
       if (oldHass.states[this._config.entity] !== newHass.states[this._config.entity]) {
+        return true;
+      }
+    }
+
+    // Entité liée
+    if (this._config.linked_entity) {
+      if (oldHass.states[this._config.linked_entity] !== newHass.states[this._config.linked_entity]) {
         return true;
       }
     }
@@ -430,7 +441,11 @@ export class HaloButtonCard extends HTMLElement {
     }
 
     // Subtitle / Label
-    const subtitle = this._config.label || this._config.subtitle;
+    let subtitle = this._config.label || this._config.subtitle;
+    const linkedVal = this._formatLinkedValue();
+    if (linkedVal !== null) {
+      subtitle = subtitle ? `${subtitle} • ${linkedVal}` : linkedVal;
+    }
     if (this._subtitleEl) {
       this._subtitleEl.textContent = subtitle || '';
       this._subtitleEl.style.display = subtitle ? 'block' : 'none';
@@ -485,6 +500,60 @@ export class HaloButtonCard extends HTMLElement {
       this._subButtonsContainerEl!.appendChild(btnEl);
       this._subButtonEls.push(btnEl);
     });
+  }
+
+  private _formatLinkedValue(): string | null {
+    if (!this._config.linked_entity || !this._hass?.states?.[this._config.linked_entity]) {
+      return null;
+    }
+    const stateObj = this._hass.states[this._config.linked_entity];
+    let rawValue: any;
+    if (this._config.linked_attribute && stateObj.attributes) {
+      rawValue = stateObj.attributes[this._config.linked_attribute];
+    } else {
+      rawValue = stateObj.state;
+    }
+
+    if (rawValue === undefined || rawValue === null || rawValue === 'unavailable' || rawValue === 'unknown') {
+      return String(rawValue ?? '');
+    }
+
+    const fmt = this._config.display_format || 'raw';
+    if (fmt === 'raw') return String(rawValue);
+
+    // Tentative de parsing Date
+    const d = new Date(rawValue);
+    if (isNaN(d.getTime())) {
+      return String(rawValue);
+    }
+
+    const lang = this._hass.locale?.language || this._hass.language || 'fr';
+
+    switch (fmt) {
+      case 'date_short':
+        return d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' });
+      case 'date_long':
+        return d.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
+      case 'date_time_fr':
+        return `${d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}`;
+      case 'time_only':
+        return d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+      case 'relative': {
+        const now = Date.now();
+        const diffSec = Math.round((d.getTime() - now) / 1000);
+        try {
+          const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
+          if (Math.abs(diffSec) < 60) return rtf.format(diffSec, 'second');
+          if (Math.abs(diffSec) < 3600) return rtf.format(Math.round(diffSec / 60), 'minute');
+          if (Math.abs(diffSec) < 86400) return rtf.format(Math.round(diffSec / 3600), 'hour');
+          return rtf.format(Math.round(diffSec / 86400), 'day');
+        } catch {
+          return `${d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}`;
+        }
+      }
+      default:
+        return String(rawValue);
+    }
   }
 
   private _bindInteractions() {

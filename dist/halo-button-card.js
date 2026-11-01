@@ -371,11 +371,15 @@ var HaloButtonCard = (function (exports) {
      *                    et support complet des sous-boutons interactifs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.5.0
+     * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.5.0 (2026-11-01) : Support de `linked_entity`, `linked_attribute` et
+     *                              `display_format` (date_short, date_long, date_time_fr,
+     *                              time_only, relative) pour l'affichage de valeurs externes
+     *                              (ex. input_datetime) dans le sous-titre.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO.
      *   - 🩹 v1.2.1 (2026-10-30) : Ajout du contour net (border 1.5px solid) et
      *                              du halo lumineux permanent (box-shadow) sur ha-card.
@@ -463,6 +467,12 @@ var HaloButtonCard = (function (exports) {
             // Entité principale
             if (this._config.entity) {
                 if (oldHass.states[this._config.entity] !== newHass.states[this._config.entity]) {
+                    return true;
+                }
+            }
+            // Entité liée
+            if (this._config.linked_entity) {
+                if (oldHass.states[this._config.linked_entity] !== newHass.states[this._config.linked_entity]) {
                     return true;
                 }
             }
@@ -753,7 +763,11 @@ var HaloButtonCard = (function (exports) {
                 }
             }
             // Subtitle / Label
-            const subtitle = this._config.label || this._config.subtitle;
+            let subtitle = this._config.label || this._config.subtitle;
+            const linkedVal = this._formatLinkedValue();
+            if (linkedVal !== null) {
+                subtitle = subtitle ? `${subtitle} • ${linkedVal}` : linkedVal;
+            }
             if (this._subtitleEl) {
                 this._subtitleEl.textContent = subtitle || '';
                 this._subtitleEl.style.display = subtitle ? 'block' : 'none';
@@ -800,6 +814,60 @@ var HaloButtonCard = (function (exports) {
                 this._subButtonsContainerEl.appendChild(btnEl);
                 this._subButtonEls.push(btnEl);
             });
+        }
+        _formatLinkedValue() {
+            if (!this._config.linked_entity || !this._hass?.states?.[this._config.linked_entity]) {
+                return null;
+            }
+            const stateObj = this._hass.states[this._config.linked_entity];
+            let rawValue;
+            if (this._config.linked_attribute && stateObj.attributes) {
+                rawValue = stateObj.attributes[this._config.linked_attribute];
+            }
+            else {
+                rawValue = stateObj.state;
+            }
+            if (rawValue === undefined || rawValue === null || rawValue === 'unavailable' || rawValue === 'unknown') {
+                return String(rawValue ?? '');
+            }
+            const fmt = this._config.display_format || 'raw';
+            if (fmt === 'raw')
+                return String(rawValue);
+            // Tentative de parsing Date
+            const d = new Date(rawValue);
+            if (isNaN(d.getTime())) {
+                return String(rawValue);
+            }
+            const lang = this._hass.locale?.language || this._hass.language || 'fr';
+            switch (fmt) {
+                case 'date_short':
+                    return d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' });
+                case 'date_long':
+                    return d.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
+                case 'date_time_fr':
+                    return `${d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}`;
+                case 'time_only':
+                    return d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+                case 'relative': {
+                    const now = Date.now();
+                    const diffSec = Math.round((d.getTime() - now) / 1000);
+                    try {
+                        const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
+                        if (Math.abs(diffSec) < 60)
+                            return rtf.format(diffSec, 'second');
+                        if (Math.abs(diffSec) < 3600)
+                            return rtf.format(Math.round(diffSec / 60), 'minute');
+                        if (Math.abs(diffSec) < 86400)
+                            return rtf.format(Math.round(diffSec / 3600), 'hour');
+                        return rtf.format(Math.round(diffSec / 86400), 'day');
+                    }
+                    catch {
+                        return `${d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}`;
+                    }
+                }
+                default:
+                    return String(rawValue);
+            }
         }
         _bindInteractions() {
             this._cleanupBindings();
@@ -1248,8 +1316,39 @@ var HaloButtonCard = (function (exports) {
           "align_left": "Left",
           "align_center": "Centered",
           "align_right": "Right",
-          "entity": "Linked entity (optional)",
+          "entity": "Primary entity (optional)",
+          "linked_entity": "Displayed secondary entity (e.g. absence date, sensor)",
+          "linked_attribute": "Specific attribute of linked entity (optional)",
+          "display_format": "Linked value display format",
+          "format_raw": "Raw (Direct value)",
+          "format_date_short": "Short date (DD/MM)",
+          "format_date_long": "Long date (DD Month YYYY)",
+          "format_date_time_fr": "Date & Time (DD/MM HH:mm)",
+          "format_time_only": "Time only (HH:mm)",
+          "format_relative": "Relative time (e.g. in / ago)",
+          "tap_action": "Tap action",
           "theme_entity": "Theme selector entity (optional)"
+        },
+        "scene": {
+          "name": "Scene title",
+          "label": "Subtitle / description",
+          "icon": "MDI icon",
+          "layout": "Layout",
+          "layout_horizontal": "Horizontal (wide card, text on the right)",
+          "layout_vertical": "Vertical (compact card, text centered below)",
+          "text_align": "Text alignment",
+          "align_left": "Left",
+          "align_center": "Centered",
+          "align_right": "Right",
+          "mode": "Adjustment mode",
+          "mode_individual": "Individual (Precise per device)",
+          "mode_common": "Harmonized (Common setting for all targets)",
+          "theme_entity": "Theme selector entity (optional)",
+          "targets_title": "Scene Devices & Presets",
+          "add_target": "Add device (Light or Shutter)",
+          "no_targets": "No devices configured. Click 'Add device' to get started.",
+          "select_entity": "Select entity",
+          "delete": "Delete"
         },
         "cover": {
           "entity": "Shutter or group entity",
@@ -1428,8 +1527,39 @@ var HaloButtonCard = (function (exports) {
           "align_left": "Gauche",
           "align_center": "Centré",
           "align_right": "Droite",
-          "entity": "Entité liée (optionnel)",
+          "entity": "Entité principale (optionnel)",
+          "linked_entity": "Entité tierce affichée (ex. date d'absence, capteur)",
+          "linked_attribute": "Attribut spécifique de l'entité liée (optionnel)",
+          "display_format": "Format d'affichage de la valeur liée",
+          "format_raw": "Brut (Valeur directe)",
+          "format_date_short": "Date courte (JJ/MM)",
+          "format_date_long": "Date longue (JJ Mois AAAA)",
+          "format_date_time_fr": "Date et heure (JJ/MM HH:mm)",
+          "format_time_only": "Heure uniquement (HH:mm)",
+          "format_relative": "Temps relatif (ex. il y a / dans X j)",
+          "tap_action": "Action lors du clic",
           "theme_entity": "Entité sélecteur de thème (optionnel)"
+        },
+        "scene": {
+          "name": "Titre de l'ambiance",
+          "label": "Sous-titre / Description",
+          "icon": "Icône MDI",
+          "layout": "Disposition (Layout)",
+          "layout_horizontal": "Horizontal (Carte large avec texte à droite)",
+          "layout_vertical": "Vertical (Carte compacte avec texte centré en dessous)",
+          "text_align": "Alignement du texte",
+          "align_left": "Gauche",
+          "align_center": "Centré",
+          "align_right": "Droite",
+          "mode": "Mode de réglage",
+          "mode_individual": "Individuel (Réglage précis par appareil)",
+          "mode_common": "Harmonisé (Réglage commun à toutes les cibles)",
+          "theme_entity": "Entité sélecteur de thème (optionnel)",
+          "targets_title": "Appareils & Réglages de l'ambiance",
+          "add_target": "Ajouter un appareil (Lumière ou Volet)",
+          "no_targets": "Aucun appareil configuré. Cliquez sur « Ajouter un appareil » pour commencer.",
+          "select_entity": "Sélectionner une entité",
+          "delete": "Supprimer"
         },
         "cover": {
           "entity": "Entité Volet ou Groupe",
@@ -1707,11 +1837,13 @@ var HaloButtonCard = (function (exports) {
      *                    rapide HALO et curseur d'épaisseur de bordure.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.5.0
+     * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.5.0 (2026-11-01) : Ajout des sélecteurs pour `linked_entity`, `linked_attribute`,
+     *                              `display_format` et configuration de l'action `tap_action`.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
      *                              (`HALO_PALETTE`, `color_default_halo`).
      *   - ✨ v1.2.1 (2026-10-30) : Sélecteur de couleur Mix A+B (Halo Swatch + Nuancier
@@ -1720,7 +1852,7 @@ var HaloButtonCard = (function (exports) {
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-button-card.
      * ==============================================================================
      */
-    const buildSchema$2 = (t) => [
+    const buildSchema$3 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -1741,6 +1873,24 @@ var HaloButtonCard = (function (exports) {
             }
         },
         { name: 'entity', selector: { entity: {} } },
+        { name: 'linked_entity', selector: { entity: {} } },
+        { name: 'linked_attribute', selector: { text: {} } },
+        {
+            name: 'display_format',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'button', [
+                        ['raw', 'format_raw'],
+                        ['date_short', 'format_date_short'],
+                        ['date_long', 'format_date_long'],
+                        ['date_time_fr', 'format_date_time_fr'],
+                        ['time_only', 'format_time_only'],
+                        ['relative', 'format_relative']
+                    ])
+                }
+            }
+        },
+        { name: 'tap_action', selector: { 'ui-action': {} } },
         { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
     ];
     class HaloButtonCardEditor extends HTMLElement {
@@ -1868,7 +2018,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "button", buildSchema$2(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "button", buildSchema$3(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -1922,6 +2072,940 @@ var HaloButtonCard = (function (exports) {
             const data = { ...this._config };
             delete data.color;
             delete data.border_width;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            this._config = {
+                ...this._config,
+                ...ev.detail.value
+            };
+            this._fireConfigChanged();
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-scene-card.ts
+     * 📝 Description   : Composant Web custom:halo-scene-card.
+     *                    Tuile d'ambiance et de préréglages visuels (Lumières & Volets)
+     *                    Liquid Glass avec halo néon spéculaire réactif, feedback haptique
+     *                    et déclenchement séquentiel multi-cibles direct sans script backend.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.5.0
+     * 📅 Date         : 2026-11-01
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.5.0 (2026-11-01) : Création initiale de la carte d'ambiance custom:halo-scene-card :
+     *                              - Déclenchement multi-cibles (light & cover) en mode individuel ou harmonisé.
+     *                              - Réglages de luminosité (%), température (Kelvin), couleur (RGB) et volets (%).
+     *                              - Design System Liquid Glass avec animation d'activation lumineuse.
+     *                              - Absence totale de scripts intermédiaires dans Home Assistant.
+     * ==============================================================================
+     */
+    class HaloSceneCard extends HTMLElement {
+        constructor() {
+            super();
+            // Références DOM
+            this._cardEl = null;
+            this._iconBtnEl = null;
+            this._iconEl = null;
+            this._textColEl = null;
+            this._titleEl = null;
+            this._subtitleEl = null;
+            this._badgeEl = null;
+            // État d'animation
+            this._isActivating = false;
+            this._unbindCardTouch = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        static getConfigElement() {
+            return document.createElement('halo-scene-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                name: 'Ambiance Soirée',
+                label: 'Ambiance tamisée',
+                icon: 'mdi:weather-night',
+                layout: 'horizontal',
+                color: 'Améthyste',
+                mode: 'individual',
+                targets: []
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-scene-card');
+            }
+            this._config = {
+                layout: 'horizontal',
+                mode: 'individual',
+                text_align: config.layout === 'vertical' ? 'center' : 'left',
+                targets: [],
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            if (!this._cardEl) {
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            return this._config?.layout === 'vertical' ? 2 : 1;
+        }
+        disconnectedCallback() {
+            this._cleanupBindings();
+        }
+        _cleanupBindings() {
+            if (this._unbindCardTouch) {
+                this._unbindCardTouch();
+                this._unbindCardTouch = null;
+            }
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            // Cibles configurées
+            if (this._config.targets) {
+                for (const target of this._config.targets) {
+                    if (target.entity && oldHass.states[target.entity] !== newHass.states[target.entity]) {
+                        return true;
+                    }
+                }
+            }
+            // Entité de thème
+            if (this._config.theme_entity) {
+                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
+                    return true;
+                }
+            }
+            // Thèmes globaux HALO
+            const commonThemeEntities = [
+                'input_select.couleur_theme_eclairages',
+                'input_select.couleur_theme_ouvertures',
+                'input_select.couleur_theme_chauffage',
+                'input_select.couleur_theme_global'
+            ];
+            for (const te of commonThemeEntities) {
+                if (oldHass.states[te] !== newHass.states[te])
+                    return true;
+            }
+            return false;
+        }
+        _getEffectiveColor() {
+            const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
+            if (explicit) {
+                return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#a855f7');
+            }
+            return resolveThemeColor(this._hass, undefined, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#a855f7');
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        ha-card {
+          position: relative;
+          display: flex;
+          box-sizing: border-box;
+          border-radius: 16px;
+          border: 1.5px solid transparent;
+          background: linear-gradient(160deg, rgba(20, 28, 38, 0.85), rgba(10, 15, 22, 0.92));
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          transition: border 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      transform 0.15s ease,
+                      filter 0.15s ease;
+          overflow: hidden;
+          cursor: pointer;
+        }
+        ha-card:hover {
+          filter: brightness(1.06);
+        }
+        ha-card:active {
+          transform: scale(0.985);
+        }
+        ha-card.activating {
+          filter: brightness(1.25);
+          transform: scale(0.99);
+        }
+
+        /* Layout Horizontal */
+        ha-card.layout-horizontal {
+          flex-direction: row;
+          align-items: center;
+          padding: 12px 14px;
+          gap: 12px;
+          min-height: 64px;
+        }
+        ha-card.layout-horizontal .main-icon-btn {
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        ha-card.layout-horizontal .text-column {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+          gap: 2px;
+        }
+        ha-card.layout-horizontal .badge-container {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+
+        /* Layout Vertical */
+        ha-card.layout-vertical {
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 14px 10px 12px 10px;
+          gap: 8px;
+          min-height: 108px;
+        }
+        ha-card.layout-vertical .main-icon-btn {
+          width: 46px;
+          height: 46px;
+          min-width: 46px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        ha-card.layout-vertical .text-column {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          gap: 2px;
+        }
+        ha-card.layout-vertical .badge-container {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+        }
+
+        /* Typography */
+        .title {
+          font-size: 13.5px;
+          font-weight: 600;
+          color: #f1f5f9;
+          letter-spacing: 0.2px;
+          line-height: 1.25;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        ha-card.layout-vertical .title {
+          font-size: 13px;
+          text-align: center;
+        }
+
+        .subtitle {
+          font-size: 11.5px;
+          font-weight: 400;
+          color: rgba(220, 235, 240, 0.65);
+          line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: normal;
+        }
+        ha-card.layout-vertical .subtitle {
+          font-size: 10.5px;
+          text-align: center;
+        }
+
+        /* Icon styling */
+        ha-icon {
+          --mdc-icon-size: 22px;
+          width: 22px;
+          height: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.25s ease, transform 0.25s ease;
+        }
+        ha-card.activating ha-icon {
+          transform: scale(1.12);
+        }
+
+        /* Badge indicator */
+        .scene-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          height: 24px;
+          padding: 0 8px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+          box-sizing: border-box;
+          transition: all 0.2s ease;
+        }
+        .scene-badge ha-icon {
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+        }
+      </style>
+
+      <ha-card id="card">
+        <div class="main-icon-btn" id="icon-btn">
+          <ha-icon id="main-icon"></ha-icon>
+        </div>
+        <div class="text-column" id="text-col">
+          <div class="title" id="title"></div>
+          <div class="subtitle" id="subtitle"></div>
+        </div>
+        <div class="badge-container" id="badge-wrap">
+          <div class="scene-badge" id="scene-badge"></div>
+        </div>
+      </ha-card>
+    `;
+            this._cardEl = this._root.getElementById('card');
+            this._iconBtnEl = this._root.getElementById('icon-btn');
+            this._iconEl = this._root.getElementById('main-icon');
+            this._textColEl = this._root.getElementById('text-col');
+            this._titleEl = this._root.getElementById('title');
+            this._subtitleEl = this._root.getElementById('subtitle');
+            this._badgeEl = this._root.getElementById('scene-badge');
+        }
+        _render() {
+            if (!this._config)
+                return;
+            if (!this._cardEl) {
+                this._buildDom();
+            }
+            const color = this._getEffectiveColor();
+            const layout = this._config.layout || 'horizontal';
+            const isVertical = layout === 'vertical';
+            // Classes & Layout
+            this._cardEl.className = `${isVertical ? 'layout-vertical' : 'layout-horizontal'} ${this._isActivating ? 'activating' : ''}`;
+            // Card styling (Border & Glowing Specular Halo)
+            const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
+                ? this._config.border_width
+                : 1.5;
+            const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
+            const cardShadow = this._isActivating
+                ? `0 0 28px ${color}99, 0 0 10px ${color}80, inset 0 1px 0 rgba(255, 255, 255, 0.35)`
+                : `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            this._cardEl.style.border = cardBorder;
+            this._cardEl.style.boxShadow = cardShadow;
+            // Icon button styling
+            if (this._iconBtnEl) {
+                this._iconBtnEl.style.background = `${color}1A`;
+                this._iconBtnEl.style.border = `1px solid ${color}40`;
+                this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+            }
+            // Icon
+            const icon = this._config.icon || 'mdi:palette-swatch-outline';
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = color;
+            }
+            // Name / Title
+            const title = this._config.name || 'Ambiance HALO';
+            if (this._titleEl) {
+                this._titleEl.textContent = title;
+                if (this._config.text_align) {
+                    this._titleEl.style.textAlign = this._config.text_align;
+                }
+            }
+            // Subtitle / Targets count & description
+            let subtitle = this._config.label || this._config.subtitle;
+            if (!subtitle) {
+                const targets = this._config.targets || [];
+                const lightCount = targets.filter(t => (t.domain || t.entity.split('.')[0]) === 'light').length;
+                const coverCount = targets.filter(t => (t.domain || t.entity.split('.')[0]) === 'cover').length;
+                const parts = [];
+                if (lightCount > 0)
+                    parts.push(`${lightCount} éclairage${lightCount > 1 ? 's' : ''}`);
+                if (coverCount > 0)
+                    parts.push(`${coverCount} volet${coverCount > 1 ? 's' : ''}`);
+                subtitle = parts.length > 0 ? parts.join(' • ') : 'Appuyer pour appliquer';
+            }
+            if (this._subtitleEl) {
+                this._subtitleEl.textContent = subtitle;
+                if (this._config.text_align) {
+                    this._subtitleEl.style.textAlign = this._config.text_align;
+                }
+            }
+            // Badge
+            if (this._badgeEl) {
+                const targetsCount = (this._config.targets || []).length;
+                if (targetsCount > 0) {
+                    this._badgeEl.style.display = 'inline-flex';
+                    this._badgeEl.style.background = `${color}20`;
+                    this._badgeEl.style.border = `1px solid ${color}44`;
+                    this._badgeEl.style.color = color;
+                    this._badgeEl.innerHTML = `<ha-icon icon="mdi:check-all"></ha-icon><span>${targetsCount}</span>`;
+                }
+                else {
+                    this._badgeEl.style.display = 'none';
+                }
+            }
+            // Rebind touch gestures
+            this._bindInteractions();
+        }
+        _bindInteractions() {
+            this._cleanupBindings();
+            if (this._cardEl) {
+                this._unbindCardTouch = bindTouchActions(this._cardEl, {
+                    onTap: () => {
+                        this._applyScene();
+                    }
+                });
+            }
+        }
+        async _applyScene() {
+            if (!this._config || !this._hass)
+                return;
+            fireHaptic('medium');
+            this._isActivating = true;
+            this._render();
+            try {
+                const targets = this._config.targets || [];
+                const mode = this._config.mode || 'individual';
+                for (const target of targets) {
+                    if (!target.entity)
+                        continue;
+                    const domain = target.domain || target.entity.split('.')[0];
+                    if (domain === 'light') {
+                        if (target.state === 'off') {
+                            await this._hass.callService('light', 'turn_off', {
+                                entity_id: target.entity
+                            });
+                        }
+                        else {
+                            const serviceData = {
+                                entity_id: target.entity
+                            };
+                            // Mode commun ou individuel
+                            if (mode === 'common') {
+                                if (typeof this._config.common_light_brightness === 'number') {
+                                    serviceData.brightness_pct = this._config.common_light_brightness;
+                                }
+                                if (typeof this._config.common_light_kelvin === 'number') {
+                                    serviceData.color_temp_kelvin = this._config.common_light_kelvin;
+                                }
+                                if (this._config.common_light_rgb) {
+                                    serviceData.rgb_color = this._config.common_light_rgb;
+                                }
+                            }
+                            else {
+                                if (typeof target.brightness_pct === 'number') {
+                                    serviceData.brightness_pct = target.brightness_pct;
+                                }
+                                if (typeof target.color_temp_kelvin === 'number') {
+                                    serviceData.color_temp_kelvin = target.color_temp_kelvin;
+                                }
+                                if (target.rgb_color) {
+                                    serviceData.rgb_color = target.rgb_color;
+                                }
+                            }
+                            await this._hass.callService('light', 'turn_on', serviceData);
+                        }
+                    }
+                    else if (domain === 'cover') {
+                        let position;
+                        if (mode === 'common' && typeof this._config.common_cover_position === 'number') {
+                            position = this._config.common_cover_position;
+                        }
+                        else if (typeof target.position === 'number') {
+                            position = target.position;
+                        }
+                        if (position !== undefined) {
+                            await this._hass.callService('cover', 'set_cover_position', {
+                                entity_id: target.entity,
+                                position: position
+                            });
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                console.error('[halo-scene-card] Erreur lors de l\'application de la scène :', err);
+                fireHaptic('failure');
+            }
+            finally {
+                setTimeout(() => {
+                    this._isActivating = false;
+                    this._render();
+                }, 500);
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-scene-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-scene-card.
+     *                    Combine le composant natif <ha-form> pour les métadonnées,
+     *                    un panneau de gestion visuelle des cibles (lumières & volets),
+     *                    et le panneau de style Liquid Glass HALO (nuancier & bordure).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.5.0
+     * 📅 Date         : 2026-11-01
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.5.0 (2026-11-01) : Création initiale de l'éditeur halo-scene-card :
+     *                              - Sélection d'entités cibles (light & cover).
+     *                              - Réglages fins individuels ou harmonisés (luminosité, kelvin, position).
+     *                              - Style Panel Mix A+B (Halo Swatch + Nuancier 16 teintes + Curseur bordure).
+     * ==============================================================================
+     */
+    const buildSchema$2 = (t) => [
+        { name: 'name', selector: { text: {} } },
+        { name: 'label', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
+        {
+            name: 'layout',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'scene', [['horizontal', 'layout_horizontal'], ['vertical', 'layout_vertical']])
+                }
+            }
+        },
+        {
+            name: 'text_align',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'scene', [['left', 'align_left'], ['center', 'align_center'], ['right', 'align_right']])
+                }
+            }
+        },
+        {
+            name: 'mode',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'scene', [['individual', 'mode_individual'], ['common', 'mode_common']])
+                }
+            }
+        },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
+    ];
+    class HaloSceneCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = 'en';
+            // Références DOM Style Panel
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._chipsContainerEl = null;
+            this._borderSliderEl = null;
+            this._borderValBadgeEl = null;
+            this._targetsContainerEl = null;
+        }
+        setConfig(config) {
+            this._config = {
+                layout: 'horizontal',
+                mode: 'individual',
+                border_width: 1.5,
+                targets: [],
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
+            const form = this.querySelector('#form');
+            if (form) {
+                form.hass = hass;
+            }
+        }
+        _fireConfigChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _getColorHex() {
+            const raw = this._config?.color || 'Améthyste';
+            return toHexColor(raw, '#a855f7');
+        }
+        _getColorDisplayName() {
+            return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_halo');
+        }
+        _updateColor(colorValue) {
+            this._config = {
+                ...this._config,
+                color: colorValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _updateBorderWidth(widthValue) {
+            this._config = {
+                ...this._config,
+                border_width: widthValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _syncStylePanel() {
+            const hex = this._getColorHex();
+            const name = this._getColorDisplayName();
+            const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.5;
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = hex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = hex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = hex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = name;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = hex.toUpperCase();
+            }
+            if (this._chipsContainerEl) {
+                const activeRaw = this._config.color || 'Améthyste';
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = (chipName === activeRaw || chipHex?.toLowerCase() === hex.toLowerCase());
+                    btn.classList.toggle('active', isActive);
+                });
+            }
+            if (this._borderSliderEl) {
+                this._borderSliderEl.value = String(bw);
+            }
+            if (this._borderValBadgeEl) {
+                this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
+            }
+        }
+        _render() {
+            if (!this._config)
+                return;
+            let form = this.querySelector('#form');
+            if (!form) {
+                const t = useLocalize(this._hass);
+                this._lang = getLang(this._hass);
+                this.innerHTML = `
+        <style>
+          ${COMMON_EDITOR_STYLES}
+          .scene-targets-section {
+            margin-top: 16px;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .scene-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #f1f5f9;
+          }
+          .scene-section-title ha-icon {
+            --mdc-icon-size: 18px;
+            color: #a855f7;
+          }
+          .target-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .target-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+          }
+          .target-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+          }
+          .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 11px;
+            color: rgba(226, 232, 240, 0.8);
+          }
+          .control-group input[type="range"] {
+            width: 100%;
+          }
+          .btn-delete-target {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #ef4444;
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          .btn-delete-target:hover {
+            background: rgba(239, 68, 68, 0.3);
+          }
+          .btn-add-target {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            color: #c084fc;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          .btn-add-target:hover {
+            background: rgba(168, 85, 247, 0.25);
+            border-color: #c084fc;
+          }
+        </style>
+
+        <div class="halo-editor-wrap">
+          <ha-form id="form"></ha-form>
+
+          <!-- Section Targets -->
+          <div class="scene-targets-section">
+            <div class="scene-section-title">
+              <ha-icon icon="mdi:tune-variant"></ha-icon>
+              <span>${t('editor.scene.targets_title')}</span>
+            </div>
+            <div id="targets-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            <button type="button" class="btn-add-target" id="btn-add-target">
+              <ha-icon icon="mdi:plus-circle-outline"></ha-icon>
+              <span>${t('editor.scene.add_target')}</span>
+            </button>
+          </div>
+
+          ${stylePanelHtml(t, {
+                title: t('editor.style_title'),
+                leftTitle: t('editor.halo_color'),
+                borderTitle: t('editor.border_title')
+            })}
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    applyFormI18n(form, this._hass, 'scene', buildSchema$2(useLocalize(this._hass)));
+                    form.data = this._formMetadata();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+                this._initDomBindings();
+            }
+            else {
+                form.data = this._formMetadata();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+            this._renderTargets();
+            this._syncStylePanel();
+        }
+        _initDomBindings() {
+            this._swatchCircleEl = this.querySelector('#swatch-circle');
+            this._colorInputEl = this.querySelector('#native-color-input');
+            this._swatchNameEl = this.querySelector('#swatch-name');
+            this._swatchHexEl = this.querySelector('#swatch-hex');
+            this._chipsContainerEl = this.querySelector('#chips-grid');
+            this._borderSliderEl = this.querySelector('#border-slider-input');
+            this._borderValBadgeEl = this.querySelector('#border-val-text');
+            this._targetsContainerEl = this.querySelector('#targets-list');
+            const triggerColor = () => {
+                if (this._colorInputEl) {
+                    this._colorInputEl.click();
+                }
+            };
+            this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+            this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+            this._colorInputEl?.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val)
+                    this._updateColor(val);
+            });
+            if (this._chipsContainerEl) {
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
+            }
+            this._borderSliderEl?.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    this._updateBorderWidth(val);
+                }
+            });
+            this.querySelector('#btn-add-target')?.addEventListener('click', () => {
+                const targets = [...(this._config.targets || [])];
+                targets.push({
+                    entity: '',
+                    domain: 'light',
+                    state: 'on',
+                    brightness_pct: 50
+                });
+                this._config = { ...this._config, targets };
+                this._renderTargets();
+                this._fireConfigChanged();
+            });
+        }
+        _renderTargets() {
+            if (!this._targetsContainerEl)
+                return;
+            const targets = this._config.targets || [];
+            const t = useLocalize(this._hass);
+            if (targets.length === 0) {
+                this._targetsContainerEl.innerHTML = `
+        <div style="font-size: 11.5px; opacity: 0.6; text-align: center; padding: 8px;">
+          ${t('editor.scene.no_targets')}
+        </div>
+      `;
+                return;
+            }
+            this._targetsContainerEl.innerHTML = '';
+            targets.forEach((target, index) => {
+                const card = document.createElement('div');
+                card.className = 'target-card';
+                const domain = target.domain || (target.entity ? target.entity.split('.')[0] : 'light');
+                const isLight = domain === 'light';
+                const isCover = domain === 'cover';
+                card.innerHTML = `
+        <div class="target-header">
+          <span>#${index + 1} — ${target.entity || t('editor.scene.select_entity')}</span>
+          <button type="button" class="btn-delete-target" data-index="${index}">
+            ✕ ${t('editor.scene.delete')}
+          </button>
+        </div>
+        <div class="control-group">
+          <input type="text" class="input-target-entity" data-index="${index}" value="${target.entity || ''}" placeholder="light.salon ou cover.volet" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 6px; color: #fff; font-size: 11.5px;" />
+        </div>
+        ${isLight ? `
+          <div class="target-controls">
+            <div class="control-group">
+              <label>Luminosité : <b class="val-brightness">${target.brightness_pct ?? 100}%</b></label>
+              <input type="range" class="input-target-brightness" data-index="${index}" min="0" max="100" value="${target.brightness_pct ?? 100}" />
+            </div>
+            <div class="control-group">
+              <label>Température : <b class="val-kelvin">${target.color_temp_kelvin ?? 2700}K</b></label>
+              <input type="range" class="input-target-kelvin" data-index="${index}" min="2000" max="6500" step="100" value="${target.color_temp_kelvin ?? 2700}" />
+            </div>
+          </div>
+        ` : ''}
+        ${isCover ? `
+          <div class="target-controls">
+            <div class="control-group">
+              <label>Position volet : <b class="val-position">${target.position ?? 100}%</b></label>
+              <input type="range" class="input-target-position" data-index="${index}" min="0" max="100" value="${target.position ?? 100}" />
+            </div>
+          </div>
+        ` : ''}
+      `;
+                // Handlers
+                card.querySelector('.btn-delete-target')?.addEventListener('click', () => {
+                    const updated = [...targets];
+                    updated.splice(index, 1);
+                    this._config = { ...this._config, targets: updated };
+                    this._renderTargets();
+                    this._fireConfigChanged();
+                });
+                card.querySelector('.input-target-entity')?.addEventListener('change', (e) => {
+                    const val = e.target.value.trim();
+                    const updated = [...targets];
+                    const newDomain = val.startsWith('cover.') ? 'cover' : 'light';
+                    updated[index] = { ...updated[index], entity: val, domain: newDomain };
+                    this._config = { ...this._config, targets: updated };
+                    this._renderTargets();
+                    this._fireConfigChanged();
+                });
+                card.querySelector('.input-target-brightness')?.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value, 10);
+                    const valEl = card.querySelector('.val-brightness');
+                    if (valEl)
+                        valEl.textContent = `${val}%`;
+                    const updated = [...targets];
+                    updated[index] = { ...updated[index], brightness_pct: val };
+                    this._config = { ...this._config, targets: updated };
+                    this._fireConfigChanged();
+                });
+                card.querySelector('.input-target-kelvin')?.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value, 10);
+                    const valEl = card.querySelector('.val-kelvin');
+                    if (valEl)
+                        valEl.textContent = `${val}K`;
+                    const updated = [...targets];
+                    updated[index] = { ...updated[index], color_temp_kelvin: val };
+                    this._config = { ...this._config, targets: updated };
+                    this._fireConfigChanged();
+                });
+                card.querySelector('.input-target-position')?.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value, 10);
+                    const valEl = card.querySelector('.val-position');
+                    if (valEl)
+                        valEl.textContent = `${val}%`;
+                    const updated = [...targets];
+                    updated[index] = { ...updated[index], position: val };
+                    this._config = { ...this._config, targets: updated };
+                    this._fireConfigChanged();
+                });
+                this._targetsContainerEl.appendChild(card);
+            });
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            delete data.color;
+            delete data.border_width;
+            delete data.targets;
             return data;
         }
         _valueChanged(ev) {
@@ -6109,11 +7193,14 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.5.0
+     * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.5.0 (2026-11-01) : Intégration de custom:halo-scene-card (ambiances multi-cibles
+     *                              lumières et volets sans script backend) et enrichissement de
+     *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO,
      *                              renommage de la teinte `Cyan` et synchronisation de version.
      *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) en/fr de toute la suite :
@@ -6143,13 +7230,19 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.4.2';
+    const VERSION = '1.5.0';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
         type: 'halo-button-card',
         name: 'HALO Button Card',
-        description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts and sub-buttons.',
+        description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts, external entity linking and sub-buttons.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-scene-card',
+        name: 'HALO Scene Card',
+        description: 'Turnkey Liquid Glass scene & ambiance tile for direct multi-target light and cover control without HA scripts.',
         preview: true
     });
     window.customCards.push({
@@ -6188,6 +7281,12 @@ var HaloButtonCard = (function (exports) {
     }
     if (!customElements.get('halo-button-card-editor')) {
         customElements.define('halo-button-card-editor', HaloButtonCardEditor);
+    }
+    if (!customElements.get('halo-scene-card')) {
+        customElements.define('halo-scene-card', HaloSceneCard);
+    }
+    if (!customElements.get('halo-scene-card-editor')) {
+        customElements.define('halo-scene-card-editor', HaloSceneCardEditor);
     }
     if (!customElements.get('halo-light-card')) {
         customElements.define('halo-light-card', HaloLightCard);
@@ -6230,6 +7329,8 @@ var HaloButtonCard = (function (exports) {
     exports.HaloLightCardEditor = HaloLightCardEditor;
     exports.HaloPaletteCard = HaloPaletteCard;
     exports.HaloPaletteCardEditor = HaloPaletteCardEditor;
+    exports.HaloSceneCard = HaloSceneCard;
+    exports.HaloSceneCardEditor = HaloSceneCardEditor;
     exports.HaloSeparatorCard = HaloSeparatorCard;
     exports.HaloSeparatorCardEditor = HaloSeparatorCardEditor;
     exports.actionHandler = actionHandler;

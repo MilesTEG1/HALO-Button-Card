@@ -218,9 +218,59 @@ tap_action:
     entity_id: scene.living_room_cinema
 ```
 
+```yaml
+# Example 3: External linked entity with automatic date formatting
+type: custom:halo-button-card
+name: Prolonged Absence
+label: Return scheduled
+icon: mdi:airplane-takeoff
+color: Orange Flamme
+entity: input_boolean.mode_absence_prolongee
+linked_entity: input_datetime.date_retour_absence
+display_format: date_time_fr
+```
+
 ---
 
-### 5. `custom:halo-cover-color-card`
+### 5. `custom:halo-scene-card`
+
+Turnkey Liquid Glass scene & ambiance tile for direct multi-target light and cover orchestration without any Home Assistant backend scripts.
+
+```yaml
+type: custom:halo-scene-card
+name: Cinema Ambiance
+icon: mdi:movie-open
+color: Améthyste
+mode: individual
+targets:
+  - entity: light.living_room_ceiling
+    domain: light
+    brightness_pct: 20
+    color_temp_kelvin: 2200
+  - entity: light.tv_led_strip
+    domain: light
+    brightness_pct: 60
+    rgb_color: [255, 140, 20]
+  - entity: cover.living_room_shutter
+    domain: cover
+    position: 0
+```
+
+#### Supported Configuration Options:
+
+| Field | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `name` | `string` | `Ambiance HALO` | Custom scene card title. |
+| `icon` | `string` | `mdi:palette-swatch-outline` | Custom MDI icon. |
+| `color` | `string` | `Améthyste` | Halo accent color name or HEX. |
+| `mode` | `string` | `individual` | `individual` (per-target presets) or `common` (shared brightness/position). |
+| `targets` | `array` | `[]` | List of target light & cover configurations. |
+| `theme_entity` | `string` | *optional* | `input_select` driving view/dashboard colors. |
+| `border_width` | `number` | `1.5` | Halo border width (0 to 3 px). |
+
+---
+
+### 6. `custom:halo-cover-color-card`
 
 Turnkey 2×2 grid card for configuring shutter state colors (*Closed*, *Partial*, *Open*, *Moving*) with glowing dots and state icons.
 
