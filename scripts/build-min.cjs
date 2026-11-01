@@ -6,11 +6,12 @@
 //                    scrupuleusement la ponctuation {}:;,>+~.
 // 🖥️  Machine cible : VM-203 - Agent-Debian-Caw
 // 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-// 📦 Version      : 1.5.0
+// 📦 Version      : 1.5.1
 // 📅 Date         : 2026-11-01
 // 🤖 LLM utilisé  : Gemini / Antigravity (DÉDALE)
 // ==============================================================================
 // 📋 CHANGELOG (antéchronologique)
+//   - 🆙 v1.5.1 (2026-11-01) : Support bundle v1.5.1 avec validation continue des 11 blocs CSS.
 //   - 🆙 v1.5.0 (2026-11-01) : Ajustement du plafond budgétaire MAX_BUNDLE_BYTES à 160 000 octets (160 Ko)
 //                              pour accompagner l'extension du bundle à 7 composants (custom:halo-scene-card).
 //   - 🩹 v1.3.1 (2026-10-30) : Prise en charge des blocs <style> interpolés purs (${...})

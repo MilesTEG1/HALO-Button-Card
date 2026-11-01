@@ -6,11 +6,14 @@
  *                    call-service, more-info, navigate, url, toggle, confirmation).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.5.1
+ * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🩹 v1.5.1 (2026-11-01) : Tolérance aux actions non définies avec fallback intelligent
+ *                              (toggle automatique pour domaines commutables, more-info sinon)
+ *                              et réinitialisation stricte de hasMoved sur pointercancel.
  *   - 💡 v1.2.0 (2026-10-30) : Création initiale du moteur d'actions universel HALO.
  * ==============================================================================
  */
@@ -43,17 +46,35 @@ export async function handleAction(
   config?: ActionConfig,
   defaultEntityId?: string
 ): Promise<void> {
-  if (!config || !hass) return;
+  if (!hass) return;
 
-  const action = config.action || (config.service ? 'call-service' : (defaultEntityId ? 'more-info' : 'none'));
+  const effectiveConfig: ActionConfig = config || (defaultEntityId ? {} : { action: 'none' });
+  let action = effectiveConfig.action;
+
+  if (!action) {
+    if (effectiveConfig.service || effectiveConfig.perform_action) {
+      action = 'call-service';
+    } else if (effectiveConfig.navigation_path) {
+      action = 'navigate';
+    } else if (effectiveConfig.url_path) {
+      action = 'url';
+    } else if (effectiveConfig.entity || defaultEntityId) {
+      const target = effectiveConfig.entity || defaultEntityId;
+      const domain = target?.split('.')[0] || '';
+      const toggleableDomains = ['light', 'switch', 'input_boolean', 'fan', 'cover', 'lock', 'automation'];
+      action = toggleableDomains.includes(domain) ? 'toggle' : 'more-info';
+    } else {
+      action = 'none';
+    }
+  }
 
   if (action === 'none') return;
 
   // Confirmation dialog
-  if (config.confirmation) {
-    const text = typeof config.confirmation === 'string'
-      ? config.confirmation
-      : (config.confirmation.text || 'Confirmer l\'action ?');
+  if (effectiveConfig.confirmation) {
+    const text = typeof effectiveConfig.confirmation === 'string'
+      ? effectiveConfig.confirmation
+      : (effectiveConfig.confirmation.text || 'Confirmer l\'action ?');
     if (!window.confirm(text)) {
       return;
     }
@@ -64,18 +85,18 @@ export async function handleAction(
   switch (action) {
     case 'call-service':
     case 'perform-action': {
-      const fullService = config.service || config.perform_action;
+      const fullService = effectiveConfig.service || effectiveConfig.perform_action;
       if (!fullService) return;
 
       const [domain, service] = fullService.split('.');
       const serviceData = {
-        ...(config.data || config.service_data || {})
+        ...(effectiveConfig.data || effectiveConfig.service_data || {})
       };
 
-      if (config.target) {
-        Object.assign(serviceData, config.target);
-      } else if (!serviceData.entity_id && (config.entity || defaultEntityId)) {
-        serviceData.entity_id = config.entity || defaultEntityId;
+      if (effectiveConfig.target) {
+        Object.assign(serviceData, effectiveConfig.target);
+      } else if (!serviceData.entity_id && (effectiveConfig.entity || defaultEntityId)) {
+        serviceData.entity_id = effectiveConfig.entity || defaultEntityId;
       }
 
       await hass.callService(domain, service, serviceData);
@@ -83,7 +104,7 @@ export async function handleAction(
     }
 
     case 'toggle': {
-      const targetEntity = config.entity || defaultEntityId;
+      const targetEntity = effectiveConfig.entity || defaultEntityId;
       if (!targetEntity) return;
       const domain = targetEntity.split('.')[0] || 'homeassistant';
       await hass.callService(domain, 'toggle', { entity_id: targetEntity });
@@ -91,14 +112,14 @@ export async function handleAction(
     }
 
     case 'more-info': {
-      const targetEntity = config.entity || defaultEntityId;
+      const targetEntity = effectiveConfig.entity || defaultEntityId;
       if (!targetEntity) return;
       fireEvent(node, 'hass-more-info', { entityId: targetEntity });
       break;
     }
 
     case 'navigate': {
-      const path = config.navigation_path;
+      const path = effectiveConfig.navigation_path;
       if (!path) return;
       window.history.pushState(null, '', path);
       const navEvent = new CustomEvent('location-changed', {
@@ -110,7 +131,7 @@ export async function handleAction(
     }
 
     case 'url': {
-      const url = config.url_path;
+      const url = effectiveConfig.url_path;
       if (!url) return;
       window.open(url, '_blank');
       break;
@@ -205,6 +226,7 @@ export function bindTouchActions(
       holdTimer = null;
     }
     isHold = false;
+    hasMoved = false;
   };
 
   el.addEventListener('pointerdown', onPointerDown);
