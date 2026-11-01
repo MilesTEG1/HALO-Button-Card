@@ -10,11 +10,14 @@ var HaloButtonCard = (function (exports) {
      *                    génération dynamique des feuilles CSS des cartes.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.5.1
+     * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.5.1 (2026-11-01) : Support des mots-clés 'theme' et 'auto' dans resolveThemeColor
+     *                              pour résolution dynamique vers l'entité de thème ou thèmes globaux,
+     *                              et support des codes hexadécimaux directs dans les entités d'état.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
      *                              (`HALO_PALETTE`) et renommage de la teinte `Cyan`.
      *   - ✨ v1.3.0 (2026-10-30) : Support de l'épaisseur de bordure paramétrable (`border_width`).
@@ -98,7 +101,9 @@ var HaloButtonCard = (function (exports) {
         return fallback;
     }
     function resolveThemeColor(hass, explicitColor, themeEntity, fallback = '#26c6da') {
-        if (explicitColor && typeof explicitColor === 'string' && explicitColor.trim() !== '') {
+        const isThemeKeyword = typeof explicitColor === 'string' &&
+            (explicitColor.trim().toLowerCase() === 'theme' || explicitColor.trim().toLowerCase() === 'auto');
+        if (explicitColor && !isThemeKeyword) {
             return toHexColor(explicitColor, fallback);
         }
         const states = hass?.states || {};
@@ -120,6 +125,8 @@ var HaloButtonCard = (function (exports) {
             const st = states[ent]?.state;
             if (st && HALO_PALETTE[st])
                 return HALO_PALETTE[st];
+            if (st && st.startsWith('#'))
+                return st;
         }
         return fallback;
     }
@@ -175,11 +182,14 @@ var HaloButtonCard = (function (exports) {
      *                    call-service, more-info, navigate, url, toggle, confirmation).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.5.1
+     * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🩹 v1.5.1 (2026-11-01) : Tolérance aux actions non définies avec fallback intelligent
+     *                              (toggle automatique pour domaines commutables, more-info sinon)
+     *                              et réinitialisation stricte de hasMoved sur pointercancel.
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale du moteur d'actions universel HALO.
      * ==============================================================================
      */
@@ -200,16 +210,37 @@ var HaloButtonCard = (function (exports) {
         node.dispatchEvent(event);
     }
     async function handleAction(node, hass, config, defaultEntityId) {
-        if (!config || !hass)
+        if (!hass)
             return;
-        const action = config.action || (config.service ? 'call-service' : (defaultEntityId ? 'more-info' : 'none'));
+        const effectiveConfig = config || (defaultEntityId ? {} : { action: 'none' });
+        let action = effectiveConfig.action;
+        if (!action) {
+            if (effectiveConfig.service || effectiveConfig.perform_action) {
+                action = 'call-service';
+            }
+            else if (effectiveConfig.navigation_path) {
+                action = 'navigate';
+            }
+            else if (effectiveConfig.url_path) {
+                action = 'url';
+            }
+            else if (effectiveConfig.entity || defaultEntityId) {
+                const target = effectiveConfig.entity || defaultEntityId;
+                const domain = target?.split('.')[0] || '';
+                const toggleableDomains = ['light', 'switch', 'input_boolean', 'fan', 'cover', 'lock', 'automation'];
+                action = toggleableDomains.includes(domain) ? 'toggle' : 'more-info';
+            }
+            else {
+                action = 'none';
+            }
+        }
         if (action === 'none')
             return;
         // Confirmation dialog
-        if (config.confirmation) {
-            const text = typeof config.confirmation === 'string'
-                ? config.confirmation
-                : (config.confirmation.text || 'Confirmer l\'action ?');
+        if (effectiveConfig.confirmation) {
+            const text = typeof effectiveConfig.confirmation === 'string'
+                ? effectiveConfig.confirmation
+                : (effectiveConfig.confirmation.text || 'Confirmer l\'action ?');
             if (!window.confirm(text)) {
                 return;
             }
@@ -218,24 +249,24 @@ var HaloButtonCard = (function (exports) {
         switch (action) {
             case 'call-service':
             case 'perform-action': {
-                const fullService = config.service || config.perform_action;
+                const fullService = effectiveConfig.service || effectiveConfig.perform_action;
                 if (!fullService)
                     return;
                 const [domain, service] = fullService.split('.');
                 const serviceData = {
-                    ...(config.data || config.service_data || {})
+                    ...(effectiveConfig.data || effectiveConfig.service_data || {})
                 };
-                if (config.target) {
-                    Object.assign(serviceData, config.target);
+                if (effectiveConfig.target) {
+                    Object.assign(serviceData, effectiveConfig.target);
                 }
-                else if (!serviceData.entity_id && (config.entity || defaultEntityId)) {
-                    serviceData.entity_id = config.entity || defaultEntityId;
+                else if (!serviceData.entity_id && (effectiveConfig.entity || defaultEntityId)) {
+                    serviceData.entity_id = effectiveConfig.entity || defaultEntityId;
                 }
                 await hass.callService(domain, service, serviceData);
                 break;
             }
             case 'toggle': {
-                const targetEntity = config.entity || defaultEntityId;
+                const targetEntity = effectiveConfig.entity || defaultEntityId;
                 if (!targetEntity)
                     return;
                 const domain = targetEntity.split('.')[0] || 'homeassistant';
@@ -243,14 +274,14 @@ var HaloButtonCard = (function (exports) {
                 break;
             }
             case 'more-info': {
-                const targetEntity = config.entity || defaultEntityId;
+                const targetEntity = effectiveConfig.entity || defaultEntityId;
                 if (!targetEntity)
                     return;
                 fireEvent(node, 'hass-more-info', { entityId: targetEntity });
                 break;
             }
             case 'navigate': {
-                const path = config.navigation_path;
+                const path = effectiveConfig.navigation_path;
                 if (!path)
                     return;
                 window.history.pushState(null, '', path);
@@ -262,7 +293,7 @@ var HaloButtonCard = (function (exports) {
                 break;
             }
             case 'url': {
-                const url = config.url_path;
+                const url = effectiveConfig.url_path;
                 if (!url)
                     return;
                 window.open(url, '_blank');
@@ -340,6 +371,7 @@ var HaloButtonCard = (function (exports) {
                 holdTimer = null;
             }
             isHold = false;
+            hasMoved = false;
         };
         el.addEventListener('pointerdown', onPointerDown);
         el.addEventListener('pointermove', onPointerMove);
@@ -371,11 +403,15 @@ var HaloButtonCard = (function (exports) {
      *                    et support complet des sous-boutons interactifs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.5.0
+     * 📦 Version      : 1.5.1
      * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
+     *                              color_off, active_color, inactive_color), correction du cycle de vie
+     *                              DOM (connectedCallback) évitant la perte d'interactions lors du
+     *                              changement d'onglets, et nettoyage hermétique des écouteurs.
      *   - ✨ v1.5.0 (2026-11-01) : Support de `linked_entity`, `linked_attribute` et
      *                              `display_format` (date_short, date_long, date_time_fr,
      *                              time_only, relative) pour l'affichage de valeurs externes
@@ -446,6 +482,13 @@ var HaloButtonCard = (function (exports) {
         getCardSize() {
             return this._config?.layout === 'vertical' ? 2 : 1;
         }
+        connectedCallback() {
+            // Si la carte a déjà été construite et que les interactions ont été détachées
+            // (ex: retour de vue Lovelace sans changement d'état d'entité), réactiver immédiatement
+            if (this._cardEl && !this._unbindCardTouch) {
+                this._bindInteractions();
+            }
+        }
         disconnectedCallback() {
             this._cleanupBindings();
         }
@@ -464,6 +507,10 @@ var HaloButtonCard = (function (exports) {
         _hasChanged(oldHass, newHass) {
             if (!oldHass || !newHass || !this._config)
                 return true;
+            // Changement de thème d'interface ou langue
+            if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+                return true;
+            }
             // Entité principale
             if (this._config.entity) {
                 if (oldHass.states[this._config.entity] !== newHass.states[this._config.entity]) {
@@ -503,18 +550,49 @@ var HaloButtonCard = (function (exports) {
             }
             return false;
         }
+        _isEntityActive() {
+            if (!this._config.entity || !this._hass?.states?.[this._config.entity]) {
+                return true; // En l'absence d'entité, le bouton reste actif (déclencheur d'action pur)
+            }
+            const state = this._hass.states[this._config.entity].state?.toLowerCase();
+            const inactiveStates = [
+                'off',
+                'closed',
+                'closing',
+                'idle',
+                'standby',
+                'paused',
+                'not_home',
+                'unavailable',
+                'unknown'
+            ];
+            return !inactiveStates.includes(state);
+        }
         _getEffectiveColor() {
+            const isActive = this._isEntityActive();
+            const colorOn = this._config.color_on || this._config.active_color;
+            const colorOff = this._config.color_off || this._config.inactive_color;
+            // 1. Couleurs distinctes par état si explicitement activées ou définies
+            if (this._config.state_colors || colorOn || colorOff) {
+                if (isActive) {
+                    const activeSpec = colorOn || this._config.color || this._config.halo_color || this._config.accent_color;
+                    return resolveThemeColor(this._hass, activeSpec, this._config.theme_entity, '#26c6da');
+                }
+                else {
+                    const inactiveSpec = colorOff || '#64748b';
+                    return resolveThemeColor(this._hass, inactiveSpec, this._config.theme_entity, '#64748b');
+                }
+            }
+            // 2. Couleur explicite unique définie (color / halo_color / accent_color)
             const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
             if (explicit) {
                 return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#26c6da');
             }
-            // Si entité liée (ex: light ou switch)
-            if (this._config.entity && this._hass?.states?.[this._config.entity]) {
-                const stateObj = this._hass.states[this._config.entity];
-                if (stateObj.state === 'off') {
-                    return '#94a3b8';
-                }
+            // 3. Entité liée sans couleur configurée : état inactif => gris ardoise
+            if (!isActive) {
+                return '#64748b';
             }
+            // 4. Entité liée active sans couleur configurée : hériter de la palette du thème
             return resolveThemeColor(this._hass, undefined, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
         }
         _buildDom() {
@@ -893,7 +971,10 @@ var HaloButtonCard = (function (exports) {
             const iconHoldAction = this._config.icon_hold_action;
             const iconDoubleTapAction = this._config.icon_double_tap_action;
             if (this._iconBtnEl && (iconTapAction || iconHoldAction || iconDoubleTapAction)) {
-                this._unbindIconTouch = bindTouchActions(this._iconBtnEl, {
+                const stopProp = (e) => e.stopPropagation();
+                this._iconBtnEl.addEventListener('pointerdown', stopProp);
+                this._iconBtnEl.addEventListener('click', stopProp);
+                const rawUnbind = bindTouchActions(this._iconBtnEl, {
                     onTap: () => {
                         if (iconTapAction) {
                             handleAction(this, this._hass, iconTapAction, this._config.entity);
@@ -909,9 +990,11 @@ var HaloButtonCard = (function (exports) {
                         handleAction(this, this._hass, iconDoubleTapAction, this._config.entity);
                     } : undefined
                 });
-                // Stop propagation pour ne pas déclencher le tap carte
-                this._iconBtnEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-                this._iconBtnEl.addEventListener('click', (e) => e.stopPropagation());
+                this._unbindIconTouch = () => {
+                    rawUnbind();
+                    this._iconBtnEl?.removeEventListener('pointerdown', stopProp);
+                    this._iconBtnEl?.removeEventListener('click', stopProp);
+                };
             }
             // 3. Actions sur les sous-boutons
             if (this._config.sub_buttons && this._subButtonEls.length > 0) {
@@ -919,8 +1002,9 @@ var HaloButtonCard = (function (exports) {
                     const el = this._subButtonEls[idx];
                     if (!el)
                         return;
-                    el.addEventListener('pointerdown', (e) => e.stopPropagation());
-                    el.addEventListener('click', (e) => e.stopPropagation());
+                    const stopSubProp = (e) => e.stopPropagation();
+                    el.addEventListener('pointerdown', stopSubProp);
+                    el.addEventListener('click', stopSubProp);
                     const unbind = bindTouchActions(el, {
                         onTap: () => {
                             const act = sb.tap_action || { action: 'toggle', entity: sb.entity || this._config.entity };
@@ -933,7 +1017,11 @@ var HaloButtonCard = (function (exports) {
                             handleAction(this, this._hass, sb.double_tap_action, sb.entity || this._config.entity);
                         } : undefined
                     });
-                    this._unbindSubTouch.push(unbind);
+                    this._unbindSubTouch.push(() => {
+                        unbind();
+                        el.removeEventListener('pointerdown', stopSubProp);
+                        el.removeEventListener('click', stopSubProp);
+                    });
                 });
             }
         }
@@ -1218,6 +1306,8 @@ var HaloButtonCard = (function (exports) {
       "state": {
         "on": "On",
         "off": "Off",
+        "active": "Active",
+        "inactive": "Inactive",
         "unavailable": "Unavailable",
         "unknown": "Unknown",
         "closed": "Closed",
@@ -1317,6 +1407,10 @@ var HaloButtonCard = (function (exports) {
           "align_center": "Centered",
           "align_right": "Right",
           "entity": "Primary entity (optional)",
+          "state_colors": "State colors (Active / Inactive)",
+          "state_colors_helper": "Define separate halo and border colors depending on whether the entity is active or inactive.",
+          "state_active": "Active",
+          "state_inactive": "Inactive",
           "linked_entity": "Displayed secondary entity (e.g. absence date, sensor)",
           "linked_attribute": "Specific attribute of linked entity (optional)",
           "display_format": "Linked value display format",
@@ -1429,6 +1523,8 @@ var HaloButtonCard = (function (exports) {
       "state": {
         "on": "Allumé",
         "off": "Éteint",
+        "active": "Activé",
+        "inactive": "Désactivé",
         "unavailable": "Indisponible",
         "unknown": "Inconnu",
         "closed": "Fermé",
@@ -1528,6 +1624,10 @@ var HaloButtonCard = (function (exports) {
           "align_center": "Centré",
           "align_right": "Droite",
           "entity": "Entité principale (optionnel)",
+          "state_colors": "Couleurs par état (Activé / Désactivé)",
+          "state_colors_helper": "Définit des teintes de halo et bordure distinctes selon que l'entité est active ou inactive.",
+          "state_active": "Activé",
+          "state_inactive": "Désactivé",
           "linked_entity": "Entité tierce affichée (ex. date d'absence, capteur)",
           "linked_attribute": "Attribut spécifique de l'entité liée (optionnel)",
           "display_format": "Format d'affichage de la valeur liée",
@@ -1704,11 +1804,13 @@ var HaloButtonCard = (function (exports) {
      *                    nom d'affichage des couleurs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.5.1
+     * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.5.1 (2026-11-01) : Support du mot-clé 'theme'/'auto' dans colorDisplayName pour
+     *                              affichage clair du label 'Thème HALO actif'.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
      *                              (`HALO_PALETTE`, `localizeHalo`, `color_default_halo`)
      *                              et renommage de la teinte `Cyan`.
@@ -1818,6 +1920,10 @@ var HaloButtonCard = (function (exports) {
         if (!raw)
             return t(emptyKey);
         if (typeof raw === 'string') {
+            const trimmed = raw.trim().toLowerCase();
+            if (trimmed === 'theme' || trimmed === 'auto') {
+                return t('editor.color_active_theme');
+            }
             if (HALO_PALETTE[raw])
                 return localizeHalo(hass, raw);
             for (const [name, hex] of Object.entries(HALO_PALETTE)) {
@@ -1834,14 +1940,18 @@ var HaloButtonCard = (function (exports) {
      * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-button-card.
      *                    Combine le composant natif <ha-form> pour les métadonnées et un
      *                    panneau Liquid Glass avec médaillon halo interactif, nuancier
-     *                    rapide HALO et curseur d'épaisseur de bordure.
+     *                    rapide HALO, onglets d'états dynamiques (Activé / Désactivé)
+     *                    et curseur d'épaisseur de bordure.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.5.0
+     * 📦 Version      : 1.5.1
      * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
+     *                              color_off) avec onglets dynamiques Activé / Désactivé dans
+     *                              le panneau de style Liquid Glass et synchronisation instantanée.
      *   - ✨ v1.5.0 (2026-11-01) : Ajout des sélecteurs pour `linked_entity`, `linked_attribute`,
      *                              `display_format` et configuration de l'action `tap_action`.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
@@ -1852,6 +1962,20 @@ var HaloButtonCard = (function (exports) {
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-button-card.
      * ==============================================================================
      */
+    const BUTTON_STATES = [
+        {
+            key: 'color_on',
+            tk: 'active',
+            icon: 'mdi:toggle-switch',
+            fallback: '#26c6da'
+        },
+        {
+            key: 'color_off',
+            tk: 'inactive',
+            icon: 'mdi:toggle-switch-off-outline',
+            fallback: '#64748b'
+        }
+    ];
     const buildSchema$3 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
@@ -1873,6 +1997,7 @@ var HaloButtonCard = (function (exports) {
             }
         },
         { name: 'entity', selector: { entity: {} } },
+        { name: 'state_colors', selector: { boolean: {} } },
         { name: 'linked_entity', selector: { entity: {} } },
         { name: 'linked_attribute', selector: { text: {} } },
         {
@@ -1897,11 +2022,13 @@ var HaloButtonCard = (function (exports) {
         constructor() {
             super(...arguments);
             this._lang = "en";
+            this._activeStateKey = 'color_on';
             // Références DOM Style Panel
             this._swatchCircleEl = null;
             this._colorInputEl = null;
             this._swatchNameEl = null;
             this._swatchHexEl = null;
+            this._stateTitleEl = null;
             this._chipsContainerEl = null;
             this._borderSliderEl = null;
             this._borderValBadgeEl = null;
@@ -1925,6 +2052,7 @@ var HaloButtonCard = (function (exports) {
             if (form) {
                 form.hass = hass;
             }
+            this._syncStylePanel();
         }
         _fireConfigChanged() {
             const event = new CustomEvent('config-changed', {
@@ -1934,18 +2062,63 @@ var HaloButtonCard = (function (exports) {
             });
             this.dispatchEvent(event);
         }
-        _getColorHex() {
+        _isStateColorsEnabled() {
+            return Boolean(this._config?.state_colors || this._config?.color_on || this._config?.color_off);
+        }
+        _getStateDef(key) {
+            return BUTTON_STATES.find(s => s.key === key) || BUTTON_STATES[0];
+        }
+        _getColorHex(key) {
+            if (this._isStateColorsEnabled()) {
+                const activeKey = key || this._activeStateKey;
+                if (activeKey === 'color_on') {
+                    const raw = this._config?.color_on || this._config?.active_color || this._config?.color;
+                    if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                        return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#26c6da');
+                    }
+                    return toHexColor(raw, '#26c6da');
+                }
+                else {
+                    const raw = this._config?.color_off || this._config?.inactive_color;
+                    if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                        return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#64748b');
+                    }
+                    return toHexColor(raw, '#64748b');
+                }
+            }
             const raw = this._config?.color || 'Cyan';
+            if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#26c6da');
+            }
             return toHexColor(raw, '#26c6da');
         }
-        _getColorDisplayName() {
+        _getColorDisplayName(key) {
+            if (this._isStateColorsEnabled()) {
+                const activeKey = key || this._activeStateKey;
+                if (activeKey === 'color_on') {
+                    const raw = this._config?.color_on || this._config?.active_color || this._config?.color;
+                    return colorDisplayName(this._hass, raw, 'editor.color_active_theme');
+                }
+                else {
+                    const raw = this._config?.color_off || this._config?.inactive_color;
+                    return colorDisplayName(this._hass, raw, 'editor.color_default_grey');
+                }
+            }
             return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_cyan');
         }
         _updateColor(colorValue) {
-            this._config = {
-                ...this._config,
-                color: colorValue
-            };
+            if (this._isStateColorsEnabled()) {
+                this._config = {
+                    ...this._config,
+                    [this._activeStateKey]: colorValue
+                };
+            }
+            else {
+                this._config = {
+                    ...this._config,
+                    color: colorValue
+                };
+            }
             this._syncStylePanel();
             this._fireConfigChanged();
         }
@@ -1957,11 +2130,44 @@ var HaloButtonCard = (function (exports) {
             this._syncStylePanel();
             this._fireConfigChanged();
         }
+        _setActiveState(key) {
+            this._activeStateKey = key;
+            this._syncStylePanel();
+        }
         _syncStylePanel() {
-            const hex = this._getColorHex();
-            const name = this._getColorDisplayName();
+            if (!this._config)
+                return;
+            const isStateMode = this._isStateColorsEnabled();
+            // 1. Si mode par état : synchroniser les onglets
+            if (isStateMode) {
+                BUTTON_STATES.forEach(state => {
+                    const tabEl = this.querySelector(`#tab-${state.key}`);
+                    const dotEl = this.querySelector(`#tab-dot-${state.key}`);
+                    const hex = this._getColorHex(state.key);
+                    if (tabEl) {
+                        tabEl.classList.toggle('active', state.key === this._activeStateKey);
+                    }
+                    if (dotEl) {
+                        dotEl.style.backgroundColor = hex;
+                        dotEl.style.boxShadow = `0 0 6px ${hex}88`;
+                    }
+                });
+            }
+            const hex = this._getColorHex(isStateMode ? this._activeStateKey : undefined);
+            const name = this._getColorDisplayName(isStateMode ? this._activeStateKey : undefined);
             const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.5;
-            // 1. Swatch Circle & Halo (Option A)
+            // 2. Titre de colonne
+            if (this._stateTitleEl) {
+                const t = useLocalize(this._hass);
+                if (isStateMode) {
+                    const activeDef = this._getStateDef(this._activeStateKey);
+                    this._stateTitleEl.textContent = t('editor.state_color', 'state', t(`state.${activeDef.tk}`));
+                }
+                else {
+                    this._stateTitleEl.textContent = t('editor.halo_color');
+                }
+            }
+            // 3. Swatch Circle & Halo (Option A)
             if (this._swatchCircleEl) {
                 this._swatchCircleEl.style.background = hex;
                 this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
@@ -1976,9 +2182,11 @@ var HaloButtonCard = (function (exports) {
             if (this._swatchHexEl) {
                 this._swatchHexEl.textContent = hex.toUpperCase();
             }
-            // 2. Nuancier rapide Chips (Option B)
+            // 4. Nuancier rapide Chips (Option B)
             if (this._chipsContainerEl) {
-                const activeRaw = this._config.color || 'Cyan';
+                const activeRaw = isStateMode
+                    ? this._config[this._activeStateKey]
+                    : (this._config.color || 'Cyan');
                 const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
                 chipButtons.forEach(btn => {
                     const chipName = btn.getAttribute('data-name');
@@ -1987,7 +2195,7 @@ var HaloButtonCard = (function (exports) {
                     btn.classList.toggle('active', isActive);
                 });
             }
-            // 3. Border Slider & Badge
+            // 5. Border Slider & Badge
             if (this._borderSliderEl) {
                 this._borderSliderEl.value = String(bw);
             }
@@ -2002,6 +2210,8 @@ var HaloButtonCard = (function (exports) {
             if (!form) {
                 const t = useLocalize(this._hass);
                 this._lang = getLang(this._hass);
+                const isStateMode = this._isStateColorsEnabled();
+                const first = this._getStateDef(this._activeStateKey);
                 this.innerHTML = `
         <style>
           ${COMMON_EDITOR_STYLES}
@@ -2010,9 +2220,19 @@ var HaloButtonCard = (function (exports) {
         <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
           ${stylePanelHtml(t, {
-                title: t('editor.style_title'),
-                leftTitle: t('editor.halo_color'),
-                borderTitle: t('editor.border_title')
+                title: isStateMode ? t('editor.style_title_colors') : t('editor.style_title'),
+                tabs: isStateMode ? BUTTON_STATES.map(s => ({
+                    key: s.key,
+                    icon: s.icon,
+                    label: t(`state.${s.tk}`),
+                    active: s.key === this._activeStateKey
+                })) : undefined,
+                leftTitle: isStateMode
+                    ? t('editor.state_color', 'state', t(`state.${first.tk}`))
+                    : t('editor.halo_color'),
+                borderTitle: isStateMode
+                    ? t('editor.border_title_single')
+                    : t('editor.border_title')
             })}
         </div>
       `;
@@ -2038,10 +2258,19 @@ var HaloButtonCard = (function (exports) {
             this._colorInputEl = this.querySelector('#native-color-input');
             this._swatchNameEl = this.querySelector('#swatch-name');
             this._swatchHexEl = this.querySelector('#swatch-hex');
+            this._stateTitleEl = this.querySelector('#state-title');
             this._chipsContainerEl = this.querySelector('#chips-grid');
             this._borderSliderEl = this.querySelector('#border-slider-input');
             this._borderValBadgeEl = this.querySelector('#border-val-text');
-            // 1. Déclencheur input color natif
+            // 1. Clics sur les onglets d'états
+            if (this._isStateColorsEnabled()) {
+                BUTTON_STATES.forEach(s => {
+                    this.querySelector(`#tab-${s.key}`)?.addEventListener('click', () => {
+                        this._setActiveState(s.key);
+                    });
+                });
+            }
+            // 2. Déclencheur input color natif
             const triggerColor = () => {
                 if (this._colorInputEl) {
                     this._colorInputEl.click();
@@ -2054,11 +2283,11 @@ var HaloButtonCard = (function (exports) {
                 if (val)
                     this._updateColor(val);
             });
-            // 2. Génération des chips HALO (Option B)
+            // 3. Génération des chips HALO (Option B)
             if (this._chipsContainerEl) {
                 buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
             }
-            // 3. Slider de bordure
+            // 4. Slider de bordure
             this._borderSliderEl?.addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value);
                 if (!isNaN(val)) {
@@ -2071,16 +2300,36 @@ var HaloButtonCard = (function (exports) {
                 return {};
             const data = { ...this._config };
             delete data.color;
+            delete data.color_on;
+            delete data.color_off;
+            delete data.active_color;
+            delete data.inactive_color;
             delete data.border_width;
+            data.state_colors = this._isStateColorsEnabled();
             return data;
         }
         _valueChanged(ev) {
             if (!this._config || !ev.detail.value)
                 return;
+            const oldStateColors = this._isStateColorsEnabled();
+            const newStateColors = Boolean(ev.detail.value.state_colors);
             this._config = {
                 ...this._config,
                 ...ev.detail.value
             };
+            // Si bascule de l'option Couleurs par état, réinitialiser la vue pour afficher/masquer les onglets
+            if (oldStateColors !== newStateColors) {
+                if (newStateColors) {
+                    if (!this._config.color_on)
+                        this._config.color_on = this._config.color || 'Cyan';
+                    if (!this._config.color_off)
+                        this._config.color_off = '#64748b';
+                }
+                this.innerHTML = '';
+                this._render();
+                this._fireConfigChanged();
+                return;
+            }
             this._fireConfigChanged();
         }
     }
@@ -2094,11 +2343,13 @@ var HaloButtonCard = (function (exports) {
      *                    et déclenchement séquentiel multi-cibles direct sans script backend.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.5.0
+     * 📦 Version      : 1.5.1
      * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🩹 v1.5.1 (2026-11-01) : Ajout du cycle de vie connectedCallback pour restaurer les interactions
+     *                              après reconnexion DOM sans changement d'état.
      *   - 🆕 v1.5.0 (2026-11-01) : Création initiale de la carte d'ambiance custom:halo-scene-card :
      *                              - Déclenchement multi-cibles (light & cover) en mode individuel ou harmonisé.
      *                              - Réglages de luminosité (%), température (Kelvin), couleur (RGB) et volets (%).
@@ -2165,6 +2416,11 @@ var HaloButtonCard = (function (exports) {
         getCardSize() {
             return this._config?.layout === 'vertical' ? 2 : 1;
         }
+        connectedCallback() {
+            if (this._cardEl && !this._unbindCardTouch) {
+                this._bindInteractions();
+            }
+        }
         disconnectedCallback() {
             this._cleanupBindings();
         }
@@ -2177,6 +2433,10 @@ var HaloButtonCard = (function (exports) {
         _hasChanged(oldHass, newHass) {
             if (!oldHass || !newHass || !this._config)
                 return true;
+            // Changement de thème d'interface ou langue
+            if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+                return true;
+            }
             // Cibles configurées
             if (this._config.targets) {
                 for (const target of this._config.targets) {
