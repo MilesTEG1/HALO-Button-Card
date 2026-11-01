@@ -7,11 +7,13 @@
  *                    et déclenchement séquentiel multi-cibles direct sans script backend.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.0
+ * 📦 Version      : 1.5.1
  * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🩹 v1.5.1 (2026-11-01) : Ajout du cycle de vie connectedCallback pour restaurer les interactions
+ *                              après reconnexion DOM sans changement d'état.
  *   - 🆕 v1.5.0 (2026-11-01) : Création initiale de la carte d'ambiance custom:halo-scene-card :
  *                              - Déclenchement multi-cibles (light & cover) en mode individuel ou harmonisé.
  *                              - Réglages de luminosité (%), température (Kelvin), couleur (RGB) et volets (%).
@@ -97,6 +99,12 @@ export class HaloSceneCard extends HTMLElement {
     return this._config?.layout === 'vertical' ? 2 : 1;
   }
 
+  public connectedCallback() {
+    if (this._cardEl && !this._unbindCardTouch) {
+      this._bindInteractions();
+    }
+  }
+
   public disconnectedCallback() {
     this._cleanupBindings();
   }
@@ -110,6 +118,11 @@ export class HaloSceneCard extends HTMLElement {
 
   private _hasChanged(oldHass?: HomeAssistant, newHass?: HomeAssistant): boolean {
     if (!oldHass || !newHass || !this._config) return true;
+
+    // Changement de thème d'interface ou langue
+    if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+      return true;
+    }
 
     // Cibles configurées
     if (this._config.targets) {

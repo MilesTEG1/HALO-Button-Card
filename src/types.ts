@@ -4,11 +4,14 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.0
+ * 📦 Version      : 1.5.1
  * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.5.1 (2026-11-01) : Ajout du support des couleurs par état (state_colors,
+ *                              color_on, color_off, active_color, inactive_color) pour
+ *                              custom:halo-button-card.
  *   - 💡 v1.5.0 (2026-11-01) : Ajout des types pour custom:halo-scene-card (targets, modes,
  *                              luminosité, kelvin, couleur, volets) et extensions de
  *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
@@ -91,6 +94,11 @@ export interface SubButtonConfig {
 export interface HaloButtonCardConfig {
   type: string;
   entity?: string;
+  state_colors?: boolean;
+  color_on?: string | [number, number, number];
+  color_off?: string | [number, number, number];
+  active_color?: string | [number, number, number];
+  inactive_color?: string | [number, number, number];
   linked_entity?: string;
   linked_attribute?: string;
   display_format?: 'raw' | 'date_short' | 'date_long' | 'date_time_fr' | 'time_only' | 'relative';

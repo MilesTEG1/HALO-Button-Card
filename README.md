@@ -230,6 +230,29 @@ linked_entity: input_datetime.date_retour_absence
 display_format: date_time_fr
 ```
 
+#### Supported Configuration Options:
+
+| Field | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `name` / `title` | `string` | *optional* | Primary card title. |
+| `label` / `subtitle` | `string` | *optional* | Subtitle or muted description. |
+| `icon` | `string` | `mdi:gesture-tap-button` | MDI icon shown in the Liquid Glass button square. |
+| `layout` | `string` | `horizontal` | Layout: `horizontal` (wide) or `vertical` (compact square). |
+| `text_align` | `string` | *auto* | Alignment: `left`, `center`, `right`. |
+| `color` / `halo_color` | `string` | *theme* | Card, icon and specular halo color (HALO name or Hex). |
+| `state_colors` | `boolean` | `false` | Enable state-based colors (`color_on` when active, `color_off` when inactive). |
+| `color_on` | `string` | `color` / *theme* | Halo color when entity is active (HALO name, Hex or `'theme'`). |
+| `color_off` | `string` | `#64748b` | Halo color when entity is inactive (HALO name, Hex or `'theme'`). |
+| `entity` | `string` | *optional* | Primary entity for state monitoring, halo tint and toggle. |
+| `linked_entity` | `string` | *optional* | Secondary linked entity displayed in subtitle. |
+| `linked_attribute` | `string` | *optional* | Specific attribute of linked entity to display. |
+| `display_format` | `string` | `raw` | Formatting: `raw`, `date_short`, `date_long`, `date_time_fr`, `time_only`, `relative`. |
+| `tap_action` | `object` | *toggle* | Tap action on card. |
+| `hold_action` | `object` | *none* | Hold action (500 ms) on card. |
+| `double_tap_action` | `object` | *none* | Double tap action on card. |
+| `icon_tap_action` | `object` | *optional* | Distinct action triggered exclusively when tapping the icon button. |
+| `sub_buttons` | `array` | *none* | List of embedded sub-buttons (`icon`, `badge`, `color`, `tap_action`, etc.). |
+
 ---
 
 ### 5. `custom:halo-scene-card`
