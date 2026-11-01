@@ -240,6 +240,9 @@ display_format: date_time_fr
 | `layout` | `string` | `horizontal` | Disposition : `horizontal` (large) ou `vertical` (ambiance compacte). |
 | `text_align` | `string` | *auto* | Alignement : `left`, `center`, `right` (`left` par défaut en horizontal, `center` en vertical). |
 | `color` / `halo_color` | `string` | *thème* | Couleur de l'icône, du bouton et du halo spéculaire (nom HALO ou Hex). |
+| `state_colors` | `boolean` | `false` | Active le mode de couleurs par état (`color_on` si actif, `color_off` si inactif). |
+| `color_on` | `string` | `color` / *thème* | Couleur du halo lorsque l'entité est active (nom HALO, Hex ou `'theme'`). |
+| `color_off` | `string` | `#64748b` | Couleur du halo lorsque l'entité est inactive (nom HALO, Hex ou `'theme'`). |
 | `entity` | `string` | *optionnel* | Entité principale optionnelle (pour halo, état ou bascule). |
 | `linked_entity` | `string` | *optionnel* | Entité tierce liée dont la valeur est affichée dans le sous-titre. |
 | `linked_attribute` | `string` | *optionnel* | Attribut spécifique de l'entité liée à afficher. |

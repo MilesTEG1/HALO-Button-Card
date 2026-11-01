@@ -7,11 +7,13 @@
  *                    nom d'affichage des couleurs.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.2
- * 📅 Date         : 2026-10-31
+ * 📦 Version      : 1.5.1
+ * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.5.1 (2026-11-01) : Support du mot-clé 'theme'/'auto' dans colorDisplayName pour
+ *                              affichage clair du label 'Thème HALO actif'.
  *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
  *                              (`HALO_PALETTE`, `localizeHalo`, `color_default_halo`)
  *                              et renommage de la teinte `Cyan`.
@@ -134,6 +136,10 @@ export function colorDisplayName(hass: any, raw: any, emptyKey: string): string 
   const t = useLocalize(hass);
   if (!raw) return t(emptyKey);
   if (typeof raw === 'string') {
+    const trimmed = raw.trim().toLowerCase();
+    if (trimmed === 'theme' || trimmed === 'auto') {
+      return t('editor.color_active_theme');
+    }
     if (HALO_PALETTE[raw]) return localizeHalo(hass, raw);
     for (const [name, hex] of Object.entries(HALO_PALETTE)) {
       if (hex.toLowerCase() === raw.toLowerCase()) return localizeHalo(hass, name);

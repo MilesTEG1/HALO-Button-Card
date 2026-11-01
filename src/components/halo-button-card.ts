@@ -7,11 +7,15 @@
  *                    et support complet des sous-boutons interactifs.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.0
+ * 📦 Version      : 1.5.1
  * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
+ *                              color_off, active_color, inactive_color), correction du cycle de vie
+ *                              DOM (connectedCallback) évitant la perte d'interactions lors du
+ *                              changement d'onglets, et nettoyage hermétique des écouteurs.
  *   - ✨ v1.5.0 (2026-11-01) : Support de `linked_entity`, `linked_attribute` et
  *                              `display_format` (date_short, date_long, date_time_fr,
  *                              time_only, relative) pour l'affichage de valeurs externes
@@ -101,6 +105,14 @@ export class HaloButtonCard extends HTMLElement {
     return this._config?.layout === 'vertical' ? 2 : 1;
   }
 
+  public connectedCallback() {
+    // Si la carte a déjà été construite et que les interactions ont été détachées
+    // (ex: retour de vue Lovelace sans changement d'état d'entité), réactiver immédiatement
+    if (this._cardEl && !this._unbindCardTouch) {
+      this._bindInteractions();
+    }
+  }
+
   public disconnectedCallback() {
     this._cleanupBindings();
   }
@@ -120,6 +132,11 @@ export class HaloButtonCard extends HTMLElement {
 
   private _hasChanged(oldHass?: HomeAssistant, newHass?: HomeAssistant): boolean {
     if (!oldHass || !newHass || !this._config) return true;
+
+    // Changement de thème d'interface ou langue
+    if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+      return true;
+    }
 
     // Entité principale
     if (this._config.entity) {
@@ -165,20 +182,53 @@ export class HaloButtonCard extends HTMLElement {
     return false;
   }
 
+  private _isEntityActive(): boolean {
+    if (!this._config.entity || !this._hass?.states?.[this._config.entity]) {
+      return true; // En l'absence d'entité, le bouton reste actif (déclencheur d'action pur)
+    }
+    const state = this._hass.states[this._config.entity].state?.toLowerCase();
+    const inactiveStates = [
+      'off',
+      'closed',
+      'closing',
+      'idle',
+      'standby',
+      'paused',
+      'not_home',
+      'unavailable',
+      'unknown'
+    ];
+    return !inactiveStates.includes(state);
+  }
+
   private _getEffectiveColor(): string {
+    const isActive = this._isEntityActive();
+    const colorOn = this._config.color_on || this._config.active_color;
+    const colorOff = this._config.color_off || this._config.inactive_color;
+
+    // 1. Couleurs distinctes par état si explicitement activées ou définies
+    if (this._config.state_colors || colorOn || colorOff) {
+      if (isActive) {
+        const activeSpec = colorOn || this._config.color || this._config.halo_color || this._config.accent_color;
+        return resolveThemeColor(this._hass, activeSpec, this._config.theme_entity, '#26c6da');
+      } else {
+        const inactiveSpec = colorOff || '#64748b';
+        return resolveThemeColor(this._hass, inactiveSpec, this._config.theme_entity, '#64748b');
+      }
+    }
+
+    // 2. Couleur explicite unique définie (color / halo_color / accent_color)
     const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
     if (explicit) {
       return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#26c6da');
     }
 
-    // Si entité liée (ex: light ou switch)
-    if (this._config.entity && this._hass?.states?.[this._config.entity]) {
-      const stateObj = this._hass.states[this._config.entity];
-      if (stateObj.state === 'off') {
-        return '#94a3b8';
-      }
+    // 3. Entité liée sans couleur configurée : état inactif => gris ardoise
+    if (!isActive) {
+      return '#64748b';
     }
 
+    // 4. Entité liée active sans couleur configurée : hériter de la palette du thème
     return resolveThemeColor(
       this._hass,
       undefined,
@@ -584,7 +634,11 @@ export class HaloButtonCard extends HTMLElement {
     const iconDoubleTapAction = this._config.icon_double_tap_action;
 
     if (this._iconBtnEl && (iconTapAction || iconHoldAction || iconDoubleTapAction)) {
-      this._unbindIconTouch = bindTouchActions(this._iconBtnEl, {
+      const stopProp = (e: Event) => e.stopPropagation();
+      this._iconBtnEl.addEventListener('pointerdown', stopProp);
+      this._iconBtnEl.addEventListener('click', stopProp);
+
+      const rawUnbind = bindTouchActions(this._iconBtnEl, {
         onTap: () => {
           if (iconTapAction) {
             handleAction(this, this._hass, iconTapAction, this._config.entity);
@@ -600,9 +654,11 @@ export class HaloButtonCard extends HTMLElement {
         } : undefined
       });
 
-      // Stop propagation pour ne pas déclencher le tap carte
-      this._iconBtnEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-      this._iconBtnEl.addEventListener('click', (e) => e.stopPropagation());
+      this._unbindIconTouch = () => {
+        rawUnbind();
+        this._iconBtnEl?.removeEventListener('pointerdown', stopProp);
+        this._iconBtnEl?.removeEventListener('click', stopProp);
+      };
     }
 
     // 3. Actions sur les sous-boutons
@@ -611,8 +667,9 @@ export class HaloButtonCard extends HTMLElement {
         const el = this._subButtonEls[idx];
         if (!el) return;
 
-        el.addEventListener('pointerdown', (e) => e.stopPropagation());
-        el.addEventListener('click', (e) => e.stopPropagation());
+        const stopSubProp = (e: Event) => e.stopPropagation();
+        el.addEventListener('pointerdown', stopSubProp);
+        el.addEventListener('click', stopSubProp);
 
         const unbind = bindTouchActions(el, {
           onTap: () => {
@@ -627,7 +684,11 @@ export class HaloButtonCard extends HTMLElement {
           } : undefined
         });
 
-        this._unbindSubTouch.push(unbind);
+        this._unbindSubTouch.push(() => {
+          unbind();
+          el.removeEventListener('pointerdown', stopSubProp);
+          el.removeEventListener('click', stopSubProp);
+        });
       });
     }
   }
