@@ -7,11 +7,13 @@
  *                    rapide HALO et curseur d'épaisseur de bordure.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.2
- * 📅 Date         : 2026-10-31
+ * 📦 Version      : 1.5.0
+ * 📅 Date         : 2026-11-01
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.5.0 (2026-11-01) : Ajout des sélecteurs pour `linked_entity`, `linked_attribute`,
+ *                              `display_format` et configuration de l'action `tap_action`.
  *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
  *                              (`HALO_PALETTE`, `color_default_halo`).
  *   - ✨ v1.2.1 (2026-10-30) : Sélecteur de couleur Mix A+B (Halo Swatch + Nuancier
@@ -48,6 +50,24 @@ const buildSchema = (t: ReturnType<typeof useLocalize>) => [
     }
   },
   { name: 'entity', selector: { entity: {} } },
+  { name: 'linked_entity', selector: { entity: {} } },
+  { name: 'linked_attribute', selector: { text: {} } },
+  {
+    name: 'display_format',
+    selector: {
+      select: {
+        options: selectOptions(t, 'button', [
+          ['raw', 'format_raw'],
+          ['date_short', 'format_date_short'],
+          ['date_long', 'format_date_long'],
+          ['date_time_fr', 'format_date_time_fr'],
+          ['time_only', 'format_time_only'],
+          ['relative', 'format_relative']
+        ])
+      }
+    }
+  },
+  { name: 'tap_action', selector: { 'ui-action': {} } },
   { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
 ];
 
