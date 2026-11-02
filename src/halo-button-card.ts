@@ -7,11 +7,13 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.2
+ * 📦 Version      : 1.6.0-beta.1
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Intégration de custom:halo-fold-card (conteneur
+ *                                     accordéon repliable Liquid Glass pour cartes enfants).
  *   - 🌟 v1.5.2 (2026-11-02) : Intégration de custom:halo-markdown-card (callout Liquid Glass
  *                              avec barre latérale néon et dégradé horizontal personnalisables).
  *   - 🌟 v1.5.0 (2026-11-01) : Intégration de custom:halo-scene-card (ambiances multi-cibles
@@ -63,13 +65,15 @@ import { HaloPaletteCard } from './components/halo-palette-card';
 import { HaloPaletteCardEditor } from './editors/halo-palette-card-editor';
 import { HaloMarkdownCard } from './components/halo-markdown-card';
 import { HaloMarkdownCardEditor } from './editors/halo-markdown-card-editor';
+import { HaloFoldCard } from './components/halo-fold-card';
+import { HaloFoldCardEditor } from './editors/halo-fold-card-editor';
 
 import { voletHelperInstance } from './core/volet-helper';
 import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.5.2';
+const VERSION = '1.6.0-beta.1';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -147,6 +151,13 @@ window.customCards.push({
   preview: true
 });
 
+window.customCards.push({
+  type: 'halo-fold-card',
+  name: 'HALO Fold Card',
+  description: 'Turnkey collapsible Liquid Glass container card with neon gradient header, badge counter and child cards drawer.',
+  preview: true
+});
+
 // Register Web Component custom elements
 if (!customElements.get('halo-button-card')) {
   customElements.define('halo-button-card', HaloButtonCard);
@@ -204,6 +215,13 @@ if (!customElements.get('halo-markdown-card-editor')) {
   customElements.define('halo-markdown-card-editor', HaloMarkdownCardEditor);
 }
 
+if (!customElements.get('halo-fold-card')) {
+  customElements.define('halo-fold-card', HaloFoldCard);
+}
+if (!customElements.get('halo-fold-card-editor')) {
+  customElements.define('halo-fold-card-editor', HaloFoldCardEditor);
+}
+
 // Export for external consumers
 export {
   HaloButtonCard,
@@ -222,6 +240,8 @@ export {
   HaloPaletteCardEditor,
   HaloMarkdownCard,
   HaloMarkdownCardEditor,
+  HaloFoldCard,
+  HaloFoldCardEditor,
   voletHelperInstance,
   lightHelper,
   themeHelper,

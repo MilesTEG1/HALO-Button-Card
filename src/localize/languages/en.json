@@ -53,6 +53,11 @@
     "lg_name": "Tile name",
     "lg_name_d": " : Light details"
   },
+  "fold": {
+    "default_title": "Details & Devices",
+    "hide": "Hide",
+    "show": "Show"
+  },
   "halo": {
     "Cyan": "Cyan",
     "Bleu Céleste": "Sky Blue",
@@ -227,6 +232,23 @@
       "bar_badge_off": "0 px (No bar)",
       "bar_badge_default": "{v} px (Default)",
       "target_color": "Color: {target}"
+    },
+    "fold": {
+      "name": "Foldable container title",
+      "icon": "MDI icon",
+      "theme_entity": "Theme selector entity (optional)",
+      "initial_collapsed": "Initially collapsed / hidden by default",
+      "columns": "Columns for child cards",
+      "cols_1": "1 column (Full width — recommended for light/cover cards)",
+      "cols_2": "2 columns (Side-by-side grid)",
+      "cols_3": "3 columns (Compact grid)",
+      "label_on": "Button label when expanded (e.g. Hide)",
+      "label_off": "Button label when collapsed (e.g. Show)",
+      "toggle_entity": "Synchronized external boolean entity (optional)",
+      "cards_title": "Drawer Child Cards",
+      "cards_subtitle": "Lovelace cards displayed when the drawer is expanded",
+      "add_card": "+ Add card",
+      "no_cards": "No child cards configured. Click '+ Add card' or edit in YAML."
     }
   }
 }
