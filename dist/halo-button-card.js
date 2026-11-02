@@ -1359,6 +1359,11 @@ var HaloButtonCard = (function (exports) {
         "lg_name": "Tile name",
         "lg_name_d": " : Light details"
       },
+      "fold": {
+        "default_title": "Details & Devices",
+        "hide": "Hide",
+        "show": "Show"
+      },
       "halo": {
         "Cyan": "Cyan",
         "Bleu Céleste": "Sky Blue",
@@ -1533,6 +1538,23 @@ var HaloButtonCard = (function (exports) {
           "bar_badge_off": "0 px (No bar)",
           "bar_badge_default": "{v} px (Default)",
           "target_color": "Color: {target}"
+        },
+        "fold": {
+          "name": "Foldable container title",
+          "icon": "MDI icon",
+          "theme_entity": "Theme selector entity (optional)",
+          "initial_collapsed": "Initially collapsed / hidden by default",
+          "columns": "Columns for child cards",
+          "cols_1": "1 column (Full width — recommended for light/cover cards)",
+          "cols_2": "2 columns (Side-by-side grid)",
+          "cols_3": "3 columns (Compact grid)",
+          "label_on": "Button label when expanded (e.g. Hide)",
+          "label_off": "Button label when collapsed (e.g. Show)",
+          "toggle_entity": "Synchronized external boolean entity (optional)",
+          "cards_title": "Drawer Child Cards",
+          "cards_subtitle": "Lovelace cards displayed when the drawer is expanded",
+          "add_card": "+ Add card",
+          "no_cards": "No child cards configured. Click '+ Add card' or edit in YAML."
         }
       }
     }
@@ -1592,6 +1614,11 @@ var HaloButtonCard = (function (exports) {
         "lg_k_d": " : Chaud / Froid",
         "lg_name": "Nom tuile",
         "lg_name_d": " : Détails lampe"
+      },
+      "fold": {
+        "default_title": "Détails & Appareils",
+        "hide": "Masquer",
+        "show": "Afficher"
       },
       "halo": {
         "Cyan": "Cyan",
@@ -1767,6 +1794,23 @@ var HaloButtonCard = (function (exports) {
           "bar_badge_off": "0 px (Sans barre)",
           "bar_badge_default": "{v} px (Défaut)",
           "target_color": "Couleur : {target}"
+        },
+        "fold": {
+          "name": "Titre du conteneur repliable",
+          "icon": "Icône MDI",
+          "theme_entity": "Entité sélecteur de thème (optionnel)",
+          "initial_collapsed": "Initialement replié / masqué par défaut",
+          "columns": "Nombre de colonnes pour les cartes enfants",
+          "cols_1": "1 colonne (Pleine largeur — recommandé pour cartes lumières/volets)",
+          "cols_2": "2 colonnes (Grille côte à côte)",
+          "cols_3": "3 colonnes (Grille compacte)",
+          "label_on": "Libellé bouton quand déplié (ex. Masquer)",
+          "label_off": "Libellé bouton quand replié (ex. Afficher)",
+          "toggle_entity": "Entité booléenne externe synchronisée (optionnel)",
+          "cards_title": "Cartes Enfants du Tiroir",
+          "cards_subtitle": "Cartes Lovelace affichées lorsque le volet est déplié",
+          "add_card": "+ Ajouter une carte",
+          "no_cards": "Aucune carte enfant configurée. Cliquez sur « + Ajouter une carte » ou éditez en YAML."
         }
       }
     }
@@ -2012,7 +2056,7 @@ var HaloButtonCard = (function (exports) {
             fallback: '#64748b'
         }
     ];
-    const buildSchema$4 = (t) => [
+    const buildSchema$5 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -2274,7 +2318,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "button", buildSchema$4(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "button", buildSchema$5(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -2880,7 +2924,7 @@ var HaloButtonCard = (function (exports) {
      *                              - Style Panel Mix A+B (Halo Swatch + Nuancier 16 teintes + Curseur bordure).
      * ==============================================================================
      */
-    const buildSchema$3 = (t) => [
+    const buildSchema$4 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -3135,7 +3179,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, 'scene', buildSchema$3(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, 'scene', buildSchema$4(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -4127,7 +4171,7 @@ var HaloButtonCard = (function (exports) {
             stateEntityKey: 'input_text.couleur_volet_en_mouvement'
         }
     ];
-    const buildSchema$2 = (_t) => [
+    const buildSchema$3 = (_t) => [
         { name: 'entity', selector: { entity: { domain: 'cover' } } },
         { name: 'name', selector: { text: {} } }
     ];
@@ -4317,7 +4361,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "cover", buildSchema$2(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "cover", buildSchema$3(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -5418,7 +5462,7 @@ var HaloButtonCard = (function (exports) {
             fallback: '#64748b'
         }
     ];
-    const buildSchema$1 = (_t) => [
+    const buildSchema$2 = (_t) => [
         { name: 'entity', selector: { entity: { domain: 'light' } } },
         { name: 'name', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -5624,7 +5668,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "light", buildSchema$1(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "light", buildSchema$2(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -7787,7 +7831,7 @@ var HaloButtonCard = (function (exports) {
         { key: 'bar', icon: 'mdi:border-left-variant', labelKey: 'bar_tab' },
         { key: 'gradient', icon: 'mdi:gradient-horizontal', labelKey: 'gradient_tab' }
     ];
-    const buildSchema = (_t) => [
+    const buildSchema$1 = (_t) => [
         { name: 'title', selector: { text: {} } },
         { name: 'content', selector: { text: { multiline: true } } },
         { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
@@ -8055,7 +8099,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, 'markdown', buildSchema(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, 'markdown', buildSchema$1(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -8114,6 +8158,843 @@ var HaloButtonCard = (function (exports) {
 
     /**
      * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-fold-card.ts
+     * 📝 Description   : Composant Web custom:halo-fold-card.
+     *                    Conteneur accordéon repliable Liquid Glass permettant
+     *                    d'encapsuler n'importe quelles cartes Lovelace enfants
+     *                    (ex. lampes individuelles d'un groupe) sous une barre
+     *                    d'en-tête compacte avec ligne dégradée néon, badge de
+     *                    compteur et bouton pill Afficher / Masquer.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.6.0-beta.1
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Création initiale du composant conteneur
+     *                                     repliable custom:halo-fold-card :
+     *                                     • En-tête raffiné aligné sur halo-separator-card
+     *                                       (icône MDI, titre, ligne dégradée néon, badge
+     *                                       compteur et bouton pill Afficher / Masquer).
+     *                                     • Tiroir accordéon fluide avec grille CSS interne
+     *                                       responsive (1, 2 ou 3 colonnes, repli 1 col mobile).
+     *                                     • Instanciation dynamique des cartes enfants via
+     *                                       window.loadCardHelpers() et fallback DOM direct.
+     *                                     • Propagation réactive de hass aux cartes enfants.
+     * ==============================================================================
+     */
+    class HaloFoldCard extends HTMLElement {
+        constructor() {
+            super();
+            // État interne (replié par défaut)
+            this._isExpanded = false;
+            this._childCards = [];
+            this._cardsBuildToken = 0;
+            // Références DOM persistantes
+            this._containerEl = null;
+            this._headerEl = null;
+            this._iconEl = null;
+            this._titleEl = null;
+            this._badgeEl = null;
+            this._lineEl = null;
+            this._toggleBtnEl = null;
+            this._toggleLabelEl = null;
+            this._toggleIconEl = null;
+            this._drawerEl = null;
+            this._gridEl = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        get _t() {
+            return useLocalize(this._hass);
+        }
+        static getConfigElement() {
+            return document.createElement('halo-fold-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                name: 'Détails & Appareils individuels',
+                icon: 'mdi:tune-vertical',
+                initial_collapsed: true,
+                columns: 1,
+                cards: []
+            };
+        }
+        connectedCallback() {
+            if (this._config && !this._containerEl) {
+                this._buildDom();
+                this._buildChildCards();
+                this._render();
+            }
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-fold-card');
+            }
+            this._config = {
+                columns: 1,
+                gap: 10,
+                initial_collapsed: true,
+                ...config
+            };
+            if (config.expanded !== undefined) {
+                this._isExpanded = Boolean(config.expanded);
+            }
+            else if (config.initial_collapsed !== undefined) {
+                this._isExpanded = !config.initial_collapsed;
+            }
+            else {
+                this._isExpanded = false;
+            }
+            if (!this._containerEl) {
+                this._buildDom();
+            }
+            this._buildChildCards();
+            this._render();
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            // Propagation réactive de hass à toutes les cartes enfants instanciées
+            for (const card of this._childCards) {
+                if (card) {
+                    try {
+                        card.hass = hass;
+                    }
+                    catch (_e) {
+                        // Ignorer les erreurs éventuelles d'une carte enfant
+                    }
+                }
+            }
+            if (!this._containerEl) {
+                this._buildDom();
+                this._buildChildCards();
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            if (!this._isExpanded)
+                return 1;
+            const count = Array.isArray(this._config?.cards) ? this._config.cards.length : 1;
+            return 1 + Math.max(1, count);
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            if (this._config.toggle_entity) {
+                if (oldHass.states[this._config.toggle_entity] !== newHass.states[this._config.toggle_entity]) {
+                    return true;
+                }
+            }
+            if (this._config.theme_entity) {
+                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
+                    return true;
+                }
+            }
+            const themeEntities = [
+                'input_select.couleur_theme_eclairages',
+                'input_select.couleur_theme_ouvertures',
+                'input_select.couleur_theme_chauffage',
+                'input_select.couleur_theme_global'
+            ];
+            for (const te of themeEntities) {
+                if (oldHass.states[te] !== newHass.states[te])
+                    return true;
+            }
+            return false;
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          margin: 0;
+          padding: 0;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .halo-fold-wrapper {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 6px 0px 4px 0px;
+        }
+        .halo-fold-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          box-sizing: border-box;
+          cursor: pointer;
+          padding: 4px 2px;
+          border-radius: 10px;
+          transition: background 0.2s ease;
+        }
+        .halo-fold-header:hover {
+          background: rgba(255, 255, 255, 0.03);
+        }
+        .halo-fold-icon {
+          width: 18px;
+          height: 18px;
+          min-width: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: translateY(-2px);
+          flex-shrink: 0;
+        }
+        .halo-fold-icon ha-icon {
+          --mdc-icon-size: 18px;
+          width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.3s ease;
+        }
+        .halo-fold-title {
+          color: #e6f2f5;
+          font-size: 13.5px;
+          font-weight: 600;
+          letter-spacing: -0.2px;
+          white-space: nowrap;
+          line-height: 1.2;
+          flex-shrink: 0;
+        }
+        .halo-fold-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 5px;
+          border-radius: 9px;
+          font-size: 10.5px;
+          font-weight: 700;
+          line-height: 1;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          transition: all 0.25s ease;
+        }
+        .halo-fold-line {
+          flex: 1;
+          height: 2px;
+          min-height: 2px;
+          border-radius: 2px;
+          transition: background 0.3s ease;
+        }
+        .halo-toggle-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 8px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          line-height: 14px;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all 0.25s ease;
+        }
+        .halo-toggle-btn:hover {
+          filter: brightness(1.2);
+        }
+        .halo-toggle-btn:active {
+          transform: scale(0.95);
+        }
+        .halo-toggle-btn ha-icon {
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: -1px;
+        }
+        .halo-fold-drawer {
+          max-height: 0;
+          opacity: 0;
+          overflow: hidden;
+          margin-top: 0;
+          transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                      opacity 0.3s ease,
+                      margin-top 0.3s ease;
+          pointer-events: none;
+        }
+        .halo-fold-drawer.expanded {
+          max-height: 2500px;
+          opacity: 1;
+          margin-top: 10px;
+          overflow: visible;
+          pointer-events: auto;
+        }
+        .halo-fold-grid {
+          display: grid;
+          grid-template-columns: repeat(var(--halo-fold-cols, 1), minmax(0, 1fr));
+          gap: var(--halo-fold-gap, 10px);
+          width: 100%;
+          box-sizing: border-box;
+        }
+        @media (max-width: 600px) {
+          .halo-fold-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
+      <div class="halo-fold-wrapper" id="container">
+        <div class="halo-fold-header" id="header">
+          <div class="halo-fold-icon">
+            <ha-icon id="fold-icon"></ha-icon>
+          </div>
+          <span class="halo-fold-title" id="fold-title"></span>
+          <span class="halo-fold-badge" id="fold-badge" style="display: none;"></span>
+          <div class="halo-fold-line" id="fold-line"></div>
+          <div class="halo-toggle-btn" id="toggle-btn">
+            <span id="toggle-label">Afficher</span>
+            <ha-icon id="toggle-icon" icon="mdi:chevron-down"></ha-icon>
+          </div>
+        </div>
+        <div class="halo-fold-drawer" id="fold-drawer">
+          <div class="halo-fold-grid" id="fold-grid"></div>
+        </div>
+      </div>
+    `;
+            this._containerEl = this._root.getElementById('container');
+            this._headerEl = this._root.getElementById('header');
+            this._iconEl = this._root.getElementById('fold-icon');
+            this._titleEl = this._root.getElementById('fold-title');
+            this._badgeEl = this._root.getElementById('fold-badge');
+            this._lineEl = this._root.getElementById('fold-line');
+            this._toggleBtnEl = this._root.getElementById('toggle-btn');
+            this._toggleLabelEl = this._root.getElementById('toggle-label');
+            this._toggleIconEl = this._root.getElementById('toggle-icon');
+            this._drawerEl = this._root.getElementById('fold-drawer');
+            this._gridEl = this._root.getElementById('fold-grid');
+            if (this._headerEl) {
+                this._headerEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._handleToggle();
+                });
+            }
+        }
+        _handleToggle() {
+            this._isExpanded = !this._isExpanded;
+            fireHaptic('light');
+            if (this._config.toggle_entity && this._hass) {
+                const ent = this._config.toggle_entity;
+                const domain = ent.split('.')[0] || 'input_boolean';
+                this._hass.callService(domain, 'toggle', { entity_id: ent });
+            }
+            this._render();
+        }
+        async _createCardElement(cardConfig) {
+            try {
+                const loadHelpers = window.loadCardHelpers;
+                if (typeof loadHelpers === 'function') {
+                    const helpers = await loadHelpers();
+                    if (helpers && typeof helpers.createCardElement === 'function') {
+                        const el = helpers.createCardElement(cardConfig);
+                        if (this._hass) {
+                            el.hass = this._hass;
+                        }
+                        return el;
+                    }
+                }
+            }
+            catch (_err) {
+                // Fallback direct ci-dessous
+            }
+            const rawType = String(cardConfig.type || 'div');
+            const tag = rawType.startsWith('custom:') ? rawType.slice(7) : `hui-${rawType}-card`;
+            if (rawType.startsWith('custom:') && !customElements.get(tag)) {
+                try {
+                    await Promise.race([
+                        customElements.whenDefined(tag),
+                        new Promise(resolve => setTimeout(resolve, 2000))
+                    ]);
+                }
+                catch (_e) {
+                    // Ignorer timeout
+                }
+            }
+            const el = document.createElement(tag);
+            if (typeof el.setConfig === 'function') {
+                el.setConfig(cardConfig);
+            }
+            if (this._hass) {
+                el.hass = this._hass;
+            }
+            return el;
+        }
+        async _buildChildCards() {
+            if (!this._gridEl)
+                return;
+            const token = ++this._cardsBuildToken;
+            const cardsConfig = Array.isArray(this._config?.cards) ? this._config.cards : [];
+            this._childCards = [];
+            this._gridEl.innerHTML = '';
+            for (const cardCfg of cardsConfig) {
+                if (!cardCfg || typeof cardCfg !== 'object')
+                    continue;
+                const cardEl = await this._createCardElement(cardCfg);
+                if (token !== this._cardsBuildToken)
+                    return;
+                if (this._hass) {
+                    cardEl.hass = this._hass;
+                }
+                this._childCards.push(cardEl);
+                this._gridEl.appendChild(cardEl);
+            }
+        }
+        _render() {
+            if (!this._config)
+                return;
+            if (!this._containerEl) {
+                this._buildDom();
+            }
+            const name = this._config.name || this._config.title || this._t('fold.default_title');
+            const icon = this._config.icon || 'mdi:tune-vertical';
+            const col = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
+            if (this._config.toggle_entity && this._hass?.states?.[this._config.toggle_entity]) {
+                const extState = this._hass.states[this._config.toggle_entity].state;
+                this._isExpanded = (extState === 'on');
+            }
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = col;
+            }
+            if (this._titleEl && this._titleEl.textContent !== name) {
+                this._titleEl.textContent = name;
+            }
+            const cardCount = Array.isArray(this._config.cards) ? this._config.cards.length : 0;
+            if (this._badgeEl) {
+                if (cardCount > 0) {
+                    this._badgeEl.style.display = 'inline-flex';
+                    this._badgeEl.textContent = String(cardCount);
+                    this._badgeEl.style.background = `${col}22`;
+                    this._badgeEl.style.border = `1px solid ${col}55`;
+                    this._badgeEl.style.color = col;
+                }
+                else {
+                    this._badgeEl.style.display = 'none';
+                }
+            }
+            if (this._lineEl) {
+                const gradient = `linear-gradient(90deg, ${col} 0%, ${col}44 60%, transparent 100%)`;
+                if (this._lineEl.style.background !== gradient) {
+                    this._lineEl.style.background = gradient;
+                }
+            }
+            if (this._toggleBtnEl) {
+                this._toggleBtnEl.style.background = this._isExpanded ? `${col}26` : 'rgba(255, 255, 255, 0.05)';
+                this._toggleBtnEl.style.border = this._isExpanded ? `1px solid ${col}66` : '1px solid rgba(255, 255, 255, 0.10)';
+                this._toggleBtnEl.style.boxShadow = this._isExpanded ? `0 0 8px ${col}40` : 'none';
+                this._toggleBtnEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
+                const labelText = this._isExpanded
+                    ? (this._config.label_on || this._t('fold.hide'))
+                    : (this._config.label_off || this._t('fold.show'));
+                if (this._toggleLabelEl) {
+                    this._toggleLabelEl.textContent = labelText;
+                }
+                const chevronIcon = this._isExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down';
+                if (this._toggleIconEl) {
+                    if (this._toggleIconEl.getAttribute('icon') !== chevronIcon) {
+                        this._toggleIconEl.setAttribute('icon', chevronIcon);
+                    }
+                    this._toggleIconEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
+                }
+            }
+            if (this._drawerEl) {
+                this._drawerEl.className = this._isExpanded ? 'halo-fold-drawer expanded' : 'halo-fold-drawer';
+            }
+            if (this._gridEl) {
+                let colCount = 1;
+                if (this._config.columns !== undefined) {
+                    const parsed = parseInt(String(this._config.columns), 10);
+                    if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) {
+                        colCount = parsed;
+                    }
+                }
+                const gapPx = typeof this._config.gap === 'number' ? this._config.gap : 10;
+                this._gridEl.style.setProperty('--halo-fold-cols', String(colCount));
+                this._gridEl.style.setProperty('--halo-fold-gap', `${gapPx}px`);
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-fold-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-fold-card.
+     *                    Combine <ha-form> (titre, icône, thème, état initial,
+     *                    colonnes, libellés et entité synchronisée), le panneau
+     *                    visuel Mix A+B 16 teintes HALO et un gestionnaire des
+     *                    cartes enfants Lovelace (cards).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.6.0-beta.1
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Création initiale de l'éditeur visuel
+     *                                     halo-fold-card-editor.
+     * ==============================================================================
+     */
+    const buildSchema = (t) => [
+        { name: 'name', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } },
+        { name: 'initial_collapsed', selector: { boolean: {} } },
+        {
+            name: 'columns',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'fold', [['1', 'cols_1'], ['2', 'cols_2'], ['3', 'cols_3']])
+                }
+            }
+        },
+        { name: 'label_on', selector: { text: {} } },
+        { name: 'label_off', selector: { text: {} } },
+        { name: 'toggle_entity', selector: { entity: { domain: 'input_boolean' } } }
+    ];
+    class HaloFoldCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = 'en';
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._chipsContainerEl = null;
+        }
+        get _t() {
+            return useLocalize(this._hass);
+        }
+        setConfig(config) {
+            this._config = {
+                columns: 1,
+                initial_collapsed: true,
+                cards: [],
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
+            const form = this.querySelector('#form');
+            if (form) {
+                form.hass = hass;
+            }
+            this._syncStylePanel();
+        }
+        _fireConfigChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _getColorHex() {
+            const raw = this._config?.color || 'Cyan';
+            if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#26c6da');
+            }
+            return toHexColor(raw, '#26c6da');
+        }
+        _updateColor(colorValue) {
+            this._config = {
+                ...this._config,
+                color: colorValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _syncStylePanel() {
+            if (!this._config)
+                return;
+            const hex = this._getColorHex();
+            const name = colorDisplayName(this._hass, this._config.color, 'editor.color_default_cyan');
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = hex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = hex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = hex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = name;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = hex.toUpperCase();
+            }
+            if (this._chipsContainerEl) {
+                const activeRaw = this._config.color || 'Cyan';
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = (chipName === activeRaw || chipHex?.toLowerCase() === hex.toLowerCase());
+                    btn.classList.toggle('active', Boolean(isActive));
+                });
+            }
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            if (data.columns !== undefined) {
+                data.columns = String(data.columns);
+            }
+            delete data.color;
+            delete data.cards;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const val = { ...ev.detail.value };
+            if (val.columns !== undefined) {
+                val.columns = parseInt(String(val.columns), 10) || 1;
+            }
+            this._config = {
+                ...this._config,
+                ...val
+            };
+            this._fireConfigChanged();
+        }
+        _getCards() {
+            return Array.isArray(this._config?.cards) ? [...this._config.cards] : [];
+        }
+        _addCard() {
+            const cards = this._getCards();
+            cards.push({
+                type: 'custom:halo-light-card',
+                entity: '',
+                name: ''
+            });
+            this._config = {
+                ...this._config,
+                cards
+            };
+            this._fireConfigChanged();
+            this._renderCardsManager();
+        }
+        _removeCard(index) {
+            const cards = this._getCards();
+            cards.splice(index, 1);
+            this._config = {
+                ...this._config,
+                cards
+            };
+            this._fireConfigChanged();
+            this._renderCardsManager();
+        }
+        _moveCard(index, direction) {
+            const cards = this._getCards();
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= cards.length)
+                return;
+            const tmp = cards[index];
+            cards[index] = cards[targetIndex];
+            cards[targetIndex] = tmp;
+            this._config = {
+                ...this._config,
+                cards
+            };
+            this._fireConfigChanged();
+            this._renderCardsManager();
+        }
+        _updateCardField(index, field, value) {
+            const cards = this._getCards();
+            if (!cards[index])
+                return;
+            cards[index] = {
+                ...cards[index],
+                [field]: value
+            };
+            this._config = {
+                ...this._config,
+                cards
+            };
+            this._fireConfigChanged();
+        }
+        _renderCardsManager() {
+            const container = this.querySelector('#cards-container');
+            if (!container)
+                return;
+            const cards = this._getCards();
+            const t = (k) => this._t(`editor.fold.${k}`);
+            if (cards.length === 0) {
+                container.innerHTML = `
+        <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; color: var(--secondary-text-color); font-size: 13px;">
+          ${t('no_cards')}
+        </div>
+      `;
+                return;
+            }
+            container.innerHTML = '';
+            cards.forEach((c, idx) => {
+                const row = document.createElement('div');
+                row.style.cssText = `
+        background: var(--card-background-color, rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.1));
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      `;
+                const header = document.createElement('div');
+                header.style.cssText = 'display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;';
+                header.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12.5px;">
+          <ha-icon icon="${c.icon || 'mdi:card-bulleted-outline'}" style="color: #26c6da; --mdc-icon-size: 16px;"></ha-icon>
+          <span>#${idx + 1} — ${c.name || c.entity || c.type || 'Card'}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <button type="button" class="btn-up" style="background: none; border: none; color: var(--primary-text-color); cursor: pointer; padding: 2px 6px;" ${idx === 0 ? 'disabled' : ''}>▲</button>
+          <button type="button" class="btn-down" style="background: none; border: none; color: var(--primary-text-color); cursor: pointer; padding: 2px 6px;" ${idx === cards.length - 1 ? 'disabled' : ''}>▼</button>
+          <button type="button" class="btn-del" style="background: none; border: none; color: var(--error-color, #f44336); cursor: pointer; padding: 2px 6px;">✕</button>
+        </div>
+      `;
+                header.querySelector('.btn-up')?.addEventListener('click', () => this._moveCard(idx, 'up'));
+                header.querySelector('.btn-down')?.addEventListener('click', () => this._moveCard(idx, 'down'));
+                header.querySelector('.btn-del')?.addEventListener('click', () => this._removeCard(idx));
+                const fields = document.createElement('div');
+                fields.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;';
+                fields.innerHTML = `
+        <div>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Type</label>
+          <input type="text" class="inp-type" value="${c.type || ''}" placeholder="custom:halo-light-card" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        </div>
+        <div>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Entity</label>
+          <input type="text" class="inp-entity" value="${c.entity || ''}" placeholder="light.exemple" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        </div>
+        <div>
+          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Nom</label>
+          <input type="text" class="inp-name" value="${c.name || ''}" placeholder="Lampe" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
+        </div>
+      `;
+                fields.querySelector('.inp-type')?.addEventListener('change', (e) => this._updateCardField(idx, 'type', e.target.value));
+                fields.querySelector('.inp-entity')?.addEventListener('change', (e) => this._updateCardField(idx, 'entity', e.target.value));
+                fields.querySelector('.inp-name')?.addEventListener('change', (e) => this._updateCardField(idx, 'name', e.target.value));
+                row.appendChild(header);
+                row.appendChild(fields);
+                container.appendChild(row);
+            });
+        }
+        _render() {
+            if (!this._config)
+                return;
+            const t = this._t;
+            this._lang = getLang(this._hass);
+            let form = this.querySelector('#form');
+            if (!form) {
+                this.innerHTML = `
+        <style>
+          ${COMMON_EDITOR_STYLES}
+        </style>
+        <div class="halo-editor-wrap">
+          <ha-form id="form"></ha-form>
+
+          <div class="halo-style-section">
+            <div class="halo-section-header">
+              <ha-icon icon="mdi:palette-swatch"></ha-icon>
+              <span>${t('editor.style_title')}</span>
+            </div>
+            <div class="halo-col">
+              <div class="halo-col-header">
+                <span class="halo-col-title">${t('editor.halo_color')}</span>
+              </div>
+              <div class="halo-swatch-card" id="swatch-card">
+                <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="${t('editor.open_palette')}">
+                  <div class="halo-swatch-circle" id="swatch-circle"></div>
+                  <input type="color" id="native-color-input" class="hidden-color-input" />
+                </div>
+                <div class="halo-swatch-meta">
+                  <span class="halo-color-title" id="swatch-name"></span>
+                  <span class="halo-color-hex" id="swatch-hex"></span>
+                </div>
+                <button type="button" class="halo-pipette-btn" id="pipette-btn" title="${t('editor.open_wheel')}">
+                  <ha-icon icon="mdi:eyedropper"></ha-icon>
+                </button>
+              </div>
+              <div class="halo-chips-label">${t('editor.chips_label')}</div>
+              <div class="halo-chips-grid" id="chips-grid"></div>
+            </div>
+          </div>
+
+          <div id="fold-cards-manager" style="margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div>
+                <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">${t('editor.fold.cards_title')}</span>
+                <span style="display: block; font-size: 11px; color: var(--secondary-text-color);">${t('editor.fold.cards_subtitle')}</span>
+              </div>
+              <button type="button" id="btn-add-card" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; background: var(--primary-color, #0288d1); color: #fff; border: none; cursor: pointer; font-size: 12px; font-weight: 600;">
+                <span>${t('editor.fold.add_card')}</span>
+              </button>
+            </div>
+            <div id="cards-container"></div>
+          </div>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    applyFormI18n(form, this._hass, 'fold', buildSchema(t));
+                    form.data = this._formMetadata();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+                this._swatchCircleEl = this.querySelector('#swatch-circle');
+                this._colorInputEl = this.querySelector('#native-color-input');
+                this._swatchNameEl = this.querySelector('#swatch-name');
+                this._swatchHexEl = this.querySelector('#swatch-hex');
+                this._chipsContainerEl = this.querySelector('#chips-grid');
+                const triggerColor = () => this._colorInputEl?.click();
+                this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+                this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+                this._colorInputEl?.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    if (val)
+                        this._updateColor(val);
+                });
+                if (this._chipsContainerEl) {
+                    buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
+                }
+                this.querySelector('#btn-add-card')?.addEventListener('click', () => this._addCard());
+                this._renderCardsManager();
+            }
+            else {
+                form.data = this._formMetadata();
+                if (this._hass)
+                    form.hass = this._hass;
+                this._renderCardsManager();
+            }
+            this._syncStylePanel();
+        }
+    }
+
+    /**
+     * ==============================================================================
      * 📌 Nom du fichier : src/halo-button-card.ts
      * 📝 Description   : Point d'entrée principal de la suite HALO Button Card.
      *                    Déclaration et enregistrement des Web Components Lovelace,
@@ -8121,11 +9002,13 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.5.2
+     * 📦 Version      : 1.6.0-beta.1
      * 📅 Date         : 2026-11-02
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Intégration de custom:halo-fold-card (conteneur
+     *                                     accordéon repliable Liquid Glass pour cartes enfants).
      *   - 🌟 v1.5.2 (2026-11-02) : Intégration de custom:halo-markdown-card (callout Liquid Glass
      *                              avec barre latérale néon et dégradé horizontal personnalisables).
      *   - 🌟 v1.5.0 (2026-11-01) : Intégration de custom:halo-scene-card (ambiances multi-cibles
@@ -8160,7 +9043,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.5.2';
+    const VERSION = '1.6.0-beta.1';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
@@ -8209,6 +9092,12 @@ var HaloButtonCard = (function (exports) {
         type: 'halo-markdown-card',
         name: 'HALO Markdown Card',
         description: 'Turnkey Liquid Glass markdown callout with customizable neon accent bar and horizontal gradient.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-fold-card',
+        name: 'HALO Fold Card',
+        description: 'Turnkey collapsible Liquid Glass container card with neon gradient header, badge counter and child cards drawer.',
         preview: true
     });
     // Register Web Component custom elements
@@ -8260,6 +9149,12 @@ var HaloButtonCard = (function (exports) {
     if (!customElements.get('halo-markdown-card-editor')) {
         customElements.define('halo-markdown-card-editor', HaloMarkdownCardEditor);
     }
+    if (!customElements.get('halo-fold-card')) {
+        customElements.define('halo-fold-card', HaloFoldCard);
+    }
+    if (!customElements.get('halo-fold-card-editor')) {
+        customElements.define('halo-fold-card-editor', HaloFoldCardEditor);
+    }
 
     exports.HaloButtonCard = HaloButtonCard;
     exports.HaloButtonCardEditor = HaloButtonCardEditor;
@@ -8267,6 +9162,8 @@ var HaloButtonCard = (function (exports) {
     exports.HaloCoverCardEditor = HaloCoverCardEditor;
     exports.HaloCoverColorCard = HaloCoverColorCard;
     exports.HaloCoverColorCardEditor = HaloCoverColorCardEditor;
+    exports.HaloFoldCard = HaloFoldCard;
+    exports.HaloFoldCardEditor = HaloFoldCardEditor;
     exports.HaloLightCard = HaloLightCard;
     exports.HaloLightCardEditor = HaloLightCardEditor;
     exports.HaloMarkdownCard = HaloMarkdownCard;

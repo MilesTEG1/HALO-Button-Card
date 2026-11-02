@@ -53,6 +53,11 @@
     "lg_name": "Nom tuile",
     "lg_name_d": " : Détails lampe"
   },
+  "fold": {
+    "default_title": "Détails & Appareils",
+    "hide": "Masquer",
+    "show": "Afficher"
+  },
   "halo": {
     "Cyan": "Cyan",
     "Bleu Céleste": "Bleu Céleste",
@@ -227,6 +232,23 @@
       "bar_badge_off": "0 px (Sans barre)",
       "bar_badge_default": "{v} px (Défaut)",
       "target_color": "Couleur : {target}"
+    },
+    "fold": {
+      "name": "Titre du conteneur repliable",
+      "icon": "Icône MDI",
+      "theme_entity": "Entité sélecteur de thème (optionnel)",
+      "initial_collapsed": "Initialement replié / masqué par défaut",
+      "columns": "Nombre de colonnes pour les cartes enfants",
+      "cols_1": "1 colonne (Pleine largeur — recommandé pour cartes lumières/volets)",
+      "cols_2": "2 colonnes (Grille côte à côte)",
+      "cols_3": "3 colonnes (Grille compacte)",
+      "label_on": "Libellé bouton quand déplié (ex. Masquer)",
+      "label_off": "Libellé bouton quand replié (ex. Afficher)",
+      "toggle_entity": "Entité booléenne externe synchronisée (optionnel)",
+      "cards_title": "Cartes Enfants du Tiroir",
+      "cards_subtitle": "Cartes Lovelace affichées lorsque le volet est déplié",
+      "add_card": "+ Ajouter une carte",
+      "no_cards": "Aucune carte enfant configurée. Cliquez sur « + Ajouter une carte » ou éditez en YAML."
     }
   }
 }

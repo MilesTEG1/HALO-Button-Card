@@ -4,11 +4,13 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.2
+ * 📦 Version      : 1.6.0-beta.1
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Ajout de l'interface HaloFoldCardConfig pour
+ *                                     le conteneur repliable custom:halo-fold-card.
  *   - 💡 v1.5.2 (2026-11-02) : Ajout du type HaloMarkdownCardConfig pour custom:halo-markdown-card.
  *   - ✨ v1.5.1 (2026-11-01) : Ajout du support des couleurs par état (state_colors,
  *                              color_on, color_off, active_color, inactive_color) pour
@@ -268,6 +270,23 @@ export interface HaloMarkdownCardConfig {
   text_color?: string;
   theme_entity?: string;
   card_mod?: any;
+}
+
+export interface HaloFoldCardConfig {
+  type: string;
+  name?: string;
+  title?: string;
+  icon?: string;
+  color?: string | [number, number, number];
+  theme_entity?: string;
+  expanded?: boolean;
+  initial_collapsed?: boolean;
+  label_on?: string;
+  label_off?: string;
+  toggle_entity?: string;
+  columns?: number | string;
+  gap?: number;
+  cards?: Array<Record<string, any>>;
 }
 
 export interface VoletTrack {
