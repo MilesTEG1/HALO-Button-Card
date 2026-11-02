@@ -58,6 +58,29 @@
     "hide": "Masquer",
     "show": "Afficher"
   },
+  "counter": {
+    "cover_default_title": "Volets Roulants",
+    "cover_moving_single": "1 volet en mouvement…",
+    "cover_moving_plural": "{count} volets en mouvement…",
+    "cover_all_closed": "Tous les volets sont fermés",
+    "cover_all_open": "Tous les volets sont ouverts",
+    "closed_single": "1 fermé",
+    "closed_plural": "{count} fermés",
+    "partial_single": "1 partiel",
+    "partial_plural": "{count} partiels",
+    "open_single": "1 ouvert",
+    "open_plural": "{count} ouverts",
+    "closed_label": "Fermés",
+    "open_label": "Ouvertes",
+    "binary_all_closed": "Toutes les ouvertures sont fermées",
+    "binary_open_single": "1 ouverture ouverte",
+    "binary_open_plural": "{count} ouvertures ouvertes",
+    "binary_unavail_single": "1 capteur indisponible",
+    "binary_unavail_plural": "{count} capteurs indisponibles",
+    "binary_subtitle": "{count} ouverte(s) sur {total}",
+    "binary_all_ok": "Sécurité périmétrique optimale",
+    "indispo_short": "Indispo"
+  },
   "halo": {
     "Cyan": "Cyan",
     "Bleu Céleste": "Bleu Céleste",
@@ -252,7 +275,19 @@
       "cards_title": "Cartes Enfants du Tiroir",
       "cards_subtitle": "Cartes Lovelace affichées lorsque le volet est déplié",
       "add_card": "+ Ajouter une carte",
-      "no_cards": "Aucune carte enfant configurée. Cliquez sur « + Ajouter une carte » ou éditez en YAML."
+      "no_cards": "Aucune carte enfant configurée. Cliquez sur « + Ajouter une carte » pour choisir une carte dans la liste."
+    },
+    "counter": {
+      "mode": "Mode de fonctionnement",
+      "mode_auto": "Automatique (détecté selon l'entité : Volets ou Ouvertures)",
+      "mode_cover": "Volets roulants (Compteur 4 états + mouvement, sans liste)",
+      "mode_binary": "Ouvertures / Fenêtres (Compteur + pastilles ouvertes & défauts)",
+      "entity": "Entité de groupe principale (ex. cover.volets_maison ou binary_sensor.groupe_ouvertures)",
+      "name": "Titre personnalisé (optionnel)",
+      "ok_text": "Message de sécurité quand tout est fermé (mode Ouvertures, optionnel)",
+      "counter_label": "Libellé sous le compteur (optionnel, ex. Fermés)",
+      "show_counter": "Afficher le compteur numérique à droite (X / Total)",
+      "show_details": "Afficher le détail nominatif (pastilles des ouverts et indisponibles)"
     }
   }
 }

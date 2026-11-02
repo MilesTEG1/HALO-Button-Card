@@ -4,11 +4,14 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.2
+ * 📦 Version      : 1.6.0-beta.5
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Ajout de l'interface HaloCounterCardConfig pour
+ *                                     la tuile récapitulative et compteur custom:halo-counter-card
+ *                                     (modes volets et ouvertures/fenêtres).
  *   - ✨ v1.6.0-beta.2 (2026-11-02) : Enrichissement de HaloSceneCardConfig (title_size,
  *                                     label_size, min_height, toggle_on_reclick, show_badge).
  *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Ajout de l'interface HaloFoldCardConfig pour
@@ -294,6 +297,30 @@ export interface HaloFoldCardConfig {
   columns?: number | string;
   gap?: number;
   cards?: Array<Record<string, any>>;
+}
+
+export interface HaloCounterCardConfig {
+  type: string;
+  mode?: 'auto' | 'cover' | 'binary';
+  entity?: string;
+  entities?: string[];
+  name?: string;
+  title?: string;
+  subtitle?: string;
+  ok_text?: string;
+  counter_label?: string;
+  show_details?: boolean;
+  show_counter?: boolean;
+  border_width?: number;
+  color_closed?: string | [number, number, number];
+  color_open?: string | [number, number, number];
+  color_partial?: string | [number, number, number];
+  color_moving?: string | [number, number, number];
+  color_unavail?: string | [number, number, number];
+  entity_labels?: Record<string, string>;
+  tap_action?: ActionConfig;
+  hold_action?: ActionConfig;
+  double_tap_action?: ActionConfig;
 }
 
 export interface VoletTrack {

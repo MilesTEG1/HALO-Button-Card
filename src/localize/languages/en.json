@@ -58,6 +58,29 @@
     "hide": "Hide",
     "show": "Show"
   },
+  "counter": {
+    "cover_default_title": "Roller Shutters",
+    "cover_moving_single": "1 shutter moving…",
+    "cover_moving_plural": "{count} shutters moving…",
+    "cover_all_closed": "All shutters are closed",
+    "cover_all_open": "All shutters are open",
+    "closed_single": "1 closed",
+    "closed_plural": "{count} closed",
+    "partial_single": "1 partial",
+    "partial_plural": "{count} partial",
+    "open_single": "1 open",
+    "open_plural": "{count} open",
+    "closed_label": "Closed",
+    "open_label": "Open",
+    "binary_all_closed": "All openings are closed",
+    "binary_open_single": "1 opening open",
+    "binary_open_plural": "{count} openings open",
+    "binary_unavail_single": "1 sensor unavailable",
+    "binary_unavail_plural": "{count} sensors unavailable",
+    "binary_subtitle": "{count} open out of {total}",
+    "binary_all_ok": "Optimal perimeter security",
+    "indispo_short": "Unavail"
+  },
   "halo": {
     "Cyan": "Cyan",
     "Bleu Céleste": "Sky Blue",
@@ -252,7 +275,19 @@
       "cards_title": "Drawer Child Cards",
       "cards_subtitle": "Lovelace cards displayed when the drawer is expanded",
       "add_card": "+ Add card",
-      "no_cards": "No child cards configured. Click '+ Add card' or edit in YAML."
+      "no_cards": "No child cards configured. Click '+ Add card' to pick a card from the list."
+    },
+    "counter": {
+      "mode": "Operating mode",
+      "mode_auto": "Automatic (detected from entity: Shutters or Openings)",
+      "mode_cover": "Roller shutters (4-state counter + movement, without list)",
+      "mode_binary": "Openings / Windows (Counter + open & fault pills)",
+      "entity": "Primary group entity (e.g. cover.volets_maison or binary_sensor.groupe_ouvertures)",
+      "name": "Custom title (optional)",
+      "ok_text": "Security message when all closed (Openings mode, optional)",
+      "counter_label": "Label below counter (optional, e.g. Closed)",
+      "show_counter": "Show right-hand numeric counter (X / Total)",
+      "show_details": "Show item details (open and unavailable pills)"
     }
   }
 }

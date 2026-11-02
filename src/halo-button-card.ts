@@ -7,11 +7,15 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.2
+ * 📦 Version      : 1.6.0-beta.5
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Intégration de custom:halo-counter-card (tuile
+ *                                     récapitulative et compteur polyvalent pour volets
+ *                                     roulants et ouvertures/fenêtres avec détection des
+ *                                     capteurs indisponibles).
  *   - ✨ v1.6.0-beta.2 (2026-11-02) : Amélioration ergonomique de custom:halo-scene-card :
  *                                     retrait par défaut de la pastille compteur, bascule
  *                                     d'extinction au second clic et typographie compacte
@@ -71,13 +75,15 @@ import { HaloMarkdownCard } from './components/halo-markdown-card';
 import { HaloMarkdownCardEditor } from './editors/halo-markdown-card-editor';
 import { HaloFoldCard } from './components/halo-fold-card';
 import { HaloFoldCardEditor } from './editors/halo-fold-card-editor';
+import { HaloCounterCard } from './components/halo-counter-card';
+import { HaloCounterCardEditor } from './editors/halo-counter-card-editor';
 
 import { voletHelperInstance } from './core/volet-helper';
 import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.6.0-beta.2';
+const VERSION = '1.6.0-beta.5';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -162,6 +168,13 @@ window.customCards.push({
   preview: true
 });
 
+window.customCards.push({
+  type: 'halo-counter-card',
+  name: 'HALO Counter Card',
+  description: 'Turnkey Liquid Glass summary & counter card for roller shutters (4 states + movement) and window/door openings (open & fault pills).',
+  preview: true
+});
+
 // Register Web Component custom elements
 if (!customElements.get('halo-button-card')) {
   customElements.define('halo-button-card', HaloButtonCard);
@@ -226,6 +239,13 @@ if (!customElements.get('halo-fold-card-editor')) {
   customElements.define('halo-fold-card-editor', HaloFoldCardEditor);
 }
 
+if (!customElements.get('halo-counter-card')) {
+  customElements.define('halo-counter-card', HaloCounterCard);
+}
+if (!customElements.get('halo-counter-card-editor')) {
+  customElements.define('halo-counter-card-editor', HaloCounterCardEditor);
+}
+
 // Export for external consumers
 export {
   HaloButtonCard,
@@ -246,6 +266,8 @@ export {
   HaloMarkdownCardEditor,
   HaloFoldCard,
   HaloFoldCardEditor,
+  HaloCounterCard,
+  HaloCounterCardEditor,
   voletHelperInstance,
   lightHelper,
   themeHelper,
