@@ -7,11 +7,13 @@
  *                    et le panneau de style Liquid Glass HALO (nuancier & bordure).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.0
- * 📅 Date         : 2026-11-01
+ * 📦 Version      : 1.6.0-beta.2
+ * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.6.0-beta.2 (2026-11-02) : Ajout des options title_size, label_size,
+ *                                     toggle_on_reclick et show_badge dans le schéma ha-form.
  *   - 🆕 v1.5.0 (2026-11-01) : Création initiale de l'éditeur halo-scene-card :
  *                              - Sélection d'entités cibles (light & cover).
  *                              - Réglages fins individuels ou harmonisés (luminosité, kelvin, position).
@@ -45,6 +47,10 @@ const buildSchema = (t: ReturnType<typeof useLocalize>) => [
       }
     }
   },
+  { name: 'title_size', selector: { text: {} } },
+  { name: 'label_size', selector: { text: {} } },
+  { name: 'toggle_on_reclick', selector: { boolean: {} } },
+  { name: 'show_badge', selector: { boolean: {} } },
   {
     name: 'mode',
     selector: {
@@ -76,6 +82,8 @@ export class HaloSceneCardEditor extends HTMLElement {
       layout: 'horizontal',
       mode: 'individual',
       border_width: 1.5,
+      toggle_on_reclick: true,
+      show_badge: false,
       targets: [],
       ...config
     };

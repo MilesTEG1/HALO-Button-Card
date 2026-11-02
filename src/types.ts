@@ -4,11 +4,13 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.1
+ * 📦 Version      : 1.6.0-beta.2
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.6.0-beta.2 (2026-11-02) : Enrichissement de HaloSceneCardConfig (title_size,
+ *                                     label_size, min_height, toggle_on_reclick, show_badge).
  *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Ajout de l'interface HaloFoldCardConfig pour
  *                                     le conteneur repliable custom:halo-fold-card.
  *   - 💡 v1.5.2 (2026-11-02) : Ajout du type HaloMarkdownCardConfig pour custom:halo-markdown-card.
@@ -153,6 +155,11 @@ export interface HaloSceneCardConfig {
   border_width?: number;
   layout?: 'horizontal' | 'vertical';
   text_align?: 'left' | 'center' | 'right';
+  title_size?: number | string;
+  label_size?: number | string;
+  min_height?: number | string;
+  toggle_on_reclick?: boolean;
+  show_badge?: boolean;
   mode?: 'individual' | 'common';
   targets?: HaloSceneTargetConfig[];
   common_light_brightness?: number;

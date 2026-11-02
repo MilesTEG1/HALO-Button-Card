@@ -7,11 +7,15 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.1
+ * 📦 Version      : 1.6.0-beta.2
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.6.0-beta.2 (2026-11-02) : Amélioration ergonomique de custom:halo-scene-card :
+ *                                     retrait par défaut de la pastille compteur, bascule
+ *                                     d'extinction au second clic et typographie compacte
+ *                                     sans troncature à hauteur constante.
  *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Intégration de custom:halo-fold-card (conteneur
  *                                     accordéon repliable Liquid Glass pour cartes enfants).
  *   - 🌟 v1.5.2 (2026-11-02) : Intégration de custom:halo-markdown-card (callout Liquid Glass
@@ -73,7 +77,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.6.0-beta.1';
+const VERSION = '1.6.0-beta.2';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
