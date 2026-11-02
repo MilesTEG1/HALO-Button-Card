@@ -7,12 +7,12 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.4
+ * 📦 Version      : 1.6.0-beta.5
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 🆕 v1.6.0-beta.4 (2026-11-02) : Intégration de custom:halo-counter-card (tuile
+ *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Intégration de custom:halo-counter-card (tuile
  *                                     récapitulative et compteur polyvalent pour volets
  *                                     roulants et ouvertures/fenêtres avec détection des
  *                                     capteurs indisponibles).
@@ -83,7 +83,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.6.0-beta.4';
+const VERSION = '1.6.0-beta.5';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,

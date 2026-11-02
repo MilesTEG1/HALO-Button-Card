@@ -8,12 +8,12 @@
  *                    teintes d'états et d'épaisseur de bordure.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.4
+ * 📦 Version      : 1.6.0-beta.5
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 🆕 v1.6.0-beta.4 (2026-11-02) : Création initiale de l'éditeur visuel pour
+ *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Création initiale de l'éditeur visuel pour
  *                                     custom:halo-counter-card.
  * ==============================================================================
  */
