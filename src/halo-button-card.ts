@@ -7,7 +7,7 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.2
+ * 📦 Version      : 1.6.0-beta.3
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
@@ -77,7 +77,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.6.0-beta.2';
+const VERSION = '1.6.0-beta.3';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
