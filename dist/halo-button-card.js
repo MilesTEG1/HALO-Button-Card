@@ -1364,6 +1364,29 @@ var HaloButtonCard = (function (exports) {
         "hide": "Hide",
         "show": "Show"
       },
+      "counter": {
+        "cover_default_title": "Roller Shutters",
+        "cover_moving_single": "1 shutter moving…",
+        "cover_moving_plural": "{count} shutters moving…",
+        "cover_all_closed": "All shutters are closed",
+        "cover_all_open": "All shutters are open",
+        "closed_single": "1 closed",
+        "closed_plural": "{count} closed",
+        "partial_single": "1 partial",
+        "partial_plural": "{count} partial",
+        "open_single": "1 open",
+        "open_plural": "{count} open",
+        "closed_label": "Closed",
+        "open_label": "Open",
+        "binary_all_closed": "All openings are closed",
+        "binary_open_single": "1 opening open",
+        "binary_open_plural": "{count} openings open",
+        "binary_unavail_single": "1 sensor unavailable",
+        "binary_unavail_plural": "{count} sensors unavailable",
+        "binary_subtitle": "{count} open out of {total}",
+        "binary_all_ok": "Optimal perimeter security",
+        "indispo_short": "Unavail"
+      },
       "halo": {
         "Cyan": "Cyan",
         "Bleu Céleste": "Sky Blue",
@@ -1559,6 +1582,18 @@ var HaloButtonCard = (function (exports) {
           "cards_subtitle": "Lovelace cards displayed when the drawer is expanded",
           "add_card": "+ Add card",
           "no_cards": "No child cards configured. Click '+ Add card' to pick a card from the list."
+        },
+        "counter": {
+          "mode": "Operating mode",
+          "mode_auto": "Automatic (detected from entity: Shutters or Openings)",
+          "mode_cover": "Roller shutters (4-state counter + movement, without list)",
+          "mode_binary": "Openings / Windows (Counter + open & fault pills)",
+          "entity": "Primary group entity (e.g. cover.volets_maison or binary_sensor.groupe_ouvertures)",
+          "name": "Custom title (optional)",
+          "ok_text": "Security message when all closed (Openings mode, optional)",
+          "counter_label": "Label below counter (optional, e.g. Closed)",
+          "show_counter": "Show right-hand numeric counter (X / Total)",
+          "show_details": "Show item details (open and unavailable pills)"
         }
       }
     }
@@ -1623,6 +1658,29 @@ var HaloButtonCard = (function (exports) {
         "default_title": "Détails & Appareils",
         "hide": "Masquer",
         "show": "Afficher"
+      },
+      "counter": {
+        "cover_default_title": "Volets Roulants",
+        "cover_moving_single": "1 volet en mouvement…",
+        "cover_moving_plural": "{count} volets en mouvement…",
+        "cover_all_closed": "Tous les volets sont fermés",
+        "cover_all_open": "Tous les volets sont ouverts",
+        "closed_single": "1 fermé",
+        "closed_plural": "{count} fermés",
+        "partial_single": "1 partiel",
+        "partial_plural": "{count} partiels",
+        "open_single": "1 ouvert",
+        "open_plural": "{count} ouverts",
+        "closed_label": "Fermés",
+        "open_label": "Ouvertes",
+        "binary_all_closed": "Toutes les ouvertures sont fermées",
+        "binary_open_single": "1 ouverture ouverte",
+        "binary_open_plural": "{count} ouvertures ouvertes",
+        "binary_unavail_single": "1 capteur indisponible",
+        "binary_unavail_plural": "{count} capteurs indisponibles",
+        "binary_subtitle": "{count} ouverte(s) sur {total}",
+        "binary_all_ok": "Sécurité périmétrique optimale",
+        "indispo_short": "Indispo"
       },
       "halo": {
         "Cyan": "Cyan",
@@ -1819,6 +1877,18 @@ var HaloButtonCard = (function (exports) {
           "cards_subtitle": "Cartes Lovelace affichées lorsque le volet est déplié",
           "add_card": "+ Ajouter une carte",
           "no_cards": "Aucune carte enfant configurée. Cliquez sur « + Ajouter une carte » pour choisir une carte dans la liste."
+        },
+        "counter": {
+          "mode": "Mode de fonctionnement",
+          "mode_auto": "Automatique (détecté selon l'entité : Volets ou Ouvertures)",
+          "mode_cover": "Volets roulants (Compteur 4 états + mouvement, sans liste)",
+          "mode_binary": "Ouvertures / Fenêtres (Compteur + pastilles ouvertes & défauts)",
+          "entity": "Entité de groupe principale (ex. cover.volets_maison ou binary_sensor.groupe_ouvertures)",
+          "name": "Titre personnalisé (optionnel)",
+          "ok_text": "Message de sécurité quand tout est fermé (mode Ouvertures, optionnel)",
+          "counter_label": "Libellé sous le compteur (optionnel, ex. Fermés)",
+          "show_counter": "Afficher le compteur numérique à droite (X / Total)",
+          "show_details": "Afficher le détail nominatif (pastilles des ouverts et indisponibles)"
         }
       }
     }
@@ -2064,7 +2134,7 @@ var HaloButtonCard = (function (exports) {
             fallback: '#64748b'
         }
     ];
-    const buildSchema$5 = (t) => [
+    const buildSchema$6 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -2326,7 +2396,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "button", buildSchema$5(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "button", buildSchema$6(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -3040,7 +3110,7 @@ var HaloButtonCard = (function (exports) {
      *                              - Style Panel Mix A+B (Halo Swatch + Nuancier 16 teintes + Curseur bordure).
      * ==============================================================================
      */
-    const buildSchema$4 = (t) => [
+    const buildSchema$5 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -3301,7 +3371,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, 'scene', buildSchema$4(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, 'scene', buildSchema$5(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -3576,6 +3646,7 @@ var HaloButtonCard = (function (exports) {
                         for (let j = 0; j < all.length; j++) {
                             const e = all[j];
                             if (e.tagName === 'HALO-COVER-CARD' ||
+                                e.tagName === 'HALO-COUNTER-CARD' ||
                                 e.tagName === 'BUTTON-CARD' ||
                                 e.tagName === 'CUSTOM-BUTTON-CARD') {
                                 this.forceCardUpdate(e);
@@ -4293,7 +4364,7 @@ var HaloButtonCard = (function (exports) {
             stateEntityKey: 'input_text.couleur_volet_en_mouvement'
         }
     ];
-    const buildSchema$3 = (_t) => [
+    const buildSchema$4 = (_t) => [
         { name: 'entity', selector: { entity: { domain: 'cover' } } },
         { name: 'name', selector: { text: {} } }
     ];
@@ -4483,7 +4554,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "cover", buildSchema$3(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "cover", buildSchema$4(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -5584,7 +5655,7 @@ var HaloButtonCard = (function (exports) {
             fallback: '#64748b'
         }
     ];
-    const buildSchema$2 = (_t) => [
+    const buildSchema$3 = (_t) => [
         { name: 'entity', selector: { entity: { domain: 'light' } } },
         { name: 'name', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -5790,7 +5861,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "light", buildSchema$2(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "light", buildSchema$3(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -7953,7 +8024,7 @@ var HaloButtonCard = (function (exports) {
         { key: 'bar', icon: 'mdi:border-left-variant', labelKey: 'bar_tab' },
         { key: 'gradient', icon: 'mdi:gradient-horizontal', labelKey: 'gradient_tab' }
     ];
-    const buildSchema$1 = (_t) => [
+    const buildSchema$2 = (_t) => [
         { name: 'title', selector: { text: {} } },
         { name: 'content', selector: { text: { multiline: true } } },
         { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
@@ -8221,7 +8292,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, 'markdown', buildSchema$1(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, 'markdown', buildSchema$2(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -8774,7 +8845,7 @@ var HaloButtonCard = (function (exports) {
      *                                     halo-fold-card-editor.
      * ==============================================================================
      */
-    const buildSchema = (t) => [
+    const buildSchema$1 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
         { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } },
@@ -9113,7 +9184,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, 'fold', buildSchema(t));
+                    applyFormI18n(form, this._hass, 'fold', buildSchema$1(t));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -9150,6 +9221,1101 @@ var HaloButtonCard = (function (exports) {
 
     /**
      * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-counter-card.ts
+     * 📝 Description   : Composant Web custom:halo-counter-card.
+     *                    Tuile récapitulative et compteur intelligent Liquid Glass HALO
+     *                    pour volets roulants (mode 'cover' : 4 états + détection de
+     *                    mouvement synchrone sans liste nominative par défaut) et
+     *                    ouvertures / fenêtres & portes (mode 'binary' : compteur +
+     *                    pastilles nominatives des ouvertures actives et capteurs en défaut).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.6.0-beta.4
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.6.0-beta.4 (2026-11-02) : Création initiale de custom:halo-counter-card
+     *                                     unifiant tuile_recap_volets_holm et
+     *                                     tuile_recap_ouvertures_holm en Web Component natif.
+     * ==============================================================================
+     */
+    const DEFAULT_COVER_ENTITIES = [
+        'cover.volet_roulant_salon_tv_n03',
+        'cover.volet_roulant_salon_poele_n02',
+        'cover.volet_roulant_salon_terrasse_n01',
+        'cover.volet_roulant_cuisine_n04',
+        'cover.volet_roulant_bureau_pierrick_n06',
+        'cover.volet_roulant_salle_de_bains_n07',
+        'cover.volet_roulant_chambre_parents_n09',
+        'cover.volet_roulant_salle_de_douche_parents_n10',
+        'cover.volet_roulant_chambre_charlotte_n05',
+        'cover.volet_roulant_palier_etage_n08',
+        'cover.volet_roulant_atelier_cecile_rue_n11',
+        'cover.volet_roulant_atelier_cecile_servitude_n12'
+    ];
+    const DEFAULT_ENTITY_LABELS = {
+        'binary_sensor.capteur_porte_entree_contact': "Porte d'entrée",
+        'binary_sensor.capteur_fenetre_toilettes_rdc_contact': 'Toilettes RdC',
+        'binary_sensor.capteur_fenetre_cuisine_contact': 'Cuisine',
+        'binary_sensor.capteur_fenetre_salon_terrasse_contact': 'Porte-Fenêtre Terrasse',
+        'binary_sensor.capteur_fenetre_salon_tv_contact': 'Salon TV',
+        'binary_sensor.capteur_fenetre_salon_poele_contact': 'Salon Poêle',
+        'binary_sensor.capteur_fenetre_chambre_parents_contact': 'Chambre Parents',
+        'binary_sensor.capteur_fenetre_sdd_parentale_contact': 'SdD Parents',
+        'binary_sensor.capteur_fenetre_salle_de_bains_contact': 'Salle de Bains',
+        'binary_sensor.capteur_fenetre_bureau_contact': 'Bureau',
+        'binary_sensor.capteur_fenetre_piece_artistique_cote_rue_contact': 'Atelier Cécile (Rue)',
+        'binary_sensor.capteur_fenetre_piece_artistique_cote_servitude_contact': 'Atelier Cécile (Servitude)',
+        'binary_sensor.capteur_fenetre_chambre_enfant_1_contact': 'Chambre Charlotte',
+        'binary_sensor.capteur_fenetre_palier_etage_contact': 'Palier Étage',
+        'binary_sensor.capteur_fenetre_velux_escalier_contact': 'Velux Escalier',
+        'binary_sensor.capteur_fenetre_velux_chambre_parents_contact': 'Velux Parents',
+        'binary_sensor.capteur_fenetre_velux_salle_de_douche_contact': 'Velux Salle de Douche',
+        'binary_sensor.capteur_fenetre_velux_chambre_charlotte_contact': 'Velux Charlotte',
+        'binary_sensor.capteur_fenetre_velux_chambre_enfant_2_velux_petite_chambre': 'Velux Petite Chambre',
+        'binary_sensor.capteur_fenetre_velux_sdd_etage_velux_sdd_etage': 'Velux SdD Étage',
+        'binary_sensor.capteur_fenetre_vasistas_soussol_linky_vasistas': 'Vasistas Sous-Sol Linky',
+        'binary_sensor.capteur_fenetre_vasistas_soussol_atelier_vasistas': 'Vasistas Sous-Sol Atelier',
+        'binary_sensor.capteur_fenetre_vasistas_soussol_buanderie_vasistas': 'Vasistas Sous-Sol Buanderie'
+    };
+    class HaloCounterCard extends HTMLElement {
+        constructor() {
+            super();
+            this._updateTimerMS = 0;
+            // Persistent DOM references
+            this._cardEl = null;
+            this._iconBadgeEl = null;
+            this._iconEl = null;
+            this._titleEl = null;
+            this._subtitleEl = null;
+            this._counterWrapEl = null;
+            this._counterNumEl = null;
+            this._counterTotalEl = null;
+            this._counterLabelEl = null;
+            this._detailWrapEl = null;
+            this._unbindCardTouch = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        get _t() {
+            return useLocalize(this._hass);
+        }
+        get _helper() {
+            return window._voletHelper || voletHelperInstance;
+        }
+        static getConfigElement() {
+            return document.createElement('halo-counter-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                mode: 'cover',
+                entity: 'cover.volets_maison',
+                name: 'Volets Roulants'
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-counter-card');
+            }
+            this._config = {
+                mode: 'auto',
+                border_width: 1.25,
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            this._helper.register(this);
+            if (!this._cardEl) {
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            return 1;
+        }
+        refresh() {
+            this._render();
+        }
+        requestUpdate(_name, _oldValue) {
+            this._render();
+        }
+        connectedCallback() {
+            this._helper.register(this);
+            if (this._cardEl && !this._unbindCardTouch) {
+                this._bindInteractions();
+            }
+        }
+        disconnectedCallback() {
+            if (this._unbindCardTouch) {
+                this._unbindCardTouch();
+                this._unbindCardTouch = null;
+            }
+        }
+        _getEffectiveMode() {
+            if (this._config?.mode === 'cover')
+                return 'cover';
+            if (this._config?.mode === 'binary')
+                return 'binary';
+            const ent = this._config?.entity || '';
+            if (ent.startsWith('binary_sensor.') || ent.includes('ouverture') || ent.includes('fenetre')) {
+                return 'binary';
+            }
+            const first = this._config?.entities?.[0] || '';
+            if (first.startsWith('binary_sensor.')) {
+                return 'binary';
+            }
+            return 'cover';
+        }
+        _getTargetEntities(mode) {
+            if (Array.isArray(this._config?.entities) && this._config.entities.length > 0) {
+                return this._config.entities;
+            }
+            const states = this._hass?.states || {};
+            const entId = this._config?.entity;
+            if (entId && states[entId]) {
+                const attrs = states[entId].attributes || {};
+                if (Array.isArray(attrs.entity_id) && attrs.entity_id.length > 0) {
+                    return attrs.entity_id;
+                }
+                if (Array.isArray(attrs.group_entities) && attrs.group_entities.length > 0) {
+                    return attrs.group_entities;
+                }
+            }
+            if (mode === 'cover') {
+                const grp = states['cover.groupe_volets_tous']?.attributes?.entity_id
+                    || states['cover.volets_maison']?.attributes?.group_entities;
+                if (Array.isArray(grp) && grp.length > 0) {
+                    return grp;
+                }
+                return DEFAULT_COVER_ENTITIES;
+            }
+            const bGrp = states['binary_sensor.groupe_ouvertures']?.attributes?.entity_id;
+            if (Array.isArray(bGrp) && bGrp.length > 0) {
+                return bGrp;
+            }
+            return Object.keys(DEFAULT_ENTITY_LABELS);
+        }
+        _getEntityLabel(entityId) {
+            if (this._config?.entity_labels && this._config.entity_labels[entityId]) {
+                return this._config.entity_labels[entityId];
+            }
+            if (DEFAULT_ENTITY_LABELS[entityId]) {
+                return DEFAULT_ENTITY_LABELS[entityId];
+            }
+            const st = this._hass?.states?.[entityId];
+            let raw = st?.attributes?.friendly_name || entityId;
+            raw = raw
+                .replace(/^Volet\s+roulant\s+/i, '')
+                .replace(/^Fenêtre\s+/i, '')
+                .replace(/^Capteur\s+/i, '')
+                .replace(/\s+contact$/i, '');
+            return raw;
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            if (oldHass.language !== newHass.language || oldHass.themes !== newHass.themes)
+                return true;
+            const mode = this._getEffectiveMode();
+            const entId = this._config.entity;
+            if (entId && oldHass.states[entId] !== newHass.states[entId])
+                return true;
+            const targets = this._getTargetEntities(mode);
+            for (const tid of targets) {
+                if (oldHass.states[tid] !== newHass.states[tid])
+                    return true;
+                const track = this._helper.tracking?.[tid];
+                if (track && track.moving)
+                    return true;
+            }
+            const helperEntities = [
+                'cover.volets_maison',
+                'cover.groupe_volets_tous',
+                'binary_sensor.groupe_ouvertures',
+                'sensor.nombre_fenetres_portes_ouvertes',
+                'sensor.nombre_fenetres_portes',
+                'input_text.couleur_volet_ferme',
+                'input_text.couleur_volet_ouvert',
+                'input_text.couleur_volet_partiel',
+                'input_text.couleur_volet_en_mouvement',
+                'input_select.couleur_theme_ouvertures'
+            ];
+            for (const he of helperEntities) {
+                if (oldHass.states[he] !== newHass.states[he])
+                    return true;
+            }
+            return false;
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        ha-card.halo-counter-card {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          box-sizing: border-box;
+          border-radius: 18px;
+          padding: 12px 14px;
+          text-align: left;
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          overflow: hidden;
+        }
+        ha-card.halo-counter-card:hover {
+          filter: brightness(1.04);
+        }
+        ha-card.halo-counter-card:active {
+          transform: scale(0.99);
+        }
+        .counter-top-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .counter-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+          min-width: 0;
+          text-align: left;
+        }
+        .counter-icon-badge {
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: all 0.3s ease;
+        }
+        .counter-icon-badge ha-icon {
+          --mdc-icon-size: 24px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.3s ease;
+        }
+        .counter-titles {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          text-align: left;
+          min-width: 0;
+        }
+        .counter-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #ffffff;
+          letter-spacing: -0.2px;
+          line-height: 1.2;
+        }
+        .counter-subtitle {
+          font-size: 12px;
+          font-weight: 500;
+          color: rgba(220, 235, 240, 0.75);
+          line-height: 1.25;
+        }
+        .counter-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          justify-content: center;
+          min-width: 65px;
+          flex-shrink: 0;
+        }
+        .counter-score {
+          font-size: 18px;
+          font-weight: 800;
+          font-variant-numeric: tabular-nums;
+          line-height: 1.15;
+          transition: color 0.3s ease;
+        }
+        .counter-total {
+          font-size: 13px;
+          font-weight: 500;
+          color: rgba(220, 235, 240, 0.65);
+        }
+        .counter-unit {
+          font-size: 10px;
+          font-weight: 600;
+          color: rgba(220, 235, 240, 0.50);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-top: 1px;
+        }
+        .counter-details {
+          display: none;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .pills-wrap {
+          display: flex;
+          flex-wrap: wrap;
+          margin-top: 8px;
+          gap: 4px;
+        }
+        .pill {
+          display: inline-flex;
+          align-items: center;
+          color: #ffffff;
+          padding: 2px 8px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          margin: 2px 4px 2px 0;
+        }
+        .pill-open {
+          background: rgba(244, 63, 94, 0.22);
+          border: 1px solid rgba(244, 63, 94, 0.45);
+        }
+        .pill-unavail {
+          background: rgba(245, 158, 11, 0.22);
+          border: 1px solid rgba(245, 158, 11, 0.45);
+        }
+        .pill-partial {
+          background: rgba(56, 189, 248, 0.22);
+          border: 1px solid rgba(56, 189, 248, 0.45);
+        }
+        .ok-text {
+          display: block;
+          font-size: 12px;
+          font-weight: 500;
+          color: rgba(220, 235, 240, 0.65);
+          margin-top: 6px;
+        }
+      </style>
+      <ha-card class="halo-counter-card" id="card">
+        <div class="counter-top-row">
+          <div class="counter-left">
+            <div class="counter-icon-badge" id="icon-badge">
+              <ha-icon id="main-icon"></ha-icon>
+            </div>
+            <div class="counter-titles">
+              <span class="counter-title" id="title"></span>
+              <span class="counter-subtitle" id="subtitle"></span>
+            </div>
+          </div>
+          <div class="counter-right" id="counter-right">
+            <span class="counter-score" id="counter-score">
+              <span id="counter-num">0</span>
+              <span class="counter-total" id="counter-total">/ 0</span>
+            </span>
+            <span class="counter-unit" id="counter-label"></span>
+          </div>
+        </div>
+        <div class="counter-details" id="counter-details"></div>
+      </ha-card>
+    `;
+            this._cardEl = this._root.getElementById('card');
+            this._iconBadgeEl = this._root.getElementById('icon-badge');
+            this._iconEl = this._root.getElementById('main-icon');
+            this._titleEl = this._root.getElementById('title');
+            this._subtitleEl = this._root.getElementById('subtitle');
+            this._counterWrapEl = this._root.getElementById('counter-right');
+            this._counterNumEl = this._root.getElementById('counter-num');
+            this._counterTotalEl = this._root.getElementById('counter-total');
+            this._counterLabelEl = this._root.getElementById('counter-label');
+            this._detailWrapEl = this._root.getElementById('counter-details');
+            this._bindInteractions();
+        }
+        _bindInteractions() {
+            if (this._unbindCardTouch) {
+                this._unbindCardTouch();
+                this._unbindCardTouch = null;
+            }
+            if (!this._cardEl)
+                return;
+            const mode = this._getEffectiveMode();
+            const defaultEntity = this._config?.entity
+                || (mode === 'cover' ? 'cover.volets_maison' : 'binary_sensor.groupe_ouvertures');
+            const tapAction = this._config?.tap_action || { action: 'more-info', entity: defaultEntity };
+            const holdAction = this._config?.hold_action;
+            const doubleTapAction = this._config?.double_tap_action;
+            this._unbindCardTouch = bindTouchActions(this._cardEl, {
+                onTap: () => {
+                    handleAction(this, this._hass, tapAction, defaultEntity);
+                },
+                onHold: holdAction ? () => {
+                    handleAction(this, this._hass, holdAction, defaultEntity);
+                } : undefined,
+                onDoubleTap: doubleTapAction ? () => {
+                    handleAction(this, this._hass, doubleTapAction, defaultEntity);
+                } : undefined
+            });
+        }
+        _render() {
+            if (!this._config || !this._hass)
+                return;
+            if (!this._cardEl) {
+                this._buildDom();
+            }
+            const mode = this._getEffectiveMode();
+            if (mode === 'cover') {
+                this._renderCoverMode();
+            }
+            else {
+                this._renderBinaryMode();
+            }
+        }
+        _renderCoverMode() {
+            const t = this._t;
+            const states = this._hass.states || {};
+            const entities = this._getTargetEntities('cover');
+            const total = entities.length;
+            let closedCount = 0;
+            let partialCount = 0;
+            let openCount = 0;
+            let movingCount = 0;
+            const openNames = [];
+            const partialNames = [];
+            const movingNames = [];
+            const unavailNames = [];
+            entities.forEach(entId => {
+                const s = states[entId];
+                if (!s)
+                    return;
+                const label = this._getEntityLabel(entId);
+                const st = s.state || 'unavailable';
+                const isUnavail = st === 'unavailable' || st === 'unknown';
+                const p = this._helper.position(s);
+                const moveInfo = this._helper.checkMoving(entId, states);
+                if (moveInfo.moving) {
+                    movingCount++;
+                    movingNames.push(label);
+                }
+                else if (isUnavail) {
+                    unavailNames.push(label);
+                }
+                else if (p === 0 || st === 'closed') {
+                    closedCount++;
+                }
+                else if (p === 100 || (p == null && st === 'open')) {
+                    openCount++;
+                    openNames.push(label);
+                }
+                else if (p != null && p > 0 && p < 100) {
+                    partialCount++;
+                    partialNames.push(`${label} (${p}%)`);
+                }
+            });
+            const isAllClosed = total > 0 && closedCount === total;
+            const isAllOpen = total > 0 && openCount === total;
+            const colors = getCoverColors(this._hass, this._config);
+            let accentCol = colors.partial;
+            let cardBg = `linear-gradient(135deg, ${colors.partial}22, rgba(15, 23, 36, 0.90))`;
+            let cardShadow = `0 0 18px ${colors.partial}44, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            if (movingCount > 0) {
+                accentCol = colors.moving;
+                cardBg = `linear-gradient(135deg, ${colors.moving}26, rgba(15, 23, 36, 0.90))`;
+                cardShadow = `0 0 18px ${colors.moving}55, inset 0 1px 0 rgba(255, 255, 255, 0.20)`;
+            }
+            else if (isAllClosed) {
+                accentCol = colors.closed;
+                cardBg = `linear-gradient(135deg, ${colors.closed}1A, rgba(15, 23, 36, 0.88))`;
+                cardShadow = `0 0 18px ${colors.closed}44, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            }
+            else if (isAllOpen) {
+                accentCol = colors.open;
+                cardBg = `linear-gradient(135deg, ${colors.open}22, rgba(15, 23, 36, 0.90))`;
+                cardShadow = `0 0 18px ${colors.open}44, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            }
+            const bw = typeof this._config.border_width === 'number' && !isNaN(this._config.border_width)
+                ? this._config.border_width
+                : 1.25;
+            const cardBorder = bw > 0 ? `${bw}px solid ${accentCol}` : 'none';
+            const icon = movingCount > 0
+                ? 'mdi:swap-vertical-bold'
+                : (isAllClosed ? 'mdi:window-shutter' : 'mdi:window-shutter-open');
+            const title = this._config.name || this._config.title || t('counter.cover_default_title');
+            let subText = '';
+            if (movingCount > 0) {
+                subText = movingCount > 1
+                    ? t('counter.cover_moving_plural', 'count', String(movingCount))
+                    : t('counter.cover_moving_single', 'count', '1');
+            }
+            else if (isAllClosed) {
+                subText = t('counter.cover_all_closed');
+            }
+            else if (isAllOpen) {
+                subText = t('counter.cover_all_open');
+            }
+            else {
+                const parts = [];
+                if (closedCount > 0) {
+                    parts.push(closedCount > 1 ? t('counter.closed_plural', 'count', String(closedCount)) : t('counter.closed_single'));
+                }
+                if (partialCount > 0) {
+                    parts.push(partialCount > 1 ? t('counter.partial_plural', 'count', String(partialCount)) : t('counter.partial_single'));
+                }
+                if (openCount > 0) {
+                    parts.push(openCount > 1 ? t('counter.open_plural', 'count', String(openCount)) : t('counter.open_single'));
+                }
+                subText = parts.join(' • ');
+            }
+            // Apply card styles
+            if (this._cardEl) {
+                this._cardEl.style.background = cardBg;
+                this._cardEl.style.border = cardBorder;
+                this._cardEl.style.boxShadow = cardShadow;
+            }
+            // Apply icon badge
+            if (this._iconBadgeEl) {
+                this._iconBadgeEl.style.background = `${accentCol}22`;
+                this._iconBadgeEl.style.border = `1.25px solid ${accentCol}66`;
+                this._iconBadgeEl.style.boxShadow = `0 0 12px ${accentCol}44`;
+            }
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = accentCol;
+            }
+            // Apply texts
+            if (this._titleEl) {
+                this._titleEl.textContent = title;
+                this._titleEl.style.color = '#ffffff';
+            }
+            if (this._subtitleEl) {
+                this._subtitleEl.textContent = subText;
+            }
+            // Apply right-hand counter (default ON in cover mode)
+            const showCounter = this._config.show_counter !== false;
+            if (this._counterWrapEl) {
+                this._counterWrapEl.style.display = showCounter ? 'flex' : 'none';
+            }
+            if (showCounter) {
+                if (this._counterNumEl) {
+                    this._counterNumEl.textContent = `${closedCount} `;
+                    this._counterNumEl.style.color = accentCol;
+                }
+                if (this._counterTotalEl) {
+                    this._counterTotalEl.textContent = `/ ${total}`;
+                }
+                if (this._counterLabelEl) {
+                    this._counterLabelEl.textContent = this._config.counter_label || t('counter.closed_label');
+                }
+            }
+            // Apply details pills (default OFF in cover mode: "sans afficher quel volet est ouvert ou fermé")
+            const showDetails = this._config.show_details === true;
+            if (this._detailWrapEl) {
+                if (!showDetails) {
+                    this._detailWrapEl.style.display = 'none';
+                    this._detailWrapEl.innerHTML = '';
+                }
+                else {
+                    const pills = [];
+                    movingNames.forEach(n => pills.push(`<span class="pill pill-unavail">↕ ${n}</span>`));
+                    partialNames.forEach(n => pills.push(`<span class="pill pill-partial">• ${n}</span>`));
+                    openNames.forEach(n => pills.push(`<span class="pill pill-open">• ${n}</span>`));
+                    unavailNames.forEach(n => pills.push(`<span class="pill pill-unavail">⚠️ ${n} (${t('counter.indispo_short')})</span>`));
+                    if (pills.length > 0) {
+                        this._detailWrapEl.style.display = 'block';
+                        this._detailWrapEl.innerHTML = `<div class="pills-wrap">${pills.join('')}</div>`;
+                    }
+                    else {
+                        this._detailWrapEl.style.display = 'none';
+                        this._detailWrapEl.innerHTML = '';
+                    }
+                }
+            }
+        }
+        _renderBinaryMode() {
+            const t = this._t;
+            const states = this._hass.states || {};
+            const entities = this._getTargetEntities('binary');
+            const total = entities.length;
+            const openNames = [];
+            const unavailNames = [];
+            entities.forEach(entId => {
+                const s = states[entId]?.state;
+                const label = this._getEntityLabel(entId);
+                if (s === 'on') {
+                    openNames.push(label);
+                }
+                else if (s !== 'off') {
+                    unavailNames.push(label);
+                }
+            });
+            const count = openNames.length;
+            const hasUnavail = unavailNames.length > 0;
+            const isOpen = count > 0;
+            const colClosed = toHexColor(this._config.color_closed, '#10b981');
+            const colOpen = toHexColor(this._config.color_open, '#f43f5e');
+            const colUnavail = toHexColor(this._config.color_unavail || this._config.color_moving, '#f59e0b');
+            let icon = 'mdi:window-closed-variant';
+            let iconColor = colClosed;
+            let iconBg = `${colClosed}2E`;
+            let iconGlow = 'none';
+            let title = this._config.name || this._config.title || t('counter.binary_all_closed');
+            let titleColor = '#e6f2f5';
+            if (hasUnavail) {
+                icon = 'mdi:alert-circle';
+                iconColor = colUnavail;
+                iconBg = `${colUnavail}40`;
+                iconGlow = `0 0 16px ${colUnavail}99`;
+                title = unavailNames.length > 1
+                    ? t('counter.binary_unavail_plural', 'count', String(unavailNames.length))
+                    : t('counter.binary_unavail_single', 'count', '1');
+                titleColor = '#ffffff';
+            }
+            else if (isOpen) {
+                icon = 'mdi:window-open-variant';
+                iconColor = colOpen;
+                iconBg = `${colOpen}40`;
+                iconGlow = `0 0 16px ${colOpen}99`;
+                title = count > 1
+                    ? t('counter.binary_open_plural', 'count', String(count))
+                    : t('counter.binary_open_single', 'count', '1');
+                titleColor = '#ffffff';
+            }
+            const bw = typeof this._config.border_width === 'number' && !isNaN(this._config.border_width)
+                ? this._config.border_width
+                : 1.25;
+            let cardBg = `linear-gradient(135deg, ${colClosed}24, rgba(15, 23, 36, 0.88))`;
+            let cardBorder = bw > 0 ? `1px solid ${colClosed}66` : 'none';
+            let cardShadow = `0 4px 18px rgba(0, 0, 0, 0.35), 0 0 14px ${colClosed}2E, inset 0 1px 0 rgba(255, 255, 255, 0.08)`;
+            if (isOpen) {
+                cardBg = `linear-gradient(135deg, ${colOpen}38, rgba(15, 23, 36, 0.92))`;
+                cardBorder = bw > 0 ? `${bw}px solid ${colOpen}` : 'none';
+                cardShadow = `0 0 20px ${colOpen}73, inset 0 1px 0 rgba(255, 255, 255, 0.25)`;
+            }
+            else if (hasUnavail) {
+                cardBg = `linear-gradient(135deg, ${colUnavail}38, rgba(15, 23, 36, 0.92))`;
+                cardBorder = bw > 0 ? `${bw}px solid ${colUnavail}` : 'none';
+                cardShadow = `0 0 20px ${colUnavail}73, inset 0 1px 0 rgba(255, 255, 255, 0.25)`;
+            }
+            if (this._cardEl) {
+                this._cardEl.style.background = cardBg;
+                this._cardEl.style.border = cardBorder;
+                this._cardEl.style.boxShadow = cardShadow;
+            }
+            if (this._iconBadgeEl) {
+                this._iconBadgeEl.style.background = iconBg;
+                this._iconBadgeEl.style.border = `1px solid ${iconColor}66`;
+                this._iconBadgeEl.style.boxShadow = iconGlow;
+            }
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = iconColor;
+            }
+            if (this._titleEl) {
+                this._titleEl.textContent = title;
+                this._titleEl.style.color = titleColor;
+            }
+            const subText = t('counter.binary_subtitle', 'count', String(count)).replace('{total}', String(total));
+            if (this._subtitleEl) {
+                this._subtitleEl.textContent = subText;
+            }
+            // Right-hand counter (default OFF in binary mode, optional ON)
+            const showCounter = this._config.show_counter === true;
+            if (this._counterWrapEl) {
+                this._counterWrapEl.style.display = showCounter ? 'flex' : 'none';
+            }
+            if (showCounter) {
+                if (this._counterNumEl) {
+                    this._counterNumEl.textContent = `${count} `;
+                    this._counterNumEl.style.color = iconColor;
+                }
+                if (this._counterTotalEl) {
+                    this._counterTotalEl.textContent = `/ ${total}`;
+                }
+                if (this._counterLabelEl) {
+                    this._counterLabelEl.textContent = this._config.counter_label || t('counter.open_label');
+                }
+            }
+            // Detail pills (default ON in binary mode: lists open and unavailable sensors)
+            const showDetails = this._config.show_details !== false;
+            if (this._detailWrapEl) {
+                if (!showDetails) {
+                    this._detailWrapEl.style.display = 'none';
+                    this._detailWrapEl.innerHTML = '';
+                }
+                else {
+                    const pills = [];
+                    openNames.forEach(name => {
+                        pills.push(`<span class="pill pill-open">• ${name}</span>`);
+                    });
+                    unavailNames.forEach(name => {
+                        pills.push(`<span class="pill pill-unavail">⚠️ ${name} (${t('counter.indispo_short')})</span>`);
+                    });
+                    this._detailWrapEl.style.display = 'block';
+                    if (pills.length > 0) {
+                        this._detailWrapEl.innerHTML = `<div class="pills-wrap">${pills.join('')}</div>`;
+                    }
+                    else {
+                        const okMsg = this._config.ok_text || this._config.subtitle || t('counter.binary_all_ok');
+                        this._detailWrapEl.innerHTML = `<span class="ok-text">${okMsg}</span>`;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-counter-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-counter-card.
+     *                    Combine le composant natif <ha-form> (mode Volets / Ouvertures,
+     *                    entité de groupe, options d'affichage du compteur et des pastilles
+     *                    nominatives) et le panneau Liquid Glass de personnalisation des
+     *                    teintes d'états et d'épaisseur de bordure.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.6.0-beta.4
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.6.0-beta.4 (2026-11-02) : Création initiale de l'éditeur visuel pour
+     *                                     custom:halo-counter-card.
+     * ==============================================================================
+     */
+    const COUNTER_STATES = [
+        {
+            key: 'color_closed',
+            tk: 'closed',
+            icon: 'mdi:window-shutter',
+            fallback: '#FFB69C',
+            stateEntityKey: 'input_text.couleur_volet_ferme'
+        },
+        {
+            key: 'color_open',
+            tk: 'open',
+            icon: 'mdi:window-shutter-open',
+            fallback: '#96E1FF',
+            stateEntityKey: 'input_text.couleur_volet_ouvert'
+        },
+        {
+            key: 'color_partial',
+            tk: 'partial',
+            icon: 'mdi:window-shutter-cog',
+            fallback: '#38bdf8',
+            stateEntityKey: 'input_text.couleur_volet_partiel'
+        },
+        {
+            key: 'color_moving',
+            tk: 'moving',
+            icon: 'mdi:alert-circle',
+            fallback: '#f59e0b',
+            stateEntityKey: 'input_text.couleur_volet_en_mouvement'
+        }
+    ];
+    const buildSchema = (t) => [
+        {
+            name: 'mode',
+            selector: {
+                select: {
+                    mode: 'dropdown',
+                    options: selectOptions(t, 'counter', [
+                        ['auto', 'mode_auto'],
+                        ['cover', 'mode_cover'],
+                        ['binary', 'mode_binary']
+                    ])
+                }
+            }
+        },
+        { name: 'entity', selector: { entity: { domain: ['cover', 'binary_sensor', 'group'] } } },
+        { name: 'name', selector: { text: {} } },
+        { name: 'counter_label', selector: { text: {} } },
+        { name: 'ok_text', selector: { text: {} } },
+        { name: 'show_counter', selector: { boolean: {} } },
+        { name: 'show_details', selector: { boolean: {} } }
+    ];
+    class HaloCounterCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = 'en';
+            this._activeStateKey = 'color_closed';
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._stateTitleEl = null;
+            this._chipsContainerEl = null;
+            this._borderSliderEl = null;
+            this._borderValBadgeEl = null;
+        }
+        setConfig(config) {
+            const isBinary = config?.mode === 'binary'
+                || (!config?.mode && config?.entity?.startsWith('binary_sensor.'));
+            this._config = {
+                mode: 'auto',
+                border_width: 1.25,
+                show_counter: isBinary ? false : true,
+                show_details: isBinary ? true : false,
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
+            const form = this.querySelector('#form');
+            if (form) {
+                form.hass = hass;
+            }
+            this._syncStylePanel();
+        }
+        _fireConfigChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _getStateDef(key) {
+            return COUNTER_STATES.find(s => s.key === key) || COUNTER_STATES[0];
+        }
+        _getStateFallback(key) {
+            const def = this._getStateDef(key);
+            const isBinary = this._config?.mode === 'binary'
+                || (this._config?.mode !== 'cover' && this._config?.entity?.startsWith('binary_sensor.'));
+            if (isBinary) {
+                if (key === 'color_closed')
+                    return '#10b981';
+                if (key === 'color_open')
+                    return '#f43f5e';
+                if (key === 'color_moving')
+                    return '#f59e0b';
+            }
+            const states = this._hass?.states || {};
+            return states[def.stateEntityKey]?.state || def.fallback;
+        }
+        _getColorHex(key) {
+            const raw = this._config?.[key];
+            const fallback = this._getStateFallback(key);
+            return toHexColor(raw, fallback);
+        }
+        _getColorDisplayName(key) {
+            return colorDisplayName(this._hass, this._config?.[key], 'editor.color_default_halo');
+        }
+        _updateColor(colorValue) {
+            this._config = {
+                ...this._config,
+                [this._activeStateKey]: colorValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _updateBorderWidth(widthValue) {
+            this._config = {
+                ...this._config,
+                border_width: widthValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _setActiveState(key) {
+            this._activeStateKey = key;
+            this._syncStylePanel();
+        }
+        _syncStylePanel() {
+            if (!this._config)
+                return;
+            COUNTER_STATES.forEach(state => {
+                const tabEl = this.querySelector(`#tab-${state.key}`);
+                const dotEl = this.querySelector(`#tab-dot-${state.key}`);
+                const hex = this._getColorHex(state.key);
+                if (tabEl) {
+                    tabEl.classList.toggle('active', state.key === this._activeStateKey);
+                }
+                if (dotEl) {
+                    dotEl.style.backgroundColor = hex;
+                    dotEl.style.boxShadow = `0 0 6px ${hex}88`;
+                }
+            });
+            const activeDef = this._getStateDef(this._activeStateKey);
+            const activeHex = this._getColorHex(this._activeStateKey);
+            const activeName = this._getColorDisplayName(this._activeStateKey);
+            if (this._stateTitleEl) {
+                this._stateTitleEl.textContent = useLocalize(this._hass)('editor.state_color', 'state', useLocalize(this._hass)(`state.${activeDef.tk}`));
+            }
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = activeHex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${activeHex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = activeHex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = activeHex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = activeName;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = activeHex.toUpperCase();
+            }
+            if (this._chipsContainerEl) {
+                const activeRaw = this._config[this._activeStateKey];
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = chipName === activeRaw || chipHex?.toLowerCase() === activeHex.toLowerCase();
+                    btn.classList.toggle('active', isActive);
+                });
+            }
+            const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.25;
+            if (this._borderSliderEl) {
+                this._borderSliderEl.value = String(bw);
+            }
+            if (this._borderValBadgeEl) {
+                this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
+            }
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            delete data.border_width;
+            delete data.color_closed;
+            delete data.color_open;
+            delete data.color_partial;
+            delete data.color_moving;
+            delete data.color_unavail;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const prevMode = this._config.mode;
+            const nextVal = ev.detail.value;
+            this._config = {
+                ...this._config,
+                ...nextVal
+            };
+            if (nextVal.mode && nextVal.mode !== prevMode) {
+                if (nextVal.mode === 'cover') {
+                    this._config.show_counter = true;
+                    this._config.show_details = false;
+                }
+                else if (nextVal.mode === 'binary') {
+                    this._config.show_counter = false;
+                    this._config.show_details = true;
+                }
+                const form = this.querySelector('#form');
+                if (form)
+                    form.data = this._formMetadata();
+            }
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _render() {
+            if (!this._config)
+                return;
+            let form = this.querySelector('#form');
+            if (!form) {
+                const t = useLocalize(this._hass);
+                this._lang = getLang(this._hass);
+                const first = this._getStateDef(this._activeStateKey);
+                this.innerHTML = `
+        <style>
+          ${COMMON_EDITOR_STYLES}
+        </style>
+
+        <div class="halo-editor-wrap">
+          <ha-form id="form"></ha-form>
+          ${stylePanelHtml(t, {
+                title: t('editor.style_title_colors'),
+                tabs: COUNTER_STATES.map(s => ({
+                    key: s.key,
+                    icon: s.icon,
+                    label: t(`state.${s.tk}`),
+                    active: s.key === this._activeStateKey
+                })),
+                leftTitle: t('editor.state_color', 'state', t(`state.${first.tk}`)),
+                borderTitle: t('editor.border_title_single')
+            })}
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    applyFormI18n(form, this._hass, 'counter', buildSchema(useLocalize(this._hass)));
+                    form.data = this._formMetadata();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+                this._initDomBindings();
+            }
+            else {
+                form.data = this._formMetadata();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+            this._syncStylePanel();
+        }
+        _initDomBindings() {
+            this._swatchCircleEl = this.querySelector('#swatch-circle');
+            this._colorInputEl = this.querySelector('#native-color-input');
+            this._swatchNameEl = this.querySelector('#swatch-name');
+            this._swatchHexEl = this.querySelector('#swatch-hex');
+            this._stateTitleEl = this.querySelector('#state-title');
+            this._chipsContainerEl = this.querySelector('#chips-grid');
+            this._borderSliderEl = this.querySelector('#border-slider-input');
+            this._borderValBadgeEl = this.querySelector('#border-val-text');
+            COUNTER_STATES.forEach(s => {
+                this.querySelector(`#tab-${s.key}`)?.addEventListener('click', () => {
+                    this._setActiveState(s.key);
+                });
+            });
+            const triggerColor = () => {
+                if (this._colorInputEl) {
+                    this._colorInputEl.click();
+                }
+            };
+            this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+            this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+            this._colorInputEl?.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val)
+                    this._updateColor(val);
+            });
+            if (this._chipsContainerEl) {
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
+            }
+            this._borderSliderEl?.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    this._updateBorderWidth(val);
+                }
+            });
+        }
+    }
+
+    /**
+     * ==============================================================================
      * 📌 Nom du fichier : src/halo-button-card.ts
      * 📝 Description   : Point d'entrée principal de la suite HALO Button Card.
      *                    Déclaration et enregistrement des Web Components Lovelace,
@@ -9157,11 +10323,15 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.6.0-beta.3
+     * 📦 Version      : 1.6.0-beta.4
      * 📅 Date         : 2026-11-02
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.6.0-beta.4 (2026-11-02) : Intégration de custom:halo-counter-card (tuile
+     *                                     récapitulative et compteur polyvalent pour volets
+     *                                     roulants et ouvertures/fenêtres avec détection des
+     *                                     capteurs indisponibles).
      *   - ✨ v1.6.0-beta.2 (2026-11-02) : Amélioration ergonomique de custom:halo-scene-card :
      *                                     retrait par défaut de la pastille compteur, bascule
      *                                     d'extinction au second clic et typographie compacte
@@ -9202,7 +10372,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.6.0-beta.3';
+    const VERSION = '1.6.0-beta.4';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
@@ -9257,6 +10427,12 @@ var HaloButtonCard = (function (exports) {
         type: 'halo-fold-card',
         name: 'HALO Fold Card',
         description: 'Turnkey collapsible Liquid Glass container card with neon gradient header, badge counter and child cards drawer.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-counter-card',
+        name: 'HALO Counter Card',
+        description: 'Turnkey Liquid Glass summary & counter card for roller shutters (4 states + movement) and window/door openings (open & fault pills).',
         preview: true
     });
     // Register Web Component custom elements
@@ -9314,9 +10490,17 @@ var HaloButtonCard = (function (exports) {
     if (!customElements.get('halo-fold-card-editor')) {
         customElements.define('halo-fold-card-editor', HaloFoldCardEditor);
     }
+    if (!customElements.get('halo-counter-card')) {
+        customElements.define('halo-counter-card', HaloCounterCard);
+    }
+    if (!customElements.get('halo-counter-card-editor')) {
+        customElements.define('halo-counter-card-editor', HaloCounterCardEditor);
+    }
 
     exports.HaloButtonCard = HaloButtonCard;
     exports.HaloButtonCardEditor = HaloButtonCardEditor;
+    exports.HaloCounterCard = HaloCounterCard;
+    exports.HaloCounterCardEditor = HaloCounterCardEditor;
     exports.HaloCoverCard = HaloCoverCard;
     exports.HaloCoverCardEditor = HaloCoverCardEditor;
     exports.HaloCoverColorCard = HaloCoverColorCard;

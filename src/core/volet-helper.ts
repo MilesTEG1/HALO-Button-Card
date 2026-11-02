@@ -97,6 +97,7 @@ export class VoletHelper {
             const e = all[j] as any;
             if (
               e.tagName === 'HALO-COVER-CARD' ||
+              e.tagName === 'HALO-COUNTER-CARD' ||
               e.tagName === 'BUTTON-CARD' ||
               e.tagName === 'CUSTOM-BUTTON-CARD'
             ) {
