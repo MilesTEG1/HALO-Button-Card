@@ -252,7 +252,7 @@
       "cards_title": "Cartes Enfants du Tiroir",
       "cards_subtitle": "Cartes Lovelace affichées lorsque le volet est déplié",
       "add_card": "+ Ajouter une carte",
-      "no_cards": "Aucune carte enfant configurée. Cliquez sur « + Ajouter une carte » ou éditez en YAML."
+      "no_cards": "Aucune carte enfant configurée. Cliquez sur « + Ajouter une carte » pour choisir une carte dans la liste."
     }
   }
 }
