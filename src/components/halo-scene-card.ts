@@ -3,15 +3,23 @@
  * 📌 Nom du fichier : src/components/halo-scene-card.ts
  * 📝 Description   : Composant Web custom:halo-scene-card.
  *                    Tuile d'ambiance et de préréglages visuels (Lumières & Volets)
- *                    Liquid Glass avec halo néon spéculaire réactif, feedback haptique
- *                    et déclenchement séquentiel multi-cibles direct sans script backend.
+ *                    Liquid Glass avec halo néon spéculaire réactif, feedback haptique,
+ *                    bascule extinction au re-clic et déclenchement multi-cibles direct.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.1
- * 📅 Date         : 2026-11-01
+ * 📦 Version      : 1.6.0-beta.2
+ * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.6.0-beta.2 (2026-11-02) : Améliorations ergonomiques de la tuile d'ambiance :
+ *                                     1) Retrait par défaut de la pastille compteur de cibles
+ *                                        (show_badge: false par défaut) pour dégager la lecture.
+ *                                     2) Extinction des lumières commandées lors d'un second clic
+ *                                        sur une tuile déjà active (toggle_on_reclick: true par défaut).
+ *                                     3) Typographie compacte multi-lignes sans troncature en layout
+ *                                        vertical, hauteur uniforme des cartes en grille (height: 100%)
+ *                                        et options title_size / label_size / min_height.
  *   - 🩹 v1.5.1 (2026-11-01) : Ajout du cycle de vie connectedCallback pour restaurer les interactions
  *                              après reconnexion DOM sans changement d'état.
  *   - 🆕 v1.5.0 (2026-11-01) : Création initiale de la carte d'ambiance custom:halo-scene-card :
@@ -22,8 +30,8 @@
  * ==============================================================================
  */
 
-import { HomeAssistant, HaloSceneCardConfig, HaloSceneTargetConfig } from '../types';
-import { resolveThemeColor, toHexColor } from '../core/theme-helper';
+import { HomeAssistant, HaloSceneCardConfig } from '../types';
+import { resolveThemeColor } from '../core/theme-helper';
 import { bindTouchActions, fireHaptic } from '../core/action-handler';
 
 export class HaloSceneCard extends HTMLElement {
@@ -38,6 +46,7 @@ export class HaloSceneCard extends HTMLElement {
   private _textColEl: HTMLElement | null = null;
   private _titleEl: HTMLElement | null = null;
   private _subtitleEl: HTMLElement | null = null;
+  private _badgeWrapEl: HTMLElement | null = null;
   private _badgeEl: HTMLElement | null = null;
 
   // État d'animation
@@ -61,6 +70,8 @@ export class HaloSceneCard extends HTMLElement {
       layout: 'horizontal',
       color: 'Améthyste',
       mode: 'individual',
+      toggle_on_reclick: true,
+      show_badge: false,
       targets: []
     };
   }
@@ -73,6 +84,8 @@ export class HaloSceneCard extends HTMLElement {
       layout: 'horizontal',
       mode: 'individual',
       text_align: config.layout === 'vertical' ? 'center' : 'left',
+      toggle_on_reclick: true,
+      show_badge: false,
       targets: [],
       ...config
     };
@@ -168,11 +181,40 @@ export class HaloSceneCard extends HTMLElement {
     );
   }
 
+  /**
+   * Détermine si les lumières contrôlées par la scène sont actuellement allumées (`on`).
+   */
+  private _areSceneLightsActive(): boolean {
+    if (!this._hass || !this._config?.targets) return false;
+
+    const activeLightTargets = this._config.targets.filter(t => {
+      if (!t.entity) return false;
+      const domain = t.domain || t.entity.split('.')[0];
+      return domain === 'light' && t.state !== 'off';
+    });
+
+    if (activeLightTargets.length === 0) return false;
+
+    return activeLightTargets.some(t => {
+      const stateObj = this._hass.states[t.entity];
+      return stateObj && stateObj.state === 'on';
+    });
+  }
+
+  private _formatCssSize(val?: number | string): string {
+    if (val === undefined || val === null || val === '') return '';
+    if (typeof val === 'number') return `${val}px`;
+    const trimmed = String(val).trim();
+    if (!trimmed) return '';
+    return /^\d+(\.\d+)?$/.test(trimmed) ? `${trimmed}px` : trimmed;
+  }
+
   private _buildDom() {
     this._root.innerHTML = `
       <style>
         :host {
           display: block;
+          height: 100%;
           box-sizing: border-box;
           user-select: none;
           -webkit-user-select: none;
@@ -180,6 +222,7 @@ export class HaloSceneCard extends HTMLElement {
         ha-card {
           position: relative;
           display: flex;
+          height: 100%;
           box-sizing: border-box;
           border-radius: 16px;
           border: 1.5px solid transparent;
@@ -237,35 +280,38 @@ export class HaloSceneCard extends HTMLElement {
           flex-shrink: 0;
         }
 
-        /* Layout Vertical */
+        /* Layout Vertical (Tuile carrée / grille d'ambiances) */
         ha-card.layout-vertical {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 14px 10px 12px 10px;
-          gap: 8px;
-          min-height: 108px;
+          padding: 10px 6px;
+          gap: 5px;
+          min-height: 112px;
         }
         ha-card.layout-vertical .main-icon-btn {
-          width: 46px;
-          height: 46px;
-          min-width: 46px;
-          border-radius: 14px;
+          width: 42px;
+          height: 42px;
+          min-width: 42px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
         }
         ha-card.layout-vertical .text-column {
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
           width: 100%;
           gap: 2px;
         }
         ha-card.layout-vertical .badge-container {
           position: absolute;
-          top: 10px;
-          right: 10px;
+          top: 8px;
+          right: 8px;
         }
 
         /* Typography */
@@ -273,15 +319,22 @@ export class HaloSceneCard extends HTMLElement {
           font-size: 13.5px;
           font-weight: 600;
           color: #f1f5f9;
-          letter-spacing: 0.2px;
+          letter-spacing: 0.15px;
           line-height: 1.25;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
         ha-card.layout-vertical .title {
-          font-size: 13px;
+          font-size: 11px;
           text-align: center;
+          white-space: normal;
+          overflow: visible;
+          text-overflow: clip;
+          word-break: break-word;
+          overflow-wrap: anywhere;
+          line-height: 1.2;
+          width: 100%;
         }
 
         .subtitle {
@@ -294,8 +347,35 @@ export class HaloSceneCard extends HTMLElement {
           white-space: normal;
         }
         ha-card.layout-vertical .subtitle {
-          font-size: 10.5px;
+          font-size: 9.5px;
           text-align: center;
+          white-space: normal;
+          overflow: visible;
+          text-overflow: clip;
+          word-break: break-word;
+          overflow-wrap: anywhere;
+          line-height: 1.15;
+          width: 100%;
+        }
+
+        @media (max-width: 480px) {
+          ha-card.layout-vertical {
+            padding: 8px 4px;
+            gap: 4px;
+            min-height: 106px;
+          }
+          ha-card.layout-vertical .main-icon-btn {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 10px;
+          }
+          ha-card.layout-vertical .title {
+            font-size: 10.5px;
+          }
+          ha-card.layout-vertical .subtitle {
+            font-size: 9px;
+          }
         }
 
         /* Icon styling */
@@ -312,23 +392,23 @@ export class HaloSceneCard extends HTMLElement {
           transform: scale(1.12);
         }
 
-        /* Badge indicator */
+        /* Badge indicator (optionnel) */
         .scene-badge {
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          height: 24px;
-          padding: 0 8px;
-          border-radius: 12px;
-          font-size: 11px;
+          height: 22px;
+          padding: 0 7px;
+          border-radius: 11px;
+          font-size: 10.5px;
           font-weight: 600;
           box-sizing: border-box;
           transition: all 0.2s ease;
         }
         .scene-badge ha-icon {
-          --mdc-icon-size: 14px;
-          width: 14px;
-          height: 14px;
+          --mdc-icon-size: 13px;
+          width: 13px;
+          height: 13px;
         }
       </style>
 
@@ -340,7 +420,7 @@ export class HaloSceneCard extends HTMLElement {
           <div class="title" id="title"></div>
           <div class="subtitle" id="subtitle"></div>
         </div>
-        <div class="badge-container" id="badge-wrap">
+        <div class="badge-container" id="badge-wrap" style="display: none;">
           <div class="scene-badge" id="scene-badge"></div>
         </div>
       </ha-card>
@@ -352,6 +432,7 @@ export class HaloSceneCard extends HTMLElement {
     this._textColEl = this._root.getElementById('text-col');
     this._titleEl = this._root.getElementById('title');
     this._subtitleEl = this._root.getElementById('subtitle');
+    this._badgeWrapEl = this._root.getElementById('badge-wrap');
     this._badgeEl = this._root.getElementById('scene-badge');
   }
 
@@ -364,27 +445,36 @@ export class HaloSceneCard extends HTMLElement {
     const color = this._getEffectiveColor();
     const layout = this._config.layout || 'horizontal';
     const isVertical = layout === 'vertical';
+    const isSceneActive = this._areSceneLightsActive();
 
     // Classes & Layout
-    this._cardEl!.className = `${isVertical ? 'layout-vertical' : 'layout-horizontal'} ${this._isActivating ? 'activating' : ''}`;
+    this._cardEl!.className = `${isVertical ? 'layout-vertical' : 'layout-horizontal'} ${this._isActivating ? 'activating' : ''} ${isSceneActive ? 'scene-active' : ''}`;
+
+    // Hauteur minimale personnalisée éventuelle
+    const customMinHeight = this._formatCssSize(this._config.min_height);
+    this._cardEl!.style.minHeight = customMinHeight;
 
     // Card styling (Border & Glowing Specular Halo)
     const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
       ? this._config.border_width
       : 1.5;
-    const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
+    const cardBorder = bw > 0
+      ? `${bw}px solid ${isSceneActive ? color : `${color}B3`}`
+      : 'none';
     const cardShadow = this._isActivating
-      ? `0 0 28px ${color}99, 0 0 10px ${color}80, inset 0 1px 0 rgba(255, 255, 255, 0.35)`
-      : `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+      ? `0 0 28px ${color}AA, 0 0 10px ${color}88, inset 0 1px 0 rgba(255, 255, 255, 0.35)`
+      : isSceneActive
+        ? `0 0 22px ${color}80, 0 0 8px ${color}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`
+        : `0 0 16px ${color}45, 0 0 5px ${color}30, inset 0 1px 0 rgba(255, 255, 255, 0.14)`;
 
     this._cardEl!.style.border = cardBorder;
     this._cardEl!.style.boxShadow = cardShadow;
 
     // Icon button styling
     if (this._iconBtnEl) {
-      this._iconBtnEl.style.background = `${color}1A`;
-      this._iconBtnEl.style.border = `1px solid ${color}40`;
-      this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+      this._iconBtnEl.style.background = isSceneActive ? `${color}30` : `${color}1A`;
+      this._iconBtnEl.style.border = `1px solid ${isSceneActive ? `${color}88` : `${color}40`}`;
+      this._iconBtnEl.style.boxShadow = isSceneActive ? `0 0 14px ${color}55` : `0 0 10px ${color}26`;
     }
 
     // Icon
@@ -400,9 +490,8 @@ export class HaloSceneCard extends HTMLElement {
     const title = this._config.name || 'Ambiance HALO';
     if (this._titleEl) {
       this._titleEl.textContent = title;
-      if (this._config.text_align) {
-        this._titleEl.style.textAlign = this._config.text_align;
-      }
+      this._titleEl.style.textAlign = this._config.text_align || (isVertical ? 'center' : 'left');
+      this._titleEl.style.fontSize = this._formatCssSize(this._config.title_size);
     }
 
     // Subtitle / Targets count & description
@@ -420,21 +509,23 @@ export class HaloSceneCard extends HTMLElement {
 
     if (this._subtitleEl) {
       this._subtitleEl.textContent = subtitle;
-      if (this._config.text_align) {
-        this._subtitleEl.style.textAlign = this._config.text_align;
-      }
+      this._subtitleEl.style.textAlign = this._config.text_align || (isVertical ? 'center' : 'left');
+      this._subtitleEl.style.fontSize = this._formatCssSize(this._config.label_size);
     }
 
-    // Badge
-    if (this._badgeEl) {
+    // Pastille compteur : désactivée par défaut (show_badge === true uniquement)
+    const showBadge = this._config.show_badge === true;
+    if (this._badgeWrapEl && this._badgeEl) {
       const targetsCount = (this._config.targets || []).length;
-      if (targetsCount > 0) {
+      if (showBadge && targetsCount > 0) {
+        this._badgeWrapEl.style.display = isVertical ? 'block' : 'flex';
         this._badgeEl.style.display = 'inline-flex';
         this._badgeEl.style.background = `${color}20`;
         this._badgeEl.style.border = `1px solid ${color}44`;
         this._badgeEl.style.color = color;
         this._badgeEl.innerHTML = `<ha-icon icon="mdi:check-all"></ha-icon><span>${targetsCount}</span>`;
       } else {
+        this._badgeWrapEl.style.display = 'none';
         this._badgeEl.style.display = 'none';
       }
     }
@@ -465,6 +556,24 @@ export class HaloSceneCard extends HTMLElement {
     try {
       const targets = this._config.targets || [];
       const mode = this._config.mode || 'individual';
+      const toggleOnReclick = this._config.toggle_on_reclick !== false;
+
+      // Si le mode bascule au re-clic est actif (par défaut) et qu'au moins une lumière
+      // contrôlée par la tuile est déjà allumée, le second clic éteint toutes les lumières de la scène.
+      const shouldTurnOffLights = toggleOnReclick && this._areSceneLightsActive();
+
+      if (shouldTurnOffLights) {
+        const lightEntityIds = targets
+          .filter(t => t.entity && (t.domain || t.entity.split('.')[0]) === 'light')
+          .map(t => t.entity);
+
+        for (const entityId of lightEntityIds) {
+          await this._hass.callService('light', 'turn_off', {
+            entity_id: entityId
+          });
+        }
+        return;
+      }
 
       for (const target of targets) {
         if (!target.entity) continue;
