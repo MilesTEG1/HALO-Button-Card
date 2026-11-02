@@ -210,6 +210,23 @@
       "title": "Section title (optional)",
       "icon": "MDI icon (optional)",
       "columns": "Number of columns"
+    },
+    "markdown": {
+      "title": "Banner title (optional)",
+      "title_helper": "Title displayed above callout",
+      "content": "Markdown Content",
+      "content_helper": "Supports rich Markdown (bold, lists, links, code) and Jinja2 templates",
+      "theme_entity": "Theme selector entity (optional)",
+      "theme_entity_helper": "E.g.: input_select.couleur_theme_chauffage",
+      "bar_tab": "Sidebar",
+      "gradient_tab": "Background Gradient",
+      "bar_width_title": "Bar width",
+      "bar_none": "No bar",
+      "bar_default": "Default (4 px)",
+      "bar_max": "Max (8 px)",
+      "bar_badge_off": "0 px (No bar)",
+      "bar_badge_default": "{v} px (Default)",
+      "target_color": "Color: {target}"
     }
   }
 }

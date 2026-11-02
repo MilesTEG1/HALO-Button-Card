@@ -7,11 +7,12 @@
  *                    génération dynamique des feuilles CSS des cartes.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.1
- * 📅 Date         : 2026-11-01
+ * 📦 Version      : 1.5.2
+ * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.5.2 (2026-11-02) : Alias 'Cyan HOLM' ajouté à HALO_PALETTE pour compatibilité.
  *   - ✨ v1.5.1 (2026-11-01) : Support des mots-clés 'theme' et 'auto' dans resolveThemeColor
  *                              pour résolution dynamique vers l'entité de thème ou thèmes globaux,
  *                              et support des codes hexadécimaux directs dans les entités d'état.
@@ -33,6 +34,7 @@ export interface CoverColors {
 
 export const HALO_PALETTE: Record<string, string> = {
   'Cyan': '#26c6da',
+  'Cyan HOLM': '#26c6da',
   'Bleu Céleste': '#38bdf8',
   'Saphir Océan': '#2f86ff',
   'Menthe Givrée': '#00e5a3',

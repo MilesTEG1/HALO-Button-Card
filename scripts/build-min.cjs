@@ -6,11 +6,13 @@
 //                    scrupuleusement la ponctuation {}:;,>+~.
 // 🖥️  Machine cible : VM-203 - Agent-Debian-Caw
 // 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-// 📦 Version      : 1.5.1
-// 📅 Date         : 2026-11-01
+// 📦 Version      : 1.5.2
+// 📅 Date         : 2026-11-02
 // 🤖 LLM utilisé  : Gemini / Antigravity (DÉDALE)
 // ==============================================================================
 // 📋 CHANGELOG (antéchronologique)
+//   - 🆙 v1.5.2 (2026-11-02) : Support bundle v1.5.2 avec extension à 8 cartes Web Components (custom:halo-markdown-card)
+//                              et ajustement du plafond à 180 000 octets.
 //   - 🆙 v1.5.1 (2026-11-01) : Support bundle v1.5.1 avec validation continue des 11 blocs CSS.
 //   - 🆙 v1.5.0 (2026-11-01) : Ajustement du plafond budgétaire MAX_BUNDLE_BYTES à 160 000 octets (160 Ko)
 //                              pour accompagner l'extension du bundle à 7 composants (custom:halo-scene-card).
@@ -25,7 +27,7 @@ const fs = require('fs');
 const path = require('path');
 const terser = require('terser');
 
-const MAX_BUNDLE_BYTES = 160000; // Limite adaptée pour 7 cartes Web Components complètes
+const MAX_BUNDLE_BYTES = 180000; // Limite adaptée pour 8 cartes Web Components complètes
 const INPUT_PATH = path.resolve(__dirname, '../dist/halo-button-card.js');
 const OUTPUT_PATH = path.resolve(__dirname, '../dist/halo-button-card.min.js');
 
