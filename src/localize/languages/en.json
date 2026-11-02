@@ -252,7 +252,7 @@
       "cards_title": "Drawer Child Cards",
       "cards_subtitle": "Lovelace cards displayed when the drawer is expanded",
       "add_card": "+ Add card",
-      "no_cards": "No child cards configured. Click '+ Add card' or edit in YAML."
+      "no_cards": "No child cards configured. Click '+ Add card' to pick a card from the list."
     }
   }
 }

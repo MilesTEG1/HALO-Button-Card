@@ -8,11 +8,14 @@
  *                    cartes enfants Lovelace (cards).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.1
+ * 📦 Version      : 1.6.0-beta.3
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.6.0-beta.3 (2026-11-02) : Cartes enfants sans YAML : sélecteur natif
+ *                                     hui-card-picker + éditeur natif complet
+ *                                     hui-card-element-editor par carte enfant.
  *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Création initiale de l'éditeur visuel
  *                                     halo-fold-card-editor.
  * ==============================================================================
@@ -46,6 +49,10 @@ export class HaloFoldCardEditor extends HTMLElement {
   private _config!: HaloFoldCardConfig;
   private _hass!: HomeAssistant;
   private _lang = 'en';
+  private _lovelace: any;
+  private _picking = false;
+  private _expanded = -1;
+  private _renderToken = 0;
 
   private _swatchCircleEl: HTMLElement | null = null;
   private _colorInputEl: HTMLInputElement | null = null;
@@ -65,6 +72,10 @@ export class HaloFoldCardEditor extends HTMLElement {
       ...config
     };
     this._render();
+  }
+
+  public set lovelace(lovelace: any) {
+    this._lovelace = lovelace;
   }
 
   public set hass(hass: HomeAssistant) {
@@ -167,20 +178,43 @@ export class HaloFoldCardEditor extends HTMLElement {
     return Array.isArray(this._config?.cards) ? [...this._config.cards] : [];
   }
 
-  private _addCard() {
+  private _toggleCardPicker() {
+    this._picking = !this._picking;
+    this._renderCardsManager();
+  }
+
+  private _addCardFromPicker(cardConfig: Record<string, any>) {
+    if (!cardConfig || !cardConfig.type) return;
     const cards = this._getCards();
-    cards.push({
-      type: 'custom:halo-light-card',
-      entity: '',
-      name: ''
-    });
-    this._config = {
-      ...this._config,
-      cards
-    };
+    cards.push(cardConfig);
+    this._expanded = cards.length - 1;
+    this._picking = false;
+    this._config = { ...this._config, cards };
     this._fireConfigChanged();
     this._renderCardsManager();
   }
+
+  private _toggleExpand(index: number) {
+    this._expanded = this._expanded === index ? -1 : index;
+    this._renderCardsManager();
+  }
+
+  /** Charge les éditeurs natifs HA (hui-card-picker / hui-card-element-editor), enregistrés paresseusement. */
+  private async _ensureHuiEditors(): Promise<void> {
+    if (customElements.get('hui-card-picker') && customElements.get('hui-card-element-editor')) return;
+    try {
+      const helpers = await (window as any).loadCardHelpers();
+      const stack = await helpers.createCardElement({ type: 'vertical-stack', cards: [] });
+      await stack?.constructor?.getConfigElement?.();
+      await Promise.all([
+        customElements.whenDefined('hui-card-picker'),
+        customElements.whenDefined('hui-card-element-editor')
+      ]);
+    } catch (_e) {
+      /* éditeurs natifs indisponibles : message d'erreur affiché au rendu */
+    }
+  }
+
 
   private _removeCard(index: number) {
     const cards = this._getCards();
@@ -208,94 +242,96 @@ export class HaloFoldCardEditor extends HTMLElement {
     this._renderCardsManager();
   }
 
-  private _updateCardField(index: number, field: string, value: string) {
-    const cards = this._getCards();
-    if (!cards[index]) return;
-    cards[index] = {
-      ...cards[index],
-      [field]: value
-    };
-    this._config = {
-      ...this._config,
-      cards
-    };
-    this._fireConfigChanged();
+  private _cardTitle(c: Record<string, any>): string {
+    return c.name || c.title || c.entity || c.type || 'Card';
   }
 
-  private _renderCardsManager() {
-    const container = this.querySelector('#cards-container');
+  private _escape(s: string): string {
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(s).replace(/[&<>"']/g, ch => map[ch]);
+  }
+
+  private async _renderCardsManager() {
+    const container = this.querySelector('#cards-container') as HTMLElement | null;
     if (!container) return;
+    const token = ++this._renderToken;
+    await this._ensureHuiEditors();
+    if (token !== this._renderToken) return;
 
     const cards = this._getCards();
     const t = (k: string) => this._t(`editor.fold.${k}`);
+    const nativeOk = !!(customElements.get('hui-card-picker') && customElements.get('hui-card-element-editor'));
+    container.innerHTML = '';
 
-    if (cards.length === 0) {
-      container.innerHTML = `
-        <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; color: var(--secondary-text-color); font-size: 13px;">
-          ${t('no_cards')}
-        </div>
-      `;
+    if (!nativeOk) {
+      container.innerHTML = '<div style="padding:12px;color:var(--error-color,#f44336);font-size:13px;">hui-card-picker / hui-card-element-editor indisponibles.</div>';
       return;
     }
 
-    container.innerHTML = '';
+    if (cards.length === 0 && !this._picking) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; color: var(--secondary-text-color); font-size: 13px;';
+      empty.textContent = t('no_cards');
+      container.appendChild(empty);
+    }
+
     cards.forEach((c, idx) => {
       const row = document.createElement('div');
-      row.style.cssText = `
-        background: var(--card-background-color, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.1));
-        border-radius: 8px;
-        padding: 10px;
-        margin-bottom: 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      `;
+      row.style.cssText = 'background: var(--card-background-color, rgba(255,255,255,0.05)); border: 1px solid var(--divider-color, rgba(255,255,255,0.1)); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px;';
+      const open = this._expanded === idx;
 
       const header = document.createElement('div');
-      header.style.cssText = 'display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;';
+      header.style.cssText = 'display: flex; align-items: center; justify-content: space-between;';
       header.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12.5px;">
-          <ha-icon icon="${c.icon || 'mdi:card-bulleted-outline'}" style="color: #26c6da; --mdc-icon-size: 16px;"></ha-icon>
-          <span>#${idx + 1} — ${c.name || c.entity || c.type || 'Card'}</span>
+        <div class="btn-toggle" style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;cursor:pointer;flex:1;">
+          <ha-icon icon="${open ? 'mdi:chevron-down' : 'mdi:chevron-right'}" style="--mdc-icon-size:18px;"></ha-icon>
+          <span>#${idx + 1} — ${this._escape(this._cardTitle(c))}</span>
+          <span style="font-weight:400;font-size:11px;color:var(--secondary-text-color);">${this._escape(c.type || '')}</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <button type="button" class="btn-up" style="background: none; border: none; color: var(--primary-text-color); cursor: pointer; padding: 2px 6px;" ${idx === 0 ? 'disabled' : ''}>▲</button>
-          <button type="button" class="btn-down" style="background: none; border: none; color: var(--primary-text-color); cursor: pointer; padding: 2px 6px;" ${idx === cards.length - 1 ? 'disabled' : ''}>▼</button>
-          <button type="button" class="btn-del" style="background: none; border: none; color: var(--error-color, #f44336); cursor: pointer; padding: 2px 6px;">✕</button>
-        </div>
-      `;
-
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button type="button" class="btn-up" style="background:none;border:none;color:var(--primary-text-color);cursor:pointer;padding:2px 6px;" ${idx === 0 ? 'disabled' : ''}>▲</button>
+          <button type="button" class="btn-down" style="background:none;border:none;color:var(--primary-text-color);cursor:pointer;padding:2px 6px;" ${idx === cards.length - 1 ? 'disabled' : ''}>▼</button>
+          <button type="button" class="btn-del" style="background:none;border:none;color:var(--error-color,#f44336);cursor:pointer;padding:2px 6px;">✕</button>
+        </div>`;
+      header.querySelector('.btn-toggle')?.addEventListener('click', () => this._toggleExpand(idx));
       header.querySelector('.btn-up')?.addEventListener('click', () => this._moveCard(idx, 'up'));
       header.querySelector('.btn-down')?.addEventListener('click', () => this._moveCard(idx, 'down'));
       header.querySelector('.btn-del')?.addEventListener('click', () => this._removeCard(idx));
-
-      const fields = document.createElement('div');
-      fields.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;';
-      fields.innerHTML = `
-        <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Type</label>
-          <input type="text" class="inp-type" value="${c.type || ''}" placeholder="custom:halo-light-card" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
-        </div>
-        <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Entity</label>
-          <input type="text" class="inp-entity" value="${c.entity || ''}" placeholder="light.exemple" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
-        </div>
-        <div>
-          <label style="display:block; font-size: 11px; color: var(--secondary-text-color); margin-bottom: 2px;">Nom</label>
-          <input type="text" class="inp-name" value="${c.name || ''}" placeholder="Lampe" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.2); color: var(--primary-text-color); font-size: 12px;">
-        </div>
-      `;
-
-      fields.querySelector('.inp-type')?.addEventListener('change', (e: any) => this._updateCardField(idx, 'type', e.target.value));
-      fields.querySelector('.inp-entity')?.addEventListener('change', (e: any) => this._updateCardField(idx, 'entity', e.target.value));
-      fields.querySelector('.inp-name')?.addEventListener('change', (e: any) => this._updateCardField(idx, 'name', e.target.value));
-
       row.appendChild(header);
-      row.appendChild(fields);
+
+      if (open) {
+        // Éditeur natif HA : bascule GUI/YAML, formulaire complet de la carte enfant
+        const ed = document.createElement('hui-card-element-editor') as any;
+        ed.hass = this._hass;
+        ed.lovelace = this._lovelace;
+        ed.value = c;
+        ed.addEventListener('config-changed', (ev: CustomEvent) => {
+          ev.stopPropagation();
+          const newCfg = ev.detail?.config;
+          if (!newCfg) return;
+          const list = this._getCards();
+          list[idx] = newCfg;
+          this._config = { ...this._config, cards: list };
+          this._fireConfigChanged();
+        });
+        ed.addEventListener('GUImode-changed', (ev: Event) => ev.stopPropagation());
+        row.appendChild(ed);
+      }
       container.appendChild(row);
     });
+
+    if (this._picking) {
+      const picker = document.createElement('hui-card-picker') as any;
+      picker.hass = this._hass;
+      picker.lovelace = this._lovelace;
+      picker.addEventListener('config-changed', (ev: CustomEvent) => {
+        ev.stopPropagation();
+        this._addCardFromPicker(ev.detail?.config);
+      });
+      container.appendChild(picker);
+    }
   }
+
 
   private _render() {
     if (!this._config) return;
@@ -380,7 +416,7 @@ export class HaloFoldCardEditor extends HTMLElement {
         buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
       }
 
-      this.querySelector('#btn-add-card')?.addEventListener('click', () => this._addCard());
+      this.querySelector('#btn-add-card')?.addEventListener('click', () => this._toggleCardPicker());
       this._renderCardsManager();
     } else {
       form.data = this._formMetadata();
