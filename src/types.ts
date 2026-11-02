@@ -4,12 +4,12 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.4
+ * 📦 Version      : 1.6.0-beta.5
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 🆕 v1.6.0-beta.4 (2026-11-02) : Ajout de l'interface HaloCounterCardConfig pour
+ *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Ajout de l'interface HaloCounterCardConfig pour
  *                                     la tuile récapitulative et compteur custom:halo-counter-card
  *                                     (modes volets et ouvertures/fenêtres).
  *   - ✨ v1.6.0-beta.2 (2026-11-02) : Enrichissement de HaloSceneCardConfig (title_size,

@@ -9,12 +9,12 @@
  *                    pastilles nominatives des ouvertures actives et capteurs en défaut).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.4
+ * 📦 Version      : 1.6.0-beta.5
  * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
- *   - 🆕 v1.6.0-beta.4 (2026-11-02) : Création initiale de custom:halo-counter-card
+ *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Création initiale de custom:halo-counter-card
  *                                     unifiant tuile_recap_volets_holm et
  *                                     tuile_recap_ouvertures_holm en Web Component natif.
  * ==============================================================================
