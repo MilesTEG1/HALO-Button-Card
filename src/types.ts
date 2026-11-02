@@ -4,11 +4,12 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.1
- * 📅 Date         : 2026-11-01
+ * 📦 Version      : 1.5.2
+ * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.5.2 (2026-11-02) : Ajout du type HaloMarkdownCardConfig pour custom:halo-markdown-card.
  *   - ✨ v1.5.1 (2026-11-01) : Ajout du support des couleurs par état (state_colors,
  *                              color_on, color_off, active_color, inactive_color) pour
  *                              custom:halo-button-card.
@@ -23,6 +24,7 @@
  */
 
 export interface HomeAssistant {
+  connection?: any;
   states: Record<string, HassEntity>;
   callService: (domain: string, service: string, serviceData?: Record<string, any>) => Promise<void>;
   language?: string;
@@ -251,6 +253,21 @@ export interface HaloPaletteCardConfig {
   icon?: string;
   columns?: number;
   colors?: Array<{ name: string; hex: string }>;
+}
+
+export interface HaloMarkdownCardConfig {
+  type: string;
+  content: string;
+  title?: string;
+  color?: string | [number, number, number];
+  bar_color?: string | [number, number, number];
+  gradient_color?: string | [number, number, number];
+  bar_width?: number;
+  border_radius?: number;
+  gradient_opacity?: number;
+  text_color?: string;
+  theme_entity?: string;
+  card_mod?: any;
 }
 
 export interface VoletTrack {

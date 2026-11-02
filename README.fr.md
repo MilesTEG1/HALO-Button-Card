@@ -309,7 +309,7 @@ moving_entity: input_text.couleur_volet_en_mouvement
 
 ---
 
-### 6. `custom:halo-palette-card`
+### 7. `custom:halo-palette-card`
 
 Nuancier interactif officiel des 16 teintes HALO en grille 2 colonnes × 8 lignes avec halo spéculaire et badge de sélection active ✓.
 
@@ -318,6 +318,34 @@ type: custom:halo-palette-card
 entity: input_select.couleur_theme_eclairages
 columns: 2
 ```
+
+---
+
+### 8. `custom:halo-markdown-card`
+
+Encadré de message / callout Markdown au design Liquid Glass avec barre verticale d'accent néon, dégradé horizontal translucide et coins arrondis. Supporte la syntaxe Markdown riche et les templates Jinja2 sans nécessiter `card_mod`.
+
+```yaml
+type: custom:halo-markdown-card
+theme_entity: input_select.couleur_theme_chauffage
+content: |
+  💡 **Fonctionnement du Retour Automatique :**  
+  • **Pendant l'absence :** Maintien du socle à **17,0 °C** sur les 8 radiateurs.  
+  • **Jour J du retour (00h00 - 06h00) :** Relance profonde à **20,0 °C** en **Heures Creuses**.
+```
+
+#### Options de Configuration Disponibles :
+
+| Clé | Type | Défaut | Description |
+| :--- | :---: | :---: | :--- |
+| `content` | `string` | **requis** | Texte Markdown riche ou template Jinja2. |
+| `title` | `string` | *optionnel* | Titre affiché au-dessus de l'encadré. |
+| `color` | `string` | `'theme'` | Couleur d'accent maître (palette HALO ou hex). |
+| `bar_color` | `string` | hérite | Couleur spécifique de la barre verticale gauche. |
+| `gradient_color` | `string` | hérite | Couleur spécifique du dégradé horizontal. |
+| `bar_width` | `number` | `4` | Épaisseur de la barre latérale en pixels (0 à 8 px). |
+| `border_radius` | `number` | `12` | Rayon des coins arrondis (en pixels). |
+| `theme_entity` | `string` | *optionnel* | Entité `input_select` pilotant dynamiquement le thème. |
 
 ---
 

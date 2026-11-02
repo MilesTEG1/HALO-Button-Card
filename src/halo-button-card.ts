@@ -7,11 +7,13 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.0
- * 📅 Date         : 2026-11-01
+ * 📦 Version      : 1.5.2
+ * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.5.2 (2026-11-02) : Intégration de custom:halo-markdown-card (callout Liquid Glass
+ *                              avec barre latérale néon et dégradé horizontal personnalisables).
  *   - 🌟 v1.5.0 (2026-11-01) : Intégration de custom:halo-scene-card (ambiances multi-cibles
  *                              lumières et volets sans script backend) et enrichissement de
  *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
@@ -59,13 +61,15 @@ import { HaloCoverColorCard } from './components/halo-cover-color-card';
 import { HaloCoverColorCardEditor } from './editors/halo-cover-color-card-editor';
 import { HaloPaletteCard } from './components/halo-palette-card';
 import { HaloPaletteCardEditor } from './editors/halo-palette-card-editor';
+import { HaloMarkdownCard } from './components/halo-markdown-card';
+import { HaloMarkdownCardEditor } from './editors/halo-markdown-card-editor';
 
 import { voletHelperInstance } from './core/volet-helper';
 import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.5.0';
+const VERSION = '1.5.2';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -136,6 +140,13 @@ window.customCards.push({
   preview: true
 });
 
+window.customCards.push({
+  type: 'halo-markdown-card',
+  name: 'HALO Markdown Card',
+  description: 'Turnkey Liquid Glass markdown callout with customizable neon accent bar and horizontal gradient.',
+  preview: true
+});
+
 // Register Web Component custom elements
 if (!customElements.get('halo-button-card')) {
   customElements.define('halo-button-card', HaloButtonCard);
@@ -186,6 +197,13 @@ if (!customElements.get('halo-palette-card-editor')) {
   customElements.define('halo-palette-card-editor', HaloPaletteCardEditor);
 }
 
+if (!customElements.get('halo-markdown-card')) {
+  customElements.define('halo-markdown-card', HaloMarkdownCard);
+}
+if (!customElements.get('halo-markdown-card-editor')) {
+  customElements.define('halo-markdown-card-editor', HaloMarkdownCardEditor);
+}
+
 // Export for external consumers
 export {
   HaloButtonCard,
@@ -202,6 +220,8 @@ export {
   HaloCoverColorCardEditor,
   HaloPaletteCard,
   HaloPaletteCardEditor,
+  HaloMarkdownCard,
+  HaloMarkdownCardEditor,
   voletHelperInstance,
   lightHelper,
   themeHelper,

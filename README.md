@@ -309,7 +309,7 @@ moving_entity: input_text.couleur_volet_en_mouvement
 
 ---
 
-### 6. `custom:halo-palette-card`
+### 7. `custom:halo-palette-card`
 
 Official HALO 16-color theme palette selector in a responsive 2×8 grid with active check badges and instant `input_select` synchronization.
 
@@ -318,6 +318,34 @@ type: custom:halo-palette-card
 entity: input_select.couleur_theme_eclairages
 columns: 2
 ```
+
+---
+
+### 8. `custom:halo-markdown-card`
+
+Frosted Liquid Glass markdown callout card with customizable neon accent bar and horizontal gradient. Supports rich Markdown and live Jinja2 template rendering without requiring `card_mod`.
+
+```yaml
+type: custom:halo-markdown-card
+theme_entity: input_select.couleur_theme_chauffage
+content: |
+  💡 **Automatic Return Operation:**  
+  • **During absence:** Baseline at **17.0 °C** on all radiators.  
+  • **Return day (00:00 - 06:00):** Deep warmup at **20.0 °C** during Off-Peak hours.
+```
+
+#### Supported Configuration Options:
+
+| Field | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `content` | `string` | **required** | Rich Markdown text or Jinja2 template. |
+| `title` | `string` | *optional* | Title displayed above the callout box. |
+| `color` | `string` | `'theme'` | Master accent color name or HEX. |
+| `bar_color` | `string` | inherited | Specific color for the left accent bar. |
+| `gradient_color` | `string` | inherited | Specific color for the horizontal gradient. |
+| `bar_width` | `number` | `4` | Left bar thickness in pixels (0 to 8 px). |
+| `border_radius` | `number` | `12` | Corner border radius in pixels. |
+| `theme_entity` | `string` | *optional* | `input_select` driving view/dashboard colors. |
 
 ---
 
