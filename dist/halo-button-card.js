@@ -10,11 +10,12 @@ var HaloButtonCard = (function (exports) {
      *                    génération dynamique des feuilles CSS des cartes.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.5.1
-     * 📅 Date         : 2026-11-01
+     * 📦 Version      : 1.5.2
+     * 📅 Date         : 2026-11-02
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.5.2 (2026-11-02) : Alias 'Cyan HOLM' ajouté à HALO_PALETTE pour compatibilité.
      *   - ✨ v1.5.1 (2026-11-01) : Support des mots-clés 'theme' et 'auto' dans resolveThemeColor
      *                              pour résolution dynamique vers l'entité de thème ou thèmes globaux,
      *                              et support des codes hexadécimaux directs dans les entités d'état.
@@ -26,6 +27,7 @@ var HaloButtonCard = (function (exports) {
      */
     const HALO_PALETTE = {
         'Cyan': '#26c6da',
+        'Cyan HOLM': '#26c6da',
         'Bleu Céleste': '#38bdf8',
         'Saphir Océan': '#2f86ff',
         'Menthe Givrée': '#00e5a3',
@@ -1514,6 +1516,23 @@ var HaloButtonCard = (function (exports) {
           "title": "Section title (optional)",
           "icon": "MDI icon (optional)",
           "columns": "Number of columns"
+        },
+        "markdown": {
+          "title": "Banner title (optional)",
+          "title_helper": "Title displayed above callout",
+          "content": "Markdown Content",
+          "content_helper": "Supports rich Markdown (bold, lists, links, code) and Jinja2 templates",
+          "theme_entity": "Theme selector entity (optional)",
+          "theme_entity_helper": "E.g.: input_select.couleur_theme_chauffage",
+          "bar_tab": "Sidebar",
+          "gradient_tab": "Background Gradient",
+          "bar_width_title": "Bar width",
+          "bar_none": "No bar",
+          "bar_default": "Default (4 px)",
+          "bar_max": "Max (8 px)",
+          "bar_badge_off": "0 px (No bar)",
+          "bar_badge_default": "{v} px (Default)",
+          "target_color": "Color: {target}"
         }
       }
     }
@@ -1731,6 +1750,23 @@ var HaloButtonCard = (function (exports) {
           "title": "Titre de la section (optionnel)",
           "icon": "Icône MDI (optionnel)",
           "columns": "Nombre de colonnes"
+        },
+        "markdown": {
+          "title": "Titre du bandeau (optionnel)",
+          "title_helper": "Titre affiché au-dessus du callout",
+          "content": "Contenu Markdown",
+          "content_helper": "Supporte la syntaxe Markdown riche (gras, listes, liens, code) et les templates Jinja2",
+          "theme_entity": "Entité sélecteur de thème (optionnel)",
+          "theme_entity_helper": "Ex : input_select.couleur_theme_chauffage",
+          "bar_tab": "Barre latérale",
+          "gradient_tab": "Dégradé de fond",
+          "bar_width_title": "Largeur de la barre",
+          "bar_none": "Sans barre",
+          "bar_default": "Défaut (4 px)",
+          "bar_max": "Maxi (8 px)",
+          "bar_badge_off": "0 px (Sans barre)",
+          "bar_badge_default": "{v} px (Défaut)",
+          "target_color": "Couleur : {target}"
         }
       }
     }
@@ -1976,7 +2012,7 @@ var HaloButtonCard = (function (exports) {
             fallback: '#64748b'
         }
     ];
-    const buildSchema$3 = (t) => [
+    const buildSchema$4 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -2238,7 +2274,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "button", buildSchema$3(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "button", buildSchema$4(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -2844,7 +2880,7 @@ var HaloButtonCard = (function (exports) {
      *                              - Style Panel Mix A+B (Halo Swatch + Nuancier 16 teintes + Curseur bordure).
      * ==============================================================================
      */
-    const buildSchema$2 = (t) => [
+    const buildSchema$3 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -3099,7 +3135,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, 'scene', buildSchema$2(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, 'scene', buildSchema$3(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -4091,7 +4127,7 @@ var HaloButtonCard = (function (exports) {
             stateEntityKey: 'input_text.couleur_volet_en_mouvement'
         }
     ];
-    const buildSchema$1 = (_t) => [
+    const buildSchema$2 = (_t) => [
         { name: 'entity', selector: { entity: { domain: 'cover' } } },
         { name: 'name', selector: { text: {} } }
     ];
@@ -4281,7 +4317,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "cover", buildSchema$1(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "cover", buildSchema$2(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -5382,7 +5418,7 @@ var HaloButtonCard = (function (exports) {
             fallback: '#64748b'
         }
     ];
-    const buildSchema = (_t) => [
+    const buildSchema$1 = (_t) => [
         { name: 'entity', selector: { entity: { domain: 'light' } } },
         { name: 'name', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -5588,7 +5624,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "light", buildSchema(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "light", buildSchema$1(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -7446,6 +7482,638 @@ var HaloButtonCard = (function (exports) {
 
     /**
      * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-markdown-card.ts
+     * 📝 Description   : Composant Web custom:halo-markdown-card.
+     *                    Encadré de message / callout Markdown au style Liquid Glass
+     *                    avec barre verticale d'accent néon, dégradé horizontal translucide,
+     *                    coins arrondis et support de la synchronisation de thème.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.5.2
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.5.2 (2026-11-02) : Création initiale de la carte custom:halo-markdown-card :
+     *                              - Style Liquid Glass callout (barre verticale gauche 4px,
+     *                                dégradé 90deg translucide, coins arrondis 12px).
+     *                              - Personnalisation séparée ou harmonisée des teintes
+     *                                (barre latérale bar_color et dégradé gradient_color).
+     *                              - Support de synchronisation dynamique theme_entity.
+     *                              - Support de l'évaluation native Jinja2 via WebSocket HA
+     *                                et rendu propre des blockquotes sans redondance.
+     * ==============================================================================
+     */
+    class HaloMarkdownCard extends HTMLElement {
+        constructor() {
+            super();
+            // Références DOM
+            this._cardEl = null;
+            this._boxEl = null;
+            this._markdownEl = null;
+            this._titleEl = null;
+            // Souscription aux templates Jinja2 temps réel
+            this._unsubRenderTemplate = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        static getConfigElement() {
+            return document.createElement('halo-markdown-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                type: 'custom:halo-markdown-card',
+                content: '> 💡 **Information importante :**  \n> • **Point 1 :** Votre texte d\'explication ou d\'aide.  \n> • **Point 2 :** Mise en forme riche avec gras, listes et emojis.',
+                bar_width: 4,
+                border_radius: 12
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-markdown-card');
+            }
+            this._config = {
+                bar_width: 4,
+                border_radius: 12,
+                gradient_opacity: 0.10,
+                text_color: 'rgba(230, 242, 245, 0.90)',
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+                this._updateContent();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            if (!this._cardEl) {
+                this._render();
+                this._updateContent();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._updateStyles();
+            }
+        }
+        getCardSize() {
+            return 2;
+        }
+        connectedCallback() {
+            if (!this._cardEl && this._config && this._hass) {
+                this._render();
+            }
+            this._updateContent();
+        }
+        disconnectedCallback() {
+            this._cleanupTemplateSubscription();
+        }
+        _cleanupTemplateSubscription() {
+            if (this._unsubRenderTemplate) {
+                this._unsubRenderTemplate.then(unsub => unsub()).catch(() => { });
+                this._unsubRenderTemplate = null;
+            }
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            // Changement de langue ou de thèmes
+            if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+                return true;
+            }
+            // Entité de thème dynamique
+            if (this._config.theme_entity) {
+                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        _getColors() {
+            const baseColor = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity, '#26c6da');
+            const barColor = this._config.bar_color
+                ? resolveThemeColor(this._hass, this._config.bar_color, this._config.theme_entity, baseColor)
+                : baseColor;
+            const gradientColor = this._config.gradient_color
+                ? resolveThemeColor(this._hass, this._config.gradient_color, this._config.theme_entity, baseColor)
+                : baseColor;
+            const opacity = typeof this._config.gradient_opacity === 'number'
+                ? Math.max(0, Math.min(1, this._config.gradient_opacity))
+                : 0.10;
+            const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+            return {
+                barColor: toHexColor(barColor, '#26c6da'),
+                gradientColor: toHexColor(gradientColor, '#26c6da'),
+                alphaHex
+            };
+        }
+        _updateStyles() {
+            if (!this._boxEl)
+                return;
+            const { barColor, gradientColor, alphaHex } = this._getColors();
+            const barWidth = typeof this._config.bar_width === 'number' ? this._config.bar_width : 4;
+            const borderRadius = typeof this._config.border_radius === 'number' ? this._config.border_radius : 12;
+            const textColor = this._config.text_color || 'rgba(230, 242, 245, 0.90)';
+            this._boxEl.style.setProperty('--halo-bar-color', barColor);
+            this._boxEl.style.setProperty('--halo-gradient-color-alpha', `${gradientColor}${alphaHex}`);
+            this._boxEl.style.setProperty('--halo-text-color', textColor);
+            this._boxEl.style.setProperty('--primary-color', barColor);
+            this._boxEl.style.setProperty('--accent-color', barColor);
+            if (barWidth > 0) {
+                this._boxEl.style.borderLeft = `${barWidth}px solid ${barColor}`;
+            }
+            else {
+                this._boxEl.style.borderLeft = 'none';
+            }
+            this._boxEl.style.background = `linear-gradient(90deg, ${gradientColor}${alphaHex} 0%, transparent 100%)`;
+            this._boxEl.style.borderRadius = `0 ${borderRadius}px ${borderRadius}px 0`;
+        }
+        _updateContent() {
+            const rawContent = this._config?.content || '';
+            // Détection de syntaxe Jinja2 {{ ... }} ou {% ... %}
+            if (this._hass?.connection && (rawContent.includes('{{') || rawContent.includes('{%'))) {
+                this._cleanupTemplateSubscription();
+                try {
+                    this._unsubRenderTemplate = this._hass.connection.subscribeMessage((msg) => {
+                        if (msg.result !== undefined && this._markdownEl) {
+                            this._markdownEl.content = msg.result;
+                        }
+                    }, {
+                        type: 'render_template',
+                        template: rawContent,
+                        variables: { config: this._config }
+                    });
+                }
+                catch (err) {
+                    console.warn('HALO Markdown Card: Erreur de souscription au template Jinja2, rendu brut appliqué.', err);
+                    if (this._markdownEl) {
+                        this._markdownEl.content = rawContent;
+                    }
+                }
+            }
+            else {
+                this._cleanupTemplateSubscription();
+                if (this._markdownEl) {
+                    this._markdownEl.content = rawContent;
+                }
+            }
+            if (this._markdownEl && this._hass) {
+                this._markdownEl.hass = this._hass;
+            }
+        }
+        _render() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+        ha-card {
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          padding: 0;
+          margin: 0;
+          overflow: hidden;
+          box-sizing: border-box;
+        }
+        .halo-markdown-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #ffffff;
+          margin-bottom: 6px;
+          padding-left: 2px;
+          letter-spacing: 0.2px;
+        }
+        .halo-markdown-box {
+          position: relative;
+          box-sizing: border-box;
+          border-left: 4px solid var(--halo-bar-color, #26c6da);
+          background: linear-gradient(90deg, var(--halo-gradient-color-alpha, rgba(38, 198, 218, 0.1)) 0%, transparent 100%);
+          border-radius: 0 12px 12px 0;
+          padding: 10px 14px;
+          margin: 0;
+          color: var(--halo-text-color, rgba(230, 242, 245, 0.90));
+          transition: border-color 0.3s ease, background 0.3s ease, border-radius 0.2s ease;
+        }
+        ha-markdown {
+          display: block;
+          font-size: 0.93rem;
+          line-height: 1.5;
+        }
+        /* Intégration propre des blockquotes sans double bordure ni double marge */
+        ha-markdown blockquote {
+          border: none !important;
+          background: transparent !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          color: inherit !important;
+        }
+        ha-markdown p {
+          margin: 0 0 6px 0;
+          line-height: 1.5;
+        }
+        ha-markdown p:last-child {
+          margin-bottom: 0;
+        }
+        ha-markdown strong,
+        ha-markdown b {
+          color: #ffffff;
+          font-weight: 600;
+        }
+        ha-markdown a {
+          color: var(--primary-color, var(--halo-bar-color, #26c6da));
+          text-decoration: none;
+        }
+        ha-markdown a:hover {
+          text-decoration: underline;
+        }
+        ha-markdown code {
+          background: rgba(0, 0, 0, 0.35);
+          padding: 2px 5px;
+          border-radius: 4px;
+          font-family: monospace;
+          font-size: 0.9em;
+          color: #f1f5f9;
+        }
+        ha-markdown ul,
+        ha-markdown ol {
+          margin: 4px 0 6px 18px;
+          padding: 0;
+        }
+        ha-markdown li {
+          margin-bottom: 3px;
+        }
+        ha-markdown li:last-child {
+          margin-bottom: 0;
+        }
+      </style>
+
+      <ha-card id="card">
+        ${this._config.title ? `<div class="halo-markdown-title" id="title">${this._config.title}</div>` : ''}
+        <div class="halo-markdown-box" id="box">
+          <ha-markdown id="markdown"></ha-markdown>
+        </div>
+      </ha-card>
+    `;
+            this._cardEl = this._root.querySelector('#card');
+            this._boxEl = this._root.querySelector('#box');
+            this._markdownEl = this._root.querySelector('#markdown');
+            this._titleEl = this._root.querySelector('#title');
+            this._updateStyles();
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-markdown-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-markdown-card.
+     *                    Combine le composant natif <ha-form> pour le contenu Markdown
+     *                    et les options générales avec le panneau de style Liquid Glass
+     *                    HALO (onglets Barre / Dégradé, nuancier 16 teintes et curseur).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.5.2
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.5.2 (2026-11-02) : Création initiale de l'éditeur halo-markdown-card :
+     *                              - Saisie du Markdown riche via champ multiligne natif.
+     *                              - Panneau Liquid Glass avec onglets dédiés Barre / Dégradé.
+     *                              - Sélecteur de couleur Mix A+B (Médaillon halo + Nuancier 16 teintes + Pipette).
+     *                              - Curseur interactif de largeur de barre (0 à 8 px).
+     * ==============================================================================
+     */
+    const TABS = [
+        { key: 'bar', icon: 'mdi:border-left-variant', labelKey: 'bar_tab' },
+        { key: 'gradient', icon: 'mdi:gradient-horizontal', labelKey: 'gradient_tab' }
+    ];
+    const buildSchema = (_t) => [
+        { name: 'title', selector: { text: {} } },
+        { name: 'content', selector: { text: { multiline: true } } },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
+    ];
+    class HaloMarkdownCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = 'en';
+            this._activeTab = 'bar';
+            // Références DOM Style Panel
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._targetTitleEl = null;
+            this._chipsContainerEl = null;
+            this._barSliderEl = null;
+            this._barValBadgeEl = null;
+        }
+        setConfig(config) {
+            this._config = {
+                content: '',
+                bar_width: 4,
+                border_radius: 12,
+                gradient_opacity: 0.10,
+                text_color: 'rgba(230, 242, 245, 0.90)',
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
+            const form = this.querySelector('#form');
+            if (form) {
+                form.hass = hass;
+            }
+        }
+        _fireConfigChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _getCurrentTabColor() {
+            if (this._activeTab === 'bar') {
+                const raw = this._config?.bar_color || this._config?.color || 'Cyan';
+                return toHexColor(raw, '#26c6da');
+            }
+            const raw = this._config?.gradient_color || this._config?.color || 'Cyan';
+            return toHexColor(raw, '#26c6da');
+        }
+        _getCurrentTabRawColor() {
+            if (this._activeTab === 'bar') {
+                return this._config?.bar_color || this._config?.color || 'Cyan';
+            }
+            return this._config?.gradient_color || this._config?.color || 'Cyan';
+        }
+        _getColorDisplayName() {
+            const raw = this._getCurrentTabRawColor();
+            return colorDisplayName(this._hass, raw, 'editor.color_default_halo');
+        }
+        _updateColor(colorValue) {
+            if (this._activeTab === 'bar') {
+                this._config = {
+                    ...this._config,
+                    bar_color: colorValue
+                };
+            }
+            else {
+                this._config = {
+                    ...this._config,
+                    gradient_color: colorValue
+                };
+            }
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _updateBarWidth(widthValue) {
+            this._config = {
+                ...this._config,
+                bar_width: widthValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _setActiveTab(tabKey) {
+            this._activeTab = tabKey;
+            TABS.forEach(tab => {
+                const tabEl = this.querySelector(`#tab-${tab.key}`);
+                if (tabEl) {
+                    if (tab.key === tabKey) {
+                        tabEl.classList.add('active');
+                    }
+                    else {
+                        tabEl.classList.remove('active');
+                    }
+                }
+            });
+            const t = useLocalize(this._hass);
+            if (this._targetTitleEl) {
+                const activeDef = TABS.find(tDef => tDef.key === tabKey);
+                this._targetTitleEl.textContent = t('editor.markdown.target_color', 'target', t(`editor.markdown.${activeDef.labelKey}`));
+            }
+            this._syncStylePanel();
+        }
+        _barBadgeText(bw) {
+            const t = useLocalize(this._hass);
+            if (bw === 0)
+                return t('editor.markdown.bar_badge_off');
+            if (bw === 4)
+                return t('editor.markdown.bar_badge_default', 'v', String(bw));
+            return `${bw} px`;
+        }
+        _syncStylePanel() {
+            const hex = this._getCurrentTabColor();
+            const name = this._getColorDisplayName();
+            const bw = typeof this._config?.bar_width === 'number' ? this._config.bar_width : 4;
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = hex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = hex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = hex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = name;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = hex.toUpperCase();
+            }
+            // Pastilles témoins d'onglets
+            const barHex = toHexColor(this._config?.bar_color || this._config?.color || 'Cyan', '#26c6da');
+            const gradHex = toHexColor(this._config?.gradient_color || this._config?.color || 'Cyan', '#26c6da');
+            const dotBar = this.querySelector('#tab-dot-bar');
+            if (dotBar) {
+                dotBar.style.backgroundColor = barHex;
+                dotBar.style.boxShadow = `0 0 6px ${barHex}`;
+            }
+            const dotGrad = this.querySelector('#tab-dot-gradient');
+            if (dotGrad) {
+                dotGrad.style.backgroundColor = gradHex;
+                dotGrad.style.boxShadow = `0 0 6px ${gradHex}`;
+            }
+            // Nuancier rapide
+            if (this._chipsContainerEl) {
+                const activeRaw = this._getCurrentTabRawColor();
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = (chipName === activeRaw || chipHex?.toLowerCase() === hex.toLowerCase());
+                    btn.classList.toggle('active', Boolean(isActive));
+                });
+            }
+            // Slider barre
+            if (this._barSliderEl && parseFloat(this._barSliderEl.value) !== bw) {
+                this._barSliderEl.value = String(bw);
+            }
+            if (this._barValBadgeEl) {
+                this._barValBadgeEl.textContent = this._barBadgeText(bw);
+            }
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            delete data.color;
+            delete data.bar_color;
+            delete data.gradient_color;
+            delete data.bar_width;
+            delete data.border_radius;
+            delete data.gradient_opacity;
+            delete data.text_color;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            this._config = {
+                ...this._config,
+                ...ev.detail.value
+            };
+            this._fireConfigChanged();
+        }
+        _render() {
+            this._lang = getLang(this._hass);
+            const t = useLocalize(this._hass);
+            let form = this.querySelector('#form');
+            if (!form) {
+                const activeDef = TABS.find(tab => tab.key === this._activeTab);
+                const small = (k) => `<small style="opacity: 0.6;">${t(`editor.markdown.${k}`)}</small>`;
+                this.innerHTML = `
+        <style>
+          ${COMMON_EDITOR_STYLES}
+        </style>
+
+        <div class="halo-editor-wrap">
+          <ha-form id="form"></ha-form>
+
+          <div class="halo-style-section">
+            <div class="halo-section-header">
+              <ha-icon icon="mdi:palette-swatch"></ha-icon>
+              <span>${t('editor.style_title_colors')}</span>
+            </div>
+
+            <div class="halo-state-tabs">
+              ${TABS.map(tab => `
+                <div class="halo-state-tab ${tab.key === this._activeTab ? 'active' : ''}" id="tab-${tab.key}" data-key="${tab.key}">
+                  <span class="halo-state-tab-dot" id="tab-dot-${tab.key}"></span>
+                  <ha-icon icon="${tab.icon}"></ha-icon>
+                  <span>${t(`editor.markdown.${tab.labelKey}`)}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="halo-style-grid">
+              <div class="halo-col">
+                <div class="halo-col-header">
+                  <span class="halo-col-title" id="state-title">
+                    ${t('editor.markdown.target_color', 'target', t(`editor.markdown.${activeDef.labelKey}`))}
+                  </span>
+                </div>
+                <div class="halo-swatch-card" id="swatch-card">
+                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="${t('editor.open_palette')}">
+                    <div class="halo-swatch-circle" id="swatch-circle"></div>
+                    <input type="color" id="native-color-input" class="hidden-color-input" />
+                  </div>
+                  <div class="halo-swatch-meta">
+                    <span class="halo-color-title" id="swatch-name"></span>
+                    <span class="halo-color-hex" id="swatch-hex"></span>
+                  </div>
+                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="${t('editor.open_wheel')}">
+                    <ha-icon icon="mdi:eyedropper"></ha-icon>
+                  </button>
+                </div>
+                <div class="halo-chips-label">${t('editor.chips_label')}</div>
+                <div class="halo-chips-grid" id="chips-grid"></div>
+              </div>
+
+              <div class="halo-col">
+                <div class="halo-col-header">
+                  <span class="halo-col-title">${t('editor.markdown.bar_width_title')}</span>
+                  <span class="halo-badge-val" id="border-val-text"></span>
+                </div>
+                <div class="halo-border-card">
+                  <input type="range" id="border-slider-input" min="0" max="8" step="0.5" value="4" class="halo-range-slider" />
+                  <div class="slider-ticks">
+                    <span>0 px<br>${small('bar_none')}</span>
+                    <span style="text-align: center;">4 px<br>${small('bar_default')}</span>
+                    <span style="text-align: right;">8 px<br>${small('bar_max')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    applyFormI18n(form, this._hass, 'markdown', buildSchema(useLocalize(this._hass)));
+                    form.data = this._formMetadata();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+                this._initDomBindings();
+            }
+            else {
+                form.data = this._formMetadata();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+            this._syncStylePanel();
+        }
+        _initDomBindings() {
+            this._swatchCircleEl = this.querySelector('#swatch-circle');
+            this._colorInputEl = this.querySelector('#native-color-input');
+            this._swatchNameEl = this.querySelector('#swatch-name');
+            this._swatchHexEl = this.querySelector('#swatch-hex');
+            this._targetTitleEl = this.querySelector('#state-title');
+            this._chipsContainerEl = this.querySelector('#chips-grid');
+            this._barSliderEl = this.querySelector('#border-slider-input');
+            this._barValBadgeEl = this.querySelector('#border-val-text');
+            // 1. Clics sur les onglets (Barre latérale / Dégradé de fond)
+            TABS.forEach(tab => {
+                this.querySelector(`#tab-${tab.key}`)?.addEventListener('click', () => {
+                    this._setActiveTab(tab.key);
+                });
+            });
+            // 2. Déclencheur input color natif
+            const triggerColor = () => {
+                if (this._colorInputEl) {
+                    this._colorInputEl.click();
+                }
+            };
+            this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+            this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+            this._colorInputEl?.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val)
+                    this._updateColor(val);
+            });
+            // 3. Nuancier officiel HALO 16 teintes
+            if (this._chipsContainerEl) {
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
+            }
+            // 4. Curseur de largeur de barre
+            this._barSliderEl?.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    this._updateBarWidth(val);
+                }
+            });
+        }
+    }
+
+    /**
+     * ==============================================================================
      * 📌 Nom du fichier : src/halo-button-card.ts
      * 📝 Description   : Point d'entrée principal de la suite HALO Button Card.
      *                    Déclaration et enregistrement des Web Components Lovelace,
@@ -7453,11 +8121,13 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.5.0
-     * 📅 Date         : 2026-11-01
+     * 📦 Version      : 1.5.2
+     * 📅 Date         : 2026-11-02
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.5.2 (2026-11-02) : Intégration de custom:halo-markdown-card (callout Liquid Glass
+     *                              avec barre latérale néon et dégradé horizontal personnalisables).
      *   - 🌟 v1.5.0 (2026-11-01) : Intégration de custom:halo-scene-card (ambiances multi-cibles
      *                              lumières et volets sans script backend) et enrichissement de
      *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
@@ -7490,7 +8160,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.5.0';
+    const VERSION = '1.5.2';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
@@ -7533,6 +8203,12 @@ var HaloButtonCard = (function (exports) {
         type: 'halo-palette-card',
         name: 'HALO Palette Card',
         description: 'Official 16-color HALO theme palette picker with glowing halos and active check badges.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-markdown-card',
+        name: 'HALO Markdown Card',
+        description: 'Turnkey Liquid Glass markdown callout with customizable neon accent bar and horizontal gradient.',
         preview: true
     });
     // Register Web Component custom elements
@@ -7578,6 +8254,12 @@ var HaloButtonCard = (function (exports) {
     if (!customElements.get('halo-palette-card-editor')) {
         customElements.define('halo-palette-card-editor', HaloPaletteCardEditor);
     }
+    if (!customElements.get('halo-markdown-card')) {
+        customElements.define('halo-markdown-card', HaloMarkdownCard);
+    }
+    if (!customElements.get('halo-markdown-card-editor')) {
+        customElements.define('halo-markdown-card-editor', HaloMarkdownCardEditor);
+    }
 
     exports.HaloButtonCard = HaloButtonCard;
     exports.HaloButtonCardEditor = HaloButtonCardEditor;
@@ -7587,6 +8269,8 @@ var HaloButtonCard = (function (exports) {
     exports.HaloCoverColorCardEditor = HaloCoverColorCardEditor;
     exports.HaloLightCard = HaloLightCard;
     exports.HaloLightCardEditor = HaloLightCardEditor;
+    exports.HaloMarkdownCard = HaloMarkdownCard;
+    exports.HaloMarkdownCardEditor = HaloMarkdownCardEditor;
     exports.HaloPaletteCard = HaloPaletteCard;
     exports.HaloPaletteCardEditor = HaloPaletteCardEditor;
     exports.HaloSceneCard = HaloSceneCard;
