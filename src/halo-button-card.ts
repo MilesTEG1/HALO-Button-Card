@@ -7,11 +7,16 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.7.0-beta.1
+ * 📦 Version      : 1.7.1-beta.1
  * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.1-beta.1 (2026-11-03) : custom:halo-fold-card : contour en pointillé paramétrable
+ *                                     avec halo néon léger et fond Liquid Glass matérialisant d'un
+ *                                     seul tenant l'ensemble des cartes repliées (show_border,
+ *                                     border_style, border_width, border_color, show_halo, halo_color,
+ *                                     enclosure_padding, border_radius) et contrôles éditeur UI.
  *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Évolution majeure custom:halo-button-card :
  *                                     - Support d'un 3ème statut de couleur 'unavailable' (fallback Ambre Doré).
  *                                     - Style sobre 'subtle_inactive' (alias 'hybrid_style') sans halo envahissant
@@ -90,7 +95,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.7.0-beta.1';
+const VERSION = '1.7.1-beta.1';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
