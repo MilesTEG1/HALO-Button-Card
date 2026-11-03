@@ -9,11 +9,17 @@
  *                    compteur et bouton pill Afficher / Masquer.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.1
- * 📅 Date         : 2026-11-02
+ * 📦 Version      : 1.7.1-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Ajout du conteneur d'enclos avec contour en pointillé
+ *                                     paramétrable (dashed, dotted, solid) et halo néon léger
+ *                                     Liquid Glass matérialisant le bloc complet des cartes
+ *                                     repliées sans découper chaque carte individuellement
+ *                                     (show_border, border_style, border_width, border_color,
+ *                                     show_halo, halo_color, enclosure_padding, border_radius).
  *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Création initiale du composant conteneur
  *                                     repliable custom:halo-fold-card :
  *                                     • En-tête raffiné aligné sur halo-separator-card
@@ -53,6 +59,7 @@ export class HaloFoldCard extends HTMLElement {
   private _toggleLabelEl: HTMLElement | null = null;
   private _toggleIconEl: HTMLElement | null = null;
   private _drawerEl: HTMLElement | null = null;
+  private _enclosureEl: HTMLElement | null = null;
   private _gridEl: HTMLElement | null = null;
 
   constructor() {
@@ -74,6 +81,11 @@ export class HaloFoldCard extends HTMLElement {
       icon: 'mdi:tune-vertical',
       initial_collapsed: true,
       columns: 1,
+      show_border: true,
+      border_style: 'dashed',
+      border_width: 1.5,
+      show_halo: true,
+      enclosure_padding: 10,
       cards: []
     };
   }
@@ -95,6 +107,12 @@ export class HaloFoldCard extends HTMLElement {
       columns: 1,
       gap: 10,
       initial_collapsed: true,
+      show_border: true,
+      border_style: 'dashed',
+      border_width: 1.5,
+      show_halo: true,
+      enclosure_padding: 10,
+      border_radius: 14,
       ...config
     };
 
@@ -296,11 +314,31 @@ export class HaloFoldCard extends HTMLElement {
           pointer-events: none;
         }
         .halo-fold-drawer.expanded {
-          max-height: 2500px;
+          max-height: 3500px;
           opacity: 1;
           margin-top: 10px;
           overflow: visible;
           pointer-events: auto;
+        }
+        .halo-fold-enclosure {
+          width: 100%;
+          box-sizing: border-box;
+          border-radius: var(--halo-fold-radius, 14px);
+          padding: var(--halo-fold-padding, 10px);
+          border: var(--halo-fold-border, 1.5px dashed rgba(38, 198, 218, 0.5));
+          box-shadow: var(--halo-fold-shadow, 0 0 14px rgba(38, 198, 218, 0.25), inset 0 0 12px rgba(38, 198, 218, 0.08));
+          background: var(--halo-fold-bg, linear-gradient(135deg, rgba(38, 198, 218, 0.04), rgba(15, 23, 42, 0.40)));
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: border 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+        .halo-fold-enclosure.no-border {
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          padding: 0 !important;
         }
         .halo-fold-grid {
           display: grid;
@@ -329,7 +367,9 @@ export class HaloFoldCard extends HTMLElement {
           </div>
         </div>
         <div class="halo-fold-drawer" id="fold-drawer">
-          <div class="halo-fold-grid" id="fold-grid"></div>
+          <div class="halo-fold-enclosure" id="fold-enclosure">
+            <div class="halo-fold-grid" id="fold-grid"></div>
+          </div>
         </div>
       </div>
     `;
@@ -344,6 +384,7 @@ export class HaloFoldCard extends HTMLElement {
     this._toggleLabelEl = this._root.getElementById('toggle-label');
     this._toggleIconEl = this._root.getElementById('toggle-icon');
     this._drawerEl = this._root.getElementById('fold-drawer');
+    this._enclosureEl = this._root.getElementById('fold-enclosure');
     this._gridEl = this._root.getElementById('fold-grid');
 
     if (this._headerEl) {
@@ -501,6 +542,53 @@ export class HaloFoldCard extends HTMLElement {
 
     if (this._drawerEl) {
       this._drawerEl.className = this._isExpanded ? 'halo-fold-drawer expanded' : 'halo-fold-drawer';
+    }
+
+    const borderColor = resolveThemeColor(
+      this._hass,
+      this._config.border_color,
+      this._config.theme_entity,
+      col
+    );
+
+    const haloColor = resolveThemeColor(
+      this._hass,
+      this._config.halo_color,
+      this._config.theme_entity,
+      borderColor
+    );
+
+    if (this._enclosureEl) {
+      const showBorder = this._config.show_border !== false;
+      const borderStyle = this._config.border_style || 'dashed';
+      const cardCount = Array.isArray(this._config.cards) ? this._config.cards.length : 0;
+
+      if (cardCount === 0 || !showBorder || borderStyle === 'none') {
+        this._enclosureEl.className = 'halo-fold-enclosure no-border';
+        this._enclosureEl.style.removeProperty('--halo-fold-border');
+        this._enclosureEl.style.removeProperty('--halo-fold-shadow');
+        this._enclosureEl.style.removeProperty('--halo-fold-bg');
+        this._enclosureEl.style.removeProperty('--halo-fold-padding');
+        this._enclosureEl.style.removeProperty('--halo-fold-radius');
+      } else {
+        this._enclosureEl.className = 'halo-fold-enclosure';
+        const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.5;
+        const pad = typeof this._config.enclosure_padding === 'number' ? this._config.enclosure_padding : 10;
+        const radius = typeof this._config.border_radius === 'number' ? this._config.border_radius : 14;
+        const showHalo = this._config.show_halo !== false;
+
+        const borderCss = `${bw}px ${borderStyle} ${borderColor}80`;
+        const haloCss = showHalo
+          ? `0 0 14px ${haloColor}33, inset 0 0 14px ${haloColor}10`
+          : 'none';
+        const bgCss = `linear-gradient(135deg, ${borderColor}0a, rgba(15, 23, 42, 0.40))`;
+
+        this._enclosureEl.style.setProperty('--halo-fold-border', borderCss);
+        this._enclosureEl.style.setProperty('--halo-fold-shadow', haloCss);
+        this._enclosureEl.style.setProperty('--halo-fold-bg', bgCss);
+        this._enclosureEl.style.setProperty('--halo-fold-padding', `${pad}px`);
+        this._enclosureEl.style.setProperty('--halo-fold-radius', `${radius}px`);
+      }
     }
 
     if (this._gridEl) {

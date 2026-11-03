@@ -8,11 +8,14 @@
  *                    cartes enfants Lovelace (cards).
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.3
- * 📅 Date         : 2026-11-02
+ * 📦 Version      : 1.7.1-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Intégration des contrôles GUI pour le contour en pointillé,
+ *                                     le style de ligne (pointillés, points, continu), le halo néon léger,
+ *                                     l'épaisseur de bordure et l'espacement interne de l'enclos.
  *   - ✨ v1.6.0-beta.3 (2026-11-02) : Cartes enfants sans YAML : sélecteur natif
  *                                     hui-card-picker + éditeur natif complet
  *                                     hui-card-element-editor par carte enfant.
@@ -42,7 +45,43 @@ const buildSchema = (t: ReturnType<typeof useLocalize>) => [
   },
   { name: 'label_on', selector: { text: {} } },
   { name: 'label_off', selector: { text: {} } },
-  { name: 'toggle_entity', selector: { entity: { domain: 'input_boolean' } } }
+  { name: 'toggle_entity', selector: { entity: { domain: 'input_boolean' } } },
+  { name: 'show_border', selector: { boolean: {} } },
+  {
+    name: 'border_style',
+    selector: {
+      select: {
+        options: selectOptions(t, 'fold', [
+          ['dashed', 'style_dashed'],
+          ['dotted', 'style_dotted'],
+          ['solid', 'style_solid']
+        ])
+      }
+    }
+  },
+  { name: 'show_halo', selector: { boolean: {} } },
+  {
+    name: 'border_width',
+    selector: {
+      number: {
+        min: 1,
+        max: 4,
+        step: 0.5,
+        mode: 'slider'
+      }
+    }
+  },
+  {
+    name: 'enclosure_padding',
+    selector: {
+      number: {
+        min: 0,
+        max: 24,
+        step: 2,
+        mode: 'slider'
+      }
+    }
+  }
 ];
 
 export class HaloFoldCardEditor extends HTMLElement {
@@ -156,6 +195,21 @@ export class HaloFoldCardEditor extends HTMLElement {
     if (data.columns !== undefined) {
       data.columns = String(data.columns);
     }
+    if (data.show_border === undefined) {
+      data.show_border = true;
+    }
+    if (data.border_style === undefined) {
+      data.border_style = 'dashed';
+    }
+    if (data.show_halo === undefined) {
+      data.show_halo = true;
+    }
+    if (data.border_width === undefined) {
+      data.border_width = 1.5;
+    }
+    if (data.enclosure_padding === undefined) {
+      data.enclosure_padding = 10;
+    }
     delete data.color;
     delete data.cards;
     return data;
@@ -166,6 +220,13 @@ export class HaloFoldCardEditor extends HTMLElement {
     const val = { ...ev.detail.value };
     if (val.columns !== undefined) {
       val.columns = parseInt(String(val.columns), 10) || 1;
+    }
+    if (val.border_width !== undefined) {
+      val.border_width = parseFloat(String(val.border_width)) || 1.5;
+    }
+    if (val.enclosure_padding !== undefined) {
+      val.enclosure_padding = parseInt(String(val.enclosure_padding), 10);
+      if (isNaN(val.enclosure_padding)) val.enclosure_padding = 10;
     }
     this._config = {
       ...this._config,
