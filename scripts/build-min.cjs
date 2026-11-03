@@ -6,11 +6,12 @@
 //                    scrupuleusement la ponctuation {}:;,>+~.
 // 🖥️  Machine cible : VM-203 - Agent-Debian-Caw
 // 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-// 📦 Version      : 1.6.0-beta.5
-// 📅 Date         : 2026-11-02
+// 📦 Version      : 1.7.0-beta.1
+// 📅 Date         : 2026-11-03
 // 🤖 LLM utilisé  : Gemini / Antigravity (DÉDALE)
 // ==============================================================================
 // 📋 CHANGELOG (antéchronologique)
+//   - 🆙 v1.7.0-beta.1 (2026-11-03) : Support bundle v1.7.0-beta.1 (évolutions tripartite et subtle_inactive de custom:halo-button-card).
 //   - 🆙 v1.6.0-beta.5 (2026-11-02) : Support bundle v1.6.0-beta.5 avec extension à 10 cartes Web Components
 //                                     (custom:halo-counter-card) et ajustement du plafond à 230 000 octets.
 //   - 🆙 v1.6.0-beta.2 (2026-11-02) : Support bundle v1.6.0-beta.2 (améliorations halo-scene-card).

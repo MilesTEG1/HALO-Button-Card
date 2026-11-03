@@ -4,11 +4,15 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.5
- * 📅 Date         : 2026-11-02
+ * 📦 Version      : 1.7.0-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Ajout dans HaloButtonCardConfig des propriétés
+ *                                     color_unavailable (alias color_unavail, unavail_color),
+ *                                     subtle_inactive (alias hybrid_style), binary_mode,
+ *                                     is_door et is_velux.
  *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Ajout de l'interface HaloCounterCardConfig pour
  *                                     la tuile récapitulative et compteur custom:halo-counter-card
  *                                     (modes volets et ouvertures/fenêtres).
@@ -106,8 +110,16 @@ export interface HaloButtonCardConfig {
   state_colors?: boolean;
   color_on?: string | [number, number, number];
   color_off?: string | [number, number, number];
+  color_unavailable?: string | [number, number, number];
+  color_unavail?: string | [number, number, number];
+  unavail_color?: string | [number, number, number];
   active_color?: string | [number, number, number];
   inactive_color?: string | [number, number, number];
+  subtle_inactive?: boolean;
+  hybrid_style?: boolean;
+  binary_mode?: boolean;
+  is_door?: boolean;
+  is_velux?: boolean;
   linked_entity?: string;
   linked_attribute?: string;
   display_format?: 'raw' | 'date_short' | 'date_long' | 'date_time_fr' | 'time_only' | 'relative';
