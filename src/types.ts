@@ -4,11 +4,15 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.7.0-beta.1
+ * 📦 Version      : 1.7.1-beta.1
  * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Ajout dans HaloFoldCardConfig des propriétés de contour
+ *                                     en pointillé et halo néon léger paramétrables (show_border,
+ *                                     border_style, border_width, border_color, show_halo, halo_color,
+ *                                     enclosure_padding, border_radius).
  *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Ajout dans HaloButtonCardConfig des propriétés
  *                                     color_unavailable (alias color_unavail, unavail_color),
  *                                     subtle_inactive (alias hybrid_style), binary_mode,
@@ -309,6 +313,15 @@ export interface HaloFoldCardConfig {
   columns?: number | string;
   gap?: number;
   cards?: Array<Record<string, any>>;
+  // Contour en pointillé & halo néon léger paramétrables (matérialisant l'enclos des cartes)
+  show_border?: boolean;
+  border_style?: 'dashed' | 'dotted' | 'solid' | 'none';
+  border_width?: number;
+  border_color?: string | [number, number, number];
+  show_halo?: boolean;
+  halo_color?: string | [number, number, number];
+  enclosure_padding?: number;
+  border_radius?: number;
 }
 
 export interface HaloCounterCardConfig {

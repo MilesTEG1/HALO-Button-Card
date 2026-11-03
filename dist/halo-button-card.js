@@ -1701,6 +1701,14 @@ var HaloButtonCard = (function (exports) {
           "label_on": "Button label when expanded (e.g. Hide)",
           "label_off": "Button label when collapsed (e.g. Show)",
           "toggle_entity": "Synchronized external boolean entity (optional)",
+          "show_border": "Border outline enclosing all folded cards",
+          "border_style": "Border style",
+          "style_dashed": "Fine dashed line (Recommended)",
+          "style_dotted": "Regular dots",
+          "style_solid": "Solid line",
+          "show_halo": "Soft ambient halo around enclosure",
+          "border_width": "Border width (px)",
+          "enclosure_padding": "Inner enclosure padding (px)",
           "cards_title": "Drawer Child Cards",
           "cards_subtitle": "Lovelace cards displayed when the drawer is expanded",
           "add_card": "+ Add card",
@@ -2002,6 +2010,14 @@ var HaloButtonCard = (function (exports) {
           "label_on": "Libellé bouton quand déplié (ex. Masquer)",
           "label_off": "Libellé bouton quand replié (ex. Afficher)",
           "toggle_entity": "Entité booléenne externe synchronisée (optionnel)",
+          "show_border": "Contour entourant toutes les cartes repliées",
+          "border_style": "Style du contour",
+          "style_dashed": "Pointillés / Tirets fins (Recommandé)",
+          "style_dotted": "Points réguliers",
+          "style_solid": "Ligne continue",
+          "show_halo": "Halo lumineux léger autour de l'enclos",
+          "border_width": "Épaisseur du contour (px)",
+          "enclosure_padding": "Espacement interne de l'enclos (px)",
           "cards_title": "Cartes Enfants du Tiroir",
           "cards_subtitle": "Cartes Lovelace affichées lorsque le volet est déplié",
           "add_card": "+ Ajouter une carte",
@@ -8522,11 +8538,17 @@ var HaloButtonCard = (function (exports) {
      *                    compteur et bouton pill Afficher / Masquer.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.6.0-beta.1
-     * 📅 Date         : 2026-11-02
+     * 📦 Version      : 1.7.1-beta.1
+     * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Ajout du conteneur d'enclos avec contour en pointillé
+     *                                     paramétrable (dashed, dotted, solid) et halo néon léger
+     *                                     Liquid Glass matérialisant le bloc complet des cartes
+     *                                     repliées sans découper chaque carte individuellement
+     *                                     (show_border, border_style, border_width, border_color,
+     *                                     show_halo, halo_color, enclosure_padding, border_radius).
      *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Création initiale du composant conteneur
      *                                     repliable custom:halo-fold-card :
      *                                     • En-tête raffiné aligné sur halo-separator-card
@@ -8557,6 +8579,7 @@ var HaloButtonCard = (function (exports) {
             this._toggleLabelEl = null;
             this._toggleIconEl = null;
             this._drawerEl = null;
+            this._enclosureEl = null;
             this._gridEl = null;
             this._root = this.attachShadow({ mode: 'open' });
         }
@@ -8572,6 +8595,11 @@ var HaloButtonCard = (function (exports) {
                 icon: 'mdi:tune-vertical',
                 initial_collapsed: true,
                 columns: 1,
+                show_border: true,
+                border_style: 'dashed',
+                border_width: 1.5,
+                show_halo: true,
+                enclosure_padding: 10,
                 cards: []
             };
         }
@@ -8590,6 +8618,12 @@ var HaloButtonCard = (function (exports) {
                 columns: 1,
                 gap: 10,
                 initial_collapsed: true,
+                show_border: true,
+                border_style: 'dashed',
+                border_width: 1.5,
+                show_halo: true,
+                enclosure_padding: 10,
+                border_radius: 14,
                 ...config
             };
             if (config.expanded !== undefined) {
@@ -8783,11 +8817,31 @@ var HaloButtonCard = (function (exports) {
           pointer-events: none;
         }
         .halo-fold-drawer.expanded {
-          max-height: 2500px;
+          max-height: 3500px;
           opacity: 1;
           margin-top: 10px;
           overflow: visible;
           pointer-events: auto;
+        }
+        .halo-fold-enclosure {
+          width: 100%;
+          box-sizing: border-box;
+          border-radius: var(--halo-fold-radius, 14px);
+          padding: var(--halo-fold-padding, 10px);
+          border: var(--halo-fold-border, 1.5px dashed rgba(38, 198, 218, 0.5));
+          box-shadow: var(--halo-fold-shadow, 0 0 14px rgba(38, 198, 218, 0.25), inset 0 0 12px rgba(38, 198, 218, 0.08));
+          background: var(--halo-fold-bg, linear-gradient(135deg, rgba(38, 198, 218, 0.04), rgba(15, 23, 42, 0.40)));
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: border 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+        .halo-fold-enclosure.no-border {
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          padding: 0 !important;
         }
         .halo-fold-grid {
           display: grid;
@@ -8816,7 +8870,9 @@ var HaloButtonCard = (function (exports) {
           </div>
         </div>
         <div class="halo-fold-drawer" id="fold-drawer">
-          <div class="halo-fold-grid" id="fold-grid"></div>
+          <div class="halo-fold-enclosure" id="fold-enclosure">
+            <div class="halo-fold-grid" id="fold-grid"></div>
+          </div>
         </div>
       </div>
     `;
@@ -8830,6 +8886,7 @@ var HaloButtonCard = (function (exports) {
             this._toggleLabelEl = this._root.getElementById('toggle-label');
             this._toggleIconEl = this._root.getElementById('toggle-icon');
             this._drawerEl = this._root.getElementById('fold-drawer');
+            this._enclosureEl = this._root.getElementById('fold-enclosure');
             this._gridEl = this._root.getElementById('fold-grid');
             if (this._headerEl) {
                 this._headerEl.addEventListener('click', (e) => {
@@ -8970,6 +9027,38 @@ var HaloButtonCard = (function (exports) {
             if (this._drawerEl) {
                 this._drawerEl.className = this._isExpanded ? 'halo-fold-drawer expanded' : 'halo-fold-drawer';
             }
+            const borderColor = resolveThemeColor(this._hass, this._config.border_color, this._config.theme_entity, col);
+            const haloColor = resolveThemeColor(this._hass, this._config.halo_color, this._config.theme_entity, borderColor);
+            if (this._enclosureEl) {
+                const showBorder = this._config.show_border !== false;
+                const borderStyle = this._config.border_style || 'dashed';
+                const cardCount = Array.isArray(this._config.cards) ? this._config.cards.length : 0;
+                if (cardCount === 0 || !showBorder || borderStyle === 'none') {
+                    this._enclosureEl.className = 'halo-fold-enclosure no-border';
+                    this._enclosureEl.style.removeProperty('--halo-fold-border');
+                    this._enclosureEl.style.removeProperty('--halo-fold-shadow');
+                    this._enclosureEl.style.removeProperty('--halo-fold-bg');
+                    this._enclosureEl.style.removeProperty('--halo-fold-padding');
+                    this._enclosureEl.style.removeProperty('--halo-fold-radius');
+                }
+                else {
+                    this._enclosureEl.className = 'halo-fold-enclosure';
+                    const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.5;
+                    const pad = typeof this._config.enclosure_padding === 'number' ? this._config.enclosure_padding : 10;
+                    const radius = typeof this._config.border_radius === 'number' ? this._config.border_radius : 14;
+                    const showHalo = this._config.show_halo !== false;
+                    const borderCss = `${bw}px ${borderStyle} ${borderColor}80`;
+                    const haloCss = showHalo
+                        ? `0 0 14px ${haloColor}33, inset 0 0 14px ${haloColor}10`
+                        : 'none';
+                    const bgCss = `linear-gradient(135deg, ${borderColor}0a, rgba(15, 23, 42, 0.40))`;
+                    this._enclosureEl.style.setProperty('--halo-fold-border', borderCss);
+                    this._enclosureEl.style.setProperty('--halo-fold-shadow', haloCss);
+                    this._enclosureEl.style.setProperty('--halo-fold-bg', bgCss);
+                    this._enclosureEl.style.setProperty('--halo-fold-padding', `${pad}px`);
+                    this._enclosureEl.style.setProperty('--halo-fold-radius', `${radius}px`);
+                }
+            }
             if (this._gridEl) {
                 let colCount = 1;
                 if (this._config.columns !== undefined) {
@@ -8995,11 +9084,14 @@ var HaloButtonCard = (function (exports) {
      *                    cartes enfants Lovelace (cards).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.6.0-beta.3
-     * 📅 Date         : 2026-11-02
+     * 📦 Version      : 1.7.1-beta.1
+     * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Intégration des contrôles GUI pour le contour en pointillé,
+     *                                     le style de ligne (pointillés, points, continu), le halo néon léger,
+     *                                     l'épaisseur de bordure et l'espacement interne de l'enclos.
      *   - ✨ v1.6.0-beta.3 (2026-11-02) : Cartes enfants sans YAML : sélecteur natif
      *                                     hui-card-picker + éditeur natif complet
      *                                     hui-card-element-editor par carte enfant.
@@ -9022,7 +9114,43 @@ var HaloButtonCard = (function (exports) {
         },
         { name: 'label_on', selector: { text: {} } },
         { name: 'label_off', selector: { text: {} } },
-        { name: 'toggle_entity', selector: { entity: { domain: 'input_boolean' } } }
+        { name: 'toggle_entity', selector: { entity: { domain: 'input_boolean' } } },
+        { name: 'show_border', selector: { boolean: {} } },
+        {
+            name: 'border_style',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'fold', [
+                        ['dashed', 'style_dashed'],
+                        ['dotted', 'style_dotted'],
+                        ['solid', 'style_solid']
+                    ])
+                }
+            }
+        },
+        { name: 'show_halo', selector: { boolean: {} } },
+        {
+            name: 'border_width',
+            selector: {
+                number: {
+                    min: 1,
+                    max: 4,
+                    step: 0.5,
+                    mode: 'slider'
+                }
+            }
+        },
+        {
+            name: 'enclosure_padding',
+            selector: {
+                number: {
+                    min: 0,
+                    max: 24,
+                    step: 2,
+                    mode: 'slider'
+                }
+            }
+        }
     ];
     class HaloFoldCardEditor extends HTMLElement {
         constructor() {
@@ -9125,6 +9253,21 @@ var HaloButtonCard = (function (exports) {
             if (data.columns !== undefined) {
                 data.columns = String(data.columns);
             }
+            if (data.show_border === undefined) {
+                data.show_border = true;
+            }
+            if (data.border_style === undefined) {
+                data.border_style = 'dashed';
+            }
+            if (data.show_halo === undefined) {
+                data.show_halo = true;
+            }
+            if (data.border_width === undefined) {
+                data.border_width = 1.5;
+            }
+            if (data.enclosure_padding === undefined) {
+                data.enclosure_padding = 10;
+            }
             delete data.color;
             delete data.cards;
             return data;
@@ -9135,6 +9278,14 @@ var HaloButtonCard = (function (exports) {
             const val = { ...ev.detail.value };
             if (val.columns !== undefined) {
                 val.columns = parseInt(String(val.columns), 10) || 1;
+            }
+            if (val.border_width !== undefined) {
+                val.border_width = parseFloat(String(val.border_width)) || 1.5;
+            }
+            if (val.enclosure_padding !== undefined) {
+                val.enclosure_padding = parseInt(String(val.enclosure_padding), 10);
+                if (isNaN(val.enclosure_padding))
+                    val.enclosure_padding = 10;
             }
             this._config = {
                 ...this._config,
@@ -10485,11 +10636,16 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.7.0-beta.1
+     * 📦 Version      : 1.7.1-beta.1
      * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.1-beta.1 (2026-11-03) : custom:halo-fold-card : contour en pointillé paramétrable
+     *                                     avec halo néon léger et fond Liquid Glass matérialisant d'un
+     *                                     seul tenant l'ensemble des cartes repliées (show_border,
+     *                                     border_style, border_width, border_color, show_halo, halo_color,
+     *                                     enclosure_padding, border_radius) et contrôles éditeur UI.
      *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Évolution majeure custom:halo-button-card :
      *                                     - Support d'un 3ème statut de couleur 'unavailable' (fallback Ambre Doré).
      *                                     - Style sobre 'subtle_inactive' (alias 'hybrid_style') sans halo envahissant
@@ -10541,7 +10697,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.7.0-beta.1';
+    const VERSION = '1.7.1-beta.1';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
