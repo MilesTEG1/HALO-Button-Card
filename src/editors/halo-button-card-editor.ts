@@ -8,11 +8,14 @@
  *                    et curseur d'épaisseur de bordure.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.1
- * 📅 Date         : 2026-11-01
+ * 📦 Version      : 1.7.0-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Ajout du 3ème onglet d'état Indisponible (color_unavailable)
+ *                                     dans le nuancier Liquid Glass et des sélecteurs
+ *                                     subtle_inactive et binary_mode dans le schéma ha-form.
  *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
  *                              color_off) avec onglets dynamiques Activé / Désactivé dans
  *                              le panneau de style Liquid Glass et synchronisation instantanée.
@@ -33,7 +36,7 @@ import { COMMON_EDITOR_STYLES } from './editor-styles';
 import { useLocalize, getLang } from '../localize/localize';
 import { applyFormI18n, selectOptions, stylePanelHtml, borderBadge, buildChips, colorDisplayName } from './editor-common';
 
-type ButtonColorKey = 'color_on' | 'color_off';
+type ButtonColorKey = 'color_on' | 'color_off' | 'color_unavailable';
 
 interface ButtonStateDef {
   key: ButtonColorKey;
@@ -54,6 +57,12 @@ const BUTTON_STATES: ButtonStateDef[] = [
     tk: 'inactive',
     icon: 'mdi:toggle-switch-off-outline',
     fallback: '#64748b'
+  },
+  {
+    key: 'color_unavailable',
+    tk: 'unavailable',
+    icon: 'mdi:alert-circle-outline',
+    fallback: '#f59e0b'
   }
 ];
 
@@ -79,6 +88,8 @@ const buildSchema = (t: ReturnType<typeof useLocalize>) => [
   },
   { name: 'entity', selector: { entity: {} } },
   { name: 'state_colors', selector: { boolean: {} } },
+  { name: 'subtle_inactive', selector: { boolean: {} } },
+  { name: 'binary_mode', selector: { boolean: {} } },
   { name: 'linked_entity', selector: { entity: {} } },
   { name: 'linked_attribute', selector: { text: {} } },
   {
@@ -149,7 +160,14 @@ export class HaloButtonCardEditor extends HTMLElement {
   }
 
   private _isStateColorsEnabled(): boolean {
-    return Boolean(this._config?.state_colors || this._config?.color_on || this._config?.color_off);
+    return Boolean(
+      this._config?.state_colors ||
+      this._config?.color_on ||
+      this._config?.color_off ||
+      this._config?.color_unavailable ||
+      this._config?.color_unavail ||
+      this._config?.unavail_color
+    );
   }
 
   private _getStateDef(key: ButtonColorKey): ButtonStateDef {
@@ -165,12 +183,18 @@ export class HaloButtonCardEditor extends HTMLElement {
           return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#26c6da');
         }
         return toHexColor(raw, '#26c6da');
-      } else {
+      } else if (activeKey === 'color_off') {
         const raw = this._config?.color_off || this._config?.inactive_color;
         if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
           return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#64748b');
         }
         return toHexColor(raw, '#64748b');
+      } else if (activeKey === 'color_unavailable') {
+        const raw = this._config?.color_unavailable || this._config?.color_unavail || this._config?.unavail_color;
+        if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+          return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#f59e0b');
+        }
+        return toHexColor(raw, '#f59e0b');
       }
     }
 
@@ -187,9 +211,12 @@ export class HaloButtonCardEditor extends HTMLElement {
       if (activeKey === 'color_on') {
         const raw = this._config?.color_on || this._config?.active_color || this._config?.color;
         return colorDisplayName(this._hass, raw, 'editor.color_active_theme');
-      } else {
+      } else if (activeKey === 'color_off') {
         const raw = this._config?.color_off || this._config?.inactive_color;
         return colorDisplayName(this._hass, raw, 'editor.color_default_grey');
+      } else if (activeKey === 'color_unavailable') {
+        const raw = this._config?.color_unavailable || this._config?.color_unavail || this._config?.unavail_color;
+        return colorDisplayName(this._hass, raw, 'editor.color_default_amber');
       }
     }
     return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_cyan');
@@ -405,6 +432,9 @@ export class HaloButtonCardEditor extends HTMLElement {
     delete data.color;
     delete data.color_on;
     delete data.color_off;
+    delete data.color_unavailable;
+    delete data.color_unavail;
+    delete data.unavail_color;
     delete data.active_color;
     delete data.inactive_color;
     delete data.border_width;
@@ -428,6 +458,9 @@ export class HaloButtonCardEditor extends HTMLElement {
       if (newStateColors) {
         if (!this._config.color_on) this._config.color_on = this._config.color || 'Cyan';
         if (!this._config.color_off) this._config.color_off = '#64748b';
+        if (!this._config.color_unavailable && !this._config.color_unavail && !this._config.unavail_color) {
+          this._config.color_unavailable = '#f59e0b';
+        }
       }
       this.innerHTML = '';
       this._render();

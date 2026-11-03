@@ -7,11 +7,16 @@
  *                    et support complet des sous-boutons interactifs.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.1
- * 📅 Date         : 2026-11-01
+ * 📦 Version      : 1.7.0-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Logique d'état tripartite (active, inactive, unavailable),
+ *                                     gestion du style sobre subtle_inactive à l'état fermé
+ *                                     (bordure fine, zéro halo, médaillon neutre),
+ *                                     support de binary_mode / is_door / is_velux avec icônes
+ *                                     et sous-titres d'ouverture automatiques.
  *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
  *                              color_off, active_color, inactive_color), correction du cycle de vie
  *                              DOM (connectedCallback) évitant la perte d'interactions lors du
@@ -182,11 +187,14 @@ export class HaloButtonCard extends HTMLElement {
     return false;
   }
 
-  private _isEntityActive(): boolean {
+  private _getEntityStateCategory(): 'active' | 'inactive' | 'unavailable' {
     if (!this._config.entity || !this._hass?.states?.[this._config.entity]) {
-      return true; // En l'absence d'entité, le bouton reste actif (déclencheur d'action pur)
+      return 'active'; // En l'absence d'entité, le bouton reste actif (déclencheur d'action pur)
     }
     const state = this._hass.states[this._config.entity].state?.toLowerCase();
+    if (state === 'unavailable' || state === 'unknown') {
+      return 'unavailable';
+    }
     const inactiveStates = [
       'off',
       'closed',
@@ -194,41 +202,88 @@ export class HaloButtonCard extends HTMLElement {
       'idle',
       'standby',
       'paused',
-      'not_home',
-      'unavailable',
-      'unknown'
+      'not_home'
     ];
-    return !inactiveStates.includes(state);
+    if (inactiveStates.includes(state)) {
+      return 'inactive';
+    }
+    return 'active';
+  }
+
+  private _isEntityActive(): boolean {
+    return this._getEntityStateCategory() === 'active';
+  }
+
+  private _isBinaryMode(): boolean {
+    if (this._config.binary_mode !== undefined) {
+      return Boolean(this._config.binary_mode);
+    }
+    if (this._config.entity) {
+      if (this._config.entity.startsWith('binary_sensor.')) {
+        return true;
+      }
+      const devClass = this._hass?.states?.[this._config.entity]?.attributes?.device_class;
+      if (devClass && ['window', 'door', 'opening', 'garage_door'].includes(devClass)) {
+        return true;
+      }
+    }
+    return Boolean(this._config.is_door || this._config.is_velux);
+  }
+
+  private _isDoor(): boolean {
+    if (this._config.is_door !== undefined) {
+      return Boolean(this._config.is_door);
+    }
+    if (this._config.entity) {
+      const devClass = this._hass?.states?.[this._config.entity]?.attributes?.device_class;
+      if (devClass === 'door' || devClass === 'garage_door') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private _isVelux(): boolean {
+    return Boolean(this._config.is_velux);
   }
 
   private _getEffectiveColor(): string {
-    const isActive = this._isEntityActive();
+    const stateCat = this._getEntityStateCategory();
+    const colorUnavail = this._config.color_unavailable || this._config.color_unavail || this._config.unavail_color;
     const colorOn = this._config.color_on || this._config.active_color;
     const colorOff = this._config.color_off || this._config.inactive_color;
 
     // 1. Couleurs distinctes par état si explicitement activées ou définies
-    if (this._config.state_colors || colorOn || colorOff) {
-      if (isActive) {
-        const activeSpec = colorOn || this._config.color || this._config.halo_color || this._config.accent_color;
-        return resolveThemeColor(this._hass, activeSpec, this._config.theme_entity, '#26c6da');
+    if (this._config.state_colors || colorOn || colorOff || colorUnavail) {
+      if (stateCat === 'unavailable') {
+        const unavailSpec = colorUnavail || '#f59e0b';
+        return resolveThemeColor(this._hass, unavailSpec, this._config.theme_entity, '#f59e0b');
+      } else if (stateCat === 'active') {
+        const activeSpec = colorOn || this._config.color || this._config.halo_color || this._config.accent_color || '#f43f5e';
+        return resolveThemeColor(this._hass, activeSpec, this._config.theme_entity, '#f43f5e');
       } else {
         const inactiveSpec = colorOff || '#64748b';
         return resolveThemeColor(this._hass, inactiveSpec, this._config.theme_entity, '#64748b');
       }
     }
 
-    // 2. Couleur explicite unique définie (color / halo_color / accent_color)
+    // 2. Si l'état est unavailable : Ambre Doré par défaut
+    if (stateCat === 'unavailable') {
+      return resolveThemeColor(this._hass, colorUnavail || '#f59e0b', this._config.theme_entity, '#f59e0b');
+    }
+
+    // 3. Couleur explicite unique définie (color / halo_color / accent_color)
     const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
     if (explicit) {
       return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#26c6da');
     }
 
-    // 3. Entité liée sans couleur configurée : état inactif => gris ardoise
-    if (!isActive) {
+    // 4. Entité liée sans couleur configurée : état inactif => gris ardoise
+    if (stateCat === 'inactive') {
       return '#64748b';
     }
 
-    // 4. Entité liée active sans couleur configurée : hériter de la palette du thème
+    // 5. Entité liée active sans couleur configurée : hériter de la palette du thème
     return resolveThemeColor(
       this._hass,
       undefined,
@@ -435,6 +490,8 @@ export class HaloButtonCard extends HTMLElement {
       this._buildDom();
     }
 
+    const stateCat = this._getEntityStateCategory();
+    const isSubtleInactive = stateCat === 'inactive' && Boolean(this._config.subtle_inactive || this._config.hybrid_style);
     const color = this._getEffectiveColor();
     const layout = this._config.layout || 'horizontal';
     const isVertical = layout === 'vertical';
@@ -446,8 +503,18 @@ export class HaloButtonCard extends HTMLElement {
     const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
       ? this._config.border_width
       : 1.5;
-    const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
-    const cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+
+    let cardBorder: string;
+    let cardShadow: string;
+
+    if (isSubtleInactive) {
+      cardBorder = '1px solid rgba(255, 255, 255, 0.08)';
+      cardShadow = '0 4px 12px rgba(0, 0, 0, 0.25)';
+    } else {
+      cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
+      cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+    }
+
     if (this._cardEl!.style.border !== cardBorder) {
       this._cardEl!.style.border = cardBorder;
     }
@@ -457,16 +524,56 @@ export class HaloButtonCard extends HTMLElement {
 
     // Icon button styling
     if (this._iconBtnEl) {
-      this._iconBtnEl.style.background = `${color}1A`;
-      this._iconBtnEl.style.borderColor = `${color}40`;
-      this._iconBtnEl.style.border = `1px solid ${color}40`;
-      this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+      if (isSubtleInactive) {
+        this._iconBtnEl.style.background = 'rgba(255, 255, 255, 0.05)';
+        this._iconBtnEl.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+        this._iconBtnEl.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+        this._iconBtnEl.style.boxShadow = 'none';
+      } else {
+        this._iconBtnEl.style.background = `${color}1A`;
+        this._iconBtnEl.style.borderColor = `${color}40`;
+        this._iconBtnEl.style.border = `1px solid ${color}40`;
+        this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+      }
     }
 
-    // Icon
+    // Icon resolution
     let icon = this._config.icon;
+    const isBinary = this._isBinaryMode();
+    const isDoor = this._isDoor();
+    const isVelux = this._isVelux();
+
+    const getBinaryIcon = () => {
+      if (stateCat === 'unavailable') {
+        return 'mdi:alert-circle';
+      }
+      if (isDoor) {
+        return stateCat === 'active' ? 'mdi:door-open' : 'mdi:door-closed';
+      }
+      if (isVelux) {
+        return stateCat === 'active' ? 'mdi:window-open-variant' : 'mdi:window-closed-variant';
+      }
+      return stateCat === 'active' ? 'mdi:window-open-variant' : 'mdi:window-closed';
+    };
+
+    if (isBinary && !icon) {
+      icon = getBinaryIcon();
+    }
+
     if (!icon && this._config.entity && this._hass?.states?.[this._config.entity]) {
-      icon = this._hass.states[this._config.entity].attributes?.icon || 'mdi:gesture-tap-button';
+      const haIcon = this._hass.states[this._config.entity].attributes?.icon;
+      const genericOpenIcons = [
+        'mdi:door-open',
+        'mdi:door-closed',
+        'mdi:window-open',
+        'mdi:window-open-variant',
+        'mdi:window-closed'
+      ];
+      if (isBinary && (!haIcon || genericOpenIcons.includes(haIcon))) {
+        icon = getBinaryIcon();
+      } else {
+        icon = haIcon || 'mdi:gesture-tap-button';
+      }
     }
     if (!icon) icon = 'mdi:gesture-tap-button';
 
@@ -492,6 +599,25 @@ export class HaloButtonCard extends HTMLElement {
 
     // Subtitle / Label
     let subtitle = this._config.label || this._config.subtitle;
+    if (!subtitle && (isBinary || (!this._config.linked_entity && this._config.entity))) {
+      const stateObj = this._config.entity ? this._hass?.states?.[this._config.entity] : undefined;
+      const entityName = (
+        this._config.name ||
+        this._config.title ||
+        stateObj?.attributes?.friendly_name ||
+        ''
+      ).toLowerCase();
+      const isMasculine = isDoor && !entityName.includes('porte');
+
+      if (stateCat === 'unavailable') {
+        subtitle = stateObj?.state === 'unknown' ? 'Inconnu' : 'Indisponible';
+      } else if (stateCat === 'active') {
+        subtitle = isMasculine ? 'Ouvert' : 'Ouverte';
+      } else {
+        subtitle = isMasculine ? 'Fermé' : 'Fermée';
+      }
+    }
+
     const linkedVal = this._formatLinkedValue();
     if (linkedVal !== null) {
       subtitle = subtitle ? `${subtitle} • ${linkedVal}` : linkedVal;

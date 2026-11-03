@@ -405,11 +405,16 @@ var HaloButtonCard = (function (exports) {
      *                    et support complet des sous-boutons interactifs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.5.1
-     * 📅 Date         : 2026-11-01
+     * 📦 Version      : 1.7.0-beta.1
+     * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Logique d'état tripartite (active, inactive, unavailable),
+     *                                     gestion du style sobre subtle_inactive à l'état fermé
+     *                                     (bordure fine, zéro halo, médaillon neutre),
+     *                                     support de binary_mode / is_door / is_velux avec icônes
+     *                                     et sous-titres d'ouverture automatiques.
      *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
      *                              color_off, active_color, inactive_color), correction du cycle de vie
      *                              DOM (connectedCallback) évitant la perte d'interactions lors du
@@ -552,11 +557,14 @@ var HaloButtonCard = (function (exports) {
             }
             return false;
         }
-        _isEntityActive() {
+        _getEntityStateCategory() {
             if (!this._config.entity || !this._hass?.states?.[this._config.entity]) {
-                return true; // En l'absence d'entité, le bouton reste actif (déclencheur d'action pur)
+                return 'active'; // En l'absence d'entité, le bouton reste actif (déclencheur d'action pur)
             }
             const state = this._hass.states[this._config.entity].state?.toLowerCase();
+            if (state === 'unavailable' || state === 'unknown') {
+                return 'unavailable';
+            }
             const inactiveStates = [
                 'off',
                 'closed',
@@ -564,37 +572,80 @@ var HaloButtonCard = (function (exports) {
                 'idle',
                 'standby',
                 'paused',
-                'not_home',
-                'unavailable',
-                'unknown'
+                'not_home'
             ];
-            return !inactiveStates.includes(state);
+            if (inactiveStates.includes(state)) {
+                return 'inactive';
+            }
+            return 'active';
+        }
+        _isEntityActive() {
+            return this._getEntityStateCategory() === 'active';
+        }
+        _isBinaryMode() {
+            if (this._config.binary_mode !== undefined) {
+                return Boolean(this._config.binary_mode);
+            }
+            if (this._config.entity) {
+                if (this._config.entity.startsWith('binary_sensor.')) {
+                    return true;
+                }
+                const devClass = this._hass?.states?.[this._config.entity]?.attributes?.device_class;
+                if (devClass && ['window', 'door', 'opening', 'garage_door'].includes(devClass)) {
+                    return true;
+                }
+            }
+            return Boolean(this._config.is_door || this._config.is_velux);
+        }
+        _isDoor() {
+            if (this._config.is_door !== undefined) {
+                return Boolean(this._config.is_door);
+            }
+            if (this._config.entity) {
+                const devClass = this._hass?.states?.[this._config.entity]?.attributes?.device_class;
+                if (devClass === 'door' || devClass === 'garage_door') {
+                    return true;
+                }
+            }
+            return false;
+        }
+        _isVelux() {
+            return Boolean(this._config.is_velux);
         }
         _getEffectiveColor() {
-            const isActive = this._isEntityActive();
+            const stateCat = this._getEntityStateCategory();
+            const colorUnavail = this._config.color_unavailable || this._config.color_unavail || this._config.unavail_color;
             const colorOn = this._config.color_on || this._config.active_color;
             const colorOff = this._config.color_off || this._config.inactive_color;
             // 1. Couleurs distinctes par état si explicitement activées ou définies
-            if (this._config.state_colors || colorOn || colorOff) {
-                if (isActive) {
-                    const activeSpec = colorOn || this._config.color || this._config.halo_color || this._config.accent_color;
-                    return resolveThemeColor(this._hass, activeSpec, this._config.theme_entity, '#26c6da');
+            if (this._config.state_colors || colorOn || colorOff || colorUnavail) {
+                if (stateCat === 'unavailable') {
+                    const unavailSpec = colorUnavail || '#f59e0b';
+                    return resolveThemeColor(this._hass, unavailSpec, this._config.theme_entity, '#f59e0b');
+                }
+                else if (stateCat === 'active') {
+                    const activeSpec = colorOn || this._config.color || this._config.halo_color || this._config.accent_color || '#f43f5e';
+                    return resolveThemeColor(this._hass, activeSpec, this._config.theme_entity, '#f43f5e');
                 }
                 else {
                     const inactiveSpec = colorOff || '#64748b';
                     return resolveThemeColor(this._hass, inactiveSpec, this._config.theme_entity, '#64748b');
                 }
             }
-            // 2. Couleur explicite unique définie (color / halo_color / accent_color)
+            // 2. Si l'état est unavailable : Ambre Doré par défaut
+            if (stateCat === 'unavailable') {
+                return resolveThemeColor(this._hass, colorUnavail || '#f59e0b', this._config.theme_entity, '#f59e0b');
+            }
+            // 3. Couleur explicite unique définie (color / halo_color / accent_color)
             const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
             if (explicit) {
                 return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#26c6da');
             }
-            // 3. Entité liée sans couleur configurée : état inactif => gris ardoise
-            if (!isActive) {
+            // 4. Entité liée sans couleur configurée : état inactif => gris ardoise
+            if (stateCat === 'inactive') {
                 return '#64748b';
             }
-            // 4. Entité liée active sans couleur configurée : hériter de la palette du thème
+            // 5. Entité liée active sans couleur configurée : hériter de la palette du thème
             return resolveThemeColor(this._hass, undefined, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
         }
         _buildDom() {
@@ -793,6 +844,8 @@ var HaloButtonCard = (function (exports) {
             if (!this._cardEl) {
                 this._buildDom();
             }
+            const stateCat = this._getEntityStateCategory();
+            const isSubtleInactive = stateCat === 'inactive' && Boolean(this._config.subtle_inactive || this._config.hybrid_style);
             const color = this._getEffectiveColor();
             const layout = this._config.layout || 'horizontal';
             const isVertical = layout === 'vertical';
@@ -802,8 +855,16 @@ var HaloButtonCard = (function (exports) {
             const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
                 ? this._config.border_width
                 : 1.5;
-            const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
-            const cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            let cardBorder;
+            let cardShadow;
+            if (isSubtleInactive) {
+                cardBorder = '1px solid rgba(255, 255, 255, 0.08)';
+                cardShadow = '0 4px 12px rgba(0, 0, 0, 0.25)';
+            }
+            else {
+                cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
+                cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            }
             if (this._cardEl.style.border !== cardBorder) {
                 this._cardEl.style.border = cardBorder;
             }
@@ -812,15 +873,54 @@ var HaloButtonCard = (function (exports) {
             }
             // Icon button styling
             if (this._iconBtnEl) {
-                this._iconBtnEl.style.background = `${color}1A`;
-                this._iconBtnEl.style.borderColor = `${color}40`;
-                this._iconBtnEl.style.border = `1px solid ${color}40`;
-                this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+                if (isSubtleInactive) {
+                    this._iconBtnEl.style.background = 'rgba(255, 255, 255, 0.05)';
+                    this._iconBtnEl.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    this._iconBtnEl.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                    this._iconBtnEl.style.boxShadow = 'none';
+                }
+                else {
+                    this._iconBtnEl.style.background = `${color}1A`;
+                    this._iconBtnEl.style.borderColor = `${color}40`;
+                    this._iconBtnEl.style.border = `1px solid ${color}40`;
+                    this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+                }
             }
-            // Icon
+            // Icon resolution
             let icon = this._config.icon;
+            const isBinary = this._isBinaryMode();
+            const isDoor = this._isDoor();
+            const isVelux = this._isVelux();
+            const getBinaryIcon = () => {
+                if (stateCat === 'unavailable') {
+                    return 'mdi:alert-circle';
+                }
+                if (isDoor) {
+                    return stateCat === 'active' ? 'mdi:door-open' : 'mdi:door-closed';
+                }
+                if (isVelux) {
+                    return stateCat === 'active' ? 'mdi:window-open-variant' : 'mdi:window-closed-variant';
+                }
+                return stateCat === 'active' ? 'mdi:window-open-variant' : 'mdi:window-closed';
+            };
+            if (isBinary && !icon) {
+                icon = getBinaryIcon();
+            }
             if (!icon && this._config.entity && this._hass?.states?.[this._config.entity]) {
-                icon = this._hass.states[this._config.entity].attributes?.icon || 'mdi:gesture-tap-button';
+                const haIcon = this._hass.states[this._config.entity].attributes?.icon;
+                const genericOpenIcons = [
+                    'mdi:door-open',
+                    'mdi:door-closed',
+                    'mdi:window-open',
+                    'mdi:window-open-variant',
+                    'mdi:window-closed'
+                ];
+                if (isBinary && (!haIcon || genericOpenIcons.includes(haIcon))) {
+                    icon = getBinaryIcon();
+                }
+                else {
+                    icon = haIcon || 'mdi:gesture-tap-button';
+                }
             }
             if (!icon)
                 icon = 'mdi:gesture-tap-button';
@@ -844,6 +944,23 @@ var HaloButtonCard = (function (exports) {
             }
             // Subtitle / Label
             let subtitle = this._config.label || this._config.subtitle;
+            if (!subtitle && (isBinary || (!this._config.linked_entity && this._config.entity))) {
+                const stateObj = this._config.entity ? this._hass?.states?.[this._config.entity] : undefined;
+                const entityName = (this._config.name ||
+                    this._config.title ||
+                    stateObj?.attributes?.friendly_name ||
+                    '').toLowerCase();
+                const isMasculine = isDoor && !entityName.includes('porte');
+                if (stateCat === 'unavailable') {
+                    subtitle = stateObj?.state === 'unknown' ? 'Inconnu' : 'Indisponible';
+                }
+                else if (stateCat === 'active') {
+                    subtitle = isMasculine ? 'Ouvert' : 'Ouverte';
+                }
+                else {
+                    subtitle = isMasculine ? 'Fermé' : 'Fermée';
+                }
+            }
             const linkedVal = this._formatLinkedValue();
             if (linkedVal !== null) {
                 subtitle = subtitle ? `${subtitle} • ${linkedVal}` : linkedVal;
@@ -1425,6 +1542,7 @@ var HaloButtonCard = (function (exports) {
         "color_default_cyan": "Cyan (Default)",
         "color_active_theme": "Active HALO theme",
         "color_default_grey": "Default (#64748B)",
+        "color_default_amber": "Golden Amber (Default)",
         "button": {
           "name": "Main title",
           "label": "Subtitle / description",
@@ -1437,10 +1555,15 @@ var HaloButtonCard = (function (exports) {
           "align_center": "Centered",
           "align_right": "Right",
           "entity": "Primary entity (optional)",
-          "state_colors": "State colors (Active / Inactive)",
-          "state_colors_helper": "Define separate halo and border colors depending on whether the entity is active or inactive.",
+          "state_colors": "State colors (Active / Inactive / Unavailable)",
+          "state_colors_helper": "Define separate halo and border colors depending on the entity state.",
           "state_active": "Active",
           "state_inactive": "Inactive",
+          "state_unavailable": "Unavailable",
+          "subtle_inactive": "Subtle style when inactive (Discrete)",
+          "subtle_inactive_helper": "Removes the glowing halo and softens the border when the entity is closed or off.",
+          "binary_mode": "Binary opening / sensor mode (Doors & Windows)",
+          "binary_mode_helper": "Enables dynamic opening icons (open/closed) and automatic subtitles.",
           "linked_entity": "Displayed secondary entity (e.g. absence date, sensor)",
           "linked_attribute": "Specific attribute of linked entity (optional)",
           "display_format": "Linked value display format",
@@ -1720,6 +1843,7 @@ var HaloButtonCard = (function (exports) {
         "color_default_cyan": "Cyan (Défaut)",
         "color_active_theme": "Thème HALO actif",
         "color_default_grey": "Défaut (#64748B)",
+        "color_default_amber": "Ambre Doré (Défaut)",
         "button": {
           "name": "Titre principal",
           "label": "Sous-titre / Description",
@@ -1732,10 +1856,15 @@ var HaloButtonCard = (function (exports) {
           "align_center": "Centré",
           "align_right": "Droite",
           "entity": "Entité principale (optionnel)",
-          "state_colors": "Couleurs par état (Activé / Désactivé)",
-          "state_colors_helper": "Définit des teintes de halo et bordure distinctes selon que l'entité est active ou inactive.",
+          "state_colors": "Couleurs par état (Activé / Désactivé / Indisponible)",
+          "state_colors_helper": "Définit des teintes de halo et bordure distinctes selon l'état de l'entité.",
           "state_active": "Activé",
           "state_inactive": "Désactivé",
+          "state_unavailable": "Indisponible",
+          "subtle_inactive": "Style sobre à l'état inactif (Discret)",
+          "subtle_inactive_helper": "Supprime le halo envahissant et adoucit la bordure quand l'entité est fermée ou éteinte.",
+          "binary_mode": "Mode binaire / ouvertures (Portes & Fenêtres)",
+          "binary_mode_helper": "Active les icônes dynamiques d'ouvertures (ouverte/fermée) et les sous-titres automatiques.",
           "linked_entity": "Entité tierce affichée (ex. date d'absence, capteur)",
           "linked_attribute": "Attribut spécifique de l'entité liée (optionnel)",
           "display_format": "Format d'affichage de la valeur liée",
@@ -2102,11 +2231,14 @@ var HaloButtonCard = (function (exports) {
      *                    et curseur d'épaisseur de bordure.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.5.1
-     * 📅 Date         : 2026-11-01
+     * 📦 Version      : 1.7.0-beta.1
+     * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Ajout du 3ème onglet d'état Indisponible (color_unavailable)
+     *                                     dans le nuancier Liquid Glass et des sélecteurs
+     *                                     subtle_inactive et binary_mode dans le schéma ha-form.
      *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
      *                              color_off) avec onglets dynamiques Activé / Désactivé dans
      *                              le panneau de style Liquid Glass et synchronisation instantanée.
@@ -2132,6 +2264,12 @@ var HaloButtonCard = (function (exports) {
             tk: 'inactive',
             icon: 'mdi:toggle-switch-off-outline',
             fallback: '#64748b'
+        },
+        {
+            key: 'color_unavailable',
+            tk: 'unavailable',
+            icon: 'mdi:alert-circle-outline',
+            fallback: '#f59e0b'
         }
     ];
     const buildSchema$6 = (t) => [
@@ -2156,6 +2294,8 @@ var HaloButtonCard = (function (exports) {
         },
         { name: 'entity', selector: { entity: {} } },
         { name: 'state_colors', selector: { boolean: {} } },
+        { name: 'subtle_inactive', selector: { boolean: {} } },
+        { name: 'binary_mode', selector: { boolean: {} } },
         { name: 'linked_entity', selector: { entity: {} } },
         { name: 'linked_attribute', selector: { text: {} } },
         {
@@ -2221,7 +2361,12 @@ var HaloButtonCard = (function (exports) {
             this.dispatchEvent(event);
         }
         _isStateColorsEnabled() {
-            return Boolean(this._config?.state_colors || this._config?.color_on || this._config?.color_off);
+            return Boolean(this._config?.state_colors ||
+                this._config?.color_on ||
+                this._config?.color_off ||
+                this._config?.color_unavailable ||
+                this._config?.color_unavail ||
+                this._config?.unavail_color);
         }
         _getStateDef(key) {
             return BUTTON_STATES.find(s => s.key === key) || BUTTON_STATES[0];
@@ -2236,12 +2381,19 @@ var HaloButtonCard = (function (exports) {
                     }
                     return toHexColor(raw, '#26c6da');
                 }
-                else {
+                else if (activeKey === 'color_off') {
                     const raw = this._config?.color_off || this._config?.inactive_color;
                     if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
                         return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#64748b');
                     }
                     return toHexColor(raw, '#64748b');
+                }
+                else if (activeKey === 'color_unavailable') {
+                    const raw = this._config?.color_unavailable || this._config?.color_unavail || this._config?.unavail_color;
+                    if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                        return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#f59e0b');
+                    }
+                    return toHexColor(raw, '#f59e0b');
                 }
             }
             const raw = this._config?.color || 'Cyan';
@@ -2257,9 +2409,13 @@ var HaloButtonCard = (function (exports) {
                     const raw = this._config?.color_on || this._config?.active_color || this._config?.color;
                     return colorDisplayName(this._hass, raw, 'editor.color_active_theme');
                 }
-                else {
+                else if (activeKey === 'color_off') {
                     const raw = this._config?.color_off || this._config?.inactive_color;
                     return colorDisplayName(this._hass, raw, 'editor.color_default_grey');
+                }
+                else if (activeKey === 'color_unavailable') {
+                    const raw = this._config?.color_unavailable || this._config?.color_unavail || this._config?.unavail_color;
+                    return colorDisplayName(this._hass, raw, 'editor.color_default_amber');
                 }
             }
             return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_cyan');
@@ -2460,6 +2616,9 @@ var HaloButtonCard = (function (exports) {
             delete data.color;
             delete data.color_on;
             delete data.color_off;
+            delete data.color_unavailable;
+            delete data.color_unavail;
+            delete data.unavail_color;
             delete data.active_color;
             delete data.inactive_color;
             delete data.border_width;
@@ -2482,6 +2641,9 @@ var HaloButtonCard = (function (exports) {
                         this._config.color_on = this._config.color || 'Cyan';
                     if (!this._config.color_off)
                         this._config.color_off = '#64748b';
+                    if (!this._config.color_unavailable && !this._config.color_unavail && !this._config.unavail_color) {
+                        this._config.color_unavailable = '#f59e0b';
+                    }
                 }
                 this.innerHTML = '';
                 this._render();
@@ -10323,11 +10485,18 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.6.0-beta.5
-     * 📅 Date         : 2026-11-02
+     * 📦 Version      : 1.7.0-beta.1
+     * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Évolution majeure custom:halo-button-card :
+     *                                     - Support d'un 3ème statut de couleur 'unavailable' (fallback Ambre Doré).
+     *                                     - Style sobre 'subtle_inactive' (alias 'hybrid_style') sans halo envahissant
+     *                                       à l'état fermé / inactif avec médaillon neutre et icône colorée.
+     *                                     - Mode 'binary_mode', 'is_door', 'is_velux' et dynamisation automatique
+     *                                       des icônes d'ouverture et sous-titres d'états (Ouvert / Fermé, etc.).
+     *                                     - 3ème onglet de couleur 'color_unavailable' dans l'éditeur de carte UI.
      *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Intégration de custom:halo-counter-card (tuile
      *                                     récapitulative et compteur polyvalent pour volets
      *                                     roulants et ouvertures/fenêtres avec détection des
@@ -10372,7 +10541,7 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.6.0-beta.5';
+    const VERSION = '1.7.0-beta.1';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({

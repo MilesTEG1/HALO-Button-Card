@@ -7,11 +7,18 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.6.0-beta.5
- * 📅 Date         : 2026-11-02
+ * 📦 Version      : 1.7.0-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Évolution majeure custom:halo-button-card :
+ *                                     - Support d'un 3ème statut de couleur 'unavailable' (fallback Ambre Doré).
+ *                                     - Style sobre 'subtle_inactive' (alias 'hybrid_style') sans halo envahissant
+ *                                       à l'état fermé / inactif avec médaillon neutre et icône colorée.
+ *                                     - Mode 'binary_mode', 'is_door', 'is_velux' et dynamisation automatique
+ *                                       des icônes d'ouverture et sous-titres d'états (Ouvert / Fermé, etc.).
+ *                                     - 3ème onglet de couleur 'color_unavailable' dans l'éditeur de carte UI.
  *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Intégration de custom:halo-counter-card (tuile
  *                                     récapitulative et compteur polyvalent pour volets
  *                                     roulants et ouvertures/fenêtres avec détection des
@@ -83,7 +90,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.6.0-beta.5';
+const VERSION = '1.7.0-beta.1';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
