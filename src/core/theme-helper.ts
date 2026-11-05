@@ -7,11 +7,14 @@
  *                    génération dynamique des feuilles CSS des cartes.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.5.2
- * 📅 Date         : 2026-11-02
+ * 📦 Version      : 1.5.3
+ * 📅 Date         : 2026-11-05
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.5.3 (2026-11-05) : Ajout des utilitaires de conversion colorimétrique
+ *                              HSL (rgbToHsl, hslToRgb, hslToHex, hexToHsl)
+ *                              pour la roue chromatique interactive de HALO.
  *   - 💡 v1.5.2 (2026-11-02) : Alias 'Cyan HOLM' ajouté à HALO_PALETTE pour compatibilité.
  *   - ✨ v1.5.1 (2026-11-01) : Support des mots-clés 'theme' et 'auto' dans resolveThemeColor
  *                              pour résolution dynamique vers l'entité de thème ou thèmes globaux,
@@ -200,4 +203,86 @@ export function getHaloCardStyles(
     border: borderStr(accentCol),
     boxShadow: `0 0 18px ${accentCol}60, 0 0 6px ${accentCol}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`
   };
+}
+
+/**
+ * Convertit des coordonnées RGB (0-255) en HSL [0-360, 0-100, 0-100].
+ */
+export function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+}
+
+/**
+ * Convertit des coordonnées HSL (h: 0-360, s: 0-100, l: 0-100) en RGB [0-255, 0-255, 0-255].
+ */
+export function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  h = ((h % 360) + 360) % 360;
+  h /= 360;
+  s = Math.max(0, Math.min(100, s)) / 100;
+  l = Math.max(0, Math.min(100, l)) / 100;
+
+  let r: number;
+  let g: number;
+  let b: number;
+
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      let tNorm = t;
+      if (tNorm < 0) tNorm += 1;
+      if (tNorm > 1) tNorm -= 1;
+      if (tNorm < 1 / 6) return p + (q - p) * 6 * tNorm;
+      if (tNorm < 1 / 2) return q;
+      if (tNorm < 2 / 3) return p + (q - p) * (2 / 3 - tNorm) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+/**
+ * Convertit une teinte HSL en code hexadécimal (#RRGGBB).
+ */
+export function hslToHex(h: number, s: number, l: number): string {
+  const rgb = hslToRgb(h, s, l);
+  return rgbToHex(rgb);
+}
+
+/**
+ * Convertit un code hexadécimal en coordonnées HSL [h, s, l].
+ */
+export function hexToHsl(hex: string): [number, number, number] {
+  const rgb = hexToRgb(hex) || [38, 198, 218];
+  return rgbToHsl(rgb[0], rgb[1], rgb[2]);
 }

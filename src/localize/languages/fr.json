@@ -38,7 +38,13 @@
     "closed": "Volet Fermé",
     "partial": "Volet Partiel",
     "open": "Volet Ouvert",
-    "moving": "Mouvement"
+    "moving": "Mouvement",
+    "picker_title": "Personnalisation Couleur",
+    "brightness": "Luminosité",
+    "apply": "Appliquer",
+    "cancel": "Annuler",
+    "halo_presets": "Nuancier officiel HALO",
+    "native_picker": "Ouvrir la pipette / sélecteur natif"
   },
   "separator": {
     "section": "Section",
