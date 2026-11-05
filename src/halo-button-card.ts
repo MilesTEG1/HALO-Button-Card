@@ -7,11 +7,15 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.7.1-beta.1
- * 📅 Date         : 2026-11-03
+ * 📦 Version      : 1.8.0-beta.1
+ * 📅 Date         : 2026-11-05
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🎨 v1.8.0-beta.1 (2026-11-05) : Intégration de la roue chromatique interactive :
+ *                                     - Roue de sélection Canvas HSL/HSV sur custom:halo-cover-color-card.
+ *                                     - Slider de luminosité dynamique et pipette native.
+ *                                     - Nuancier officiel HALO (16 teintes) et mise à jour en direct input_text.
  *   - 🌟 v1.7.1-beta.1 (2026-11-03) : custom:halo-fold-card : contour en pointillé paramétrable
  *                                     avec halo néon léger et fond Liquid Glass matérialisant d'un
  *                                     seul tenant l'ensemble des cartes repliées (show_border,
@@ -95,7 +99,7 @@ import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.7.1-beta.1';
+const VERSION = '1.8.0-beta.1';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,

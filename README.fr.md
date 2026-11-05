@@ -1,4 +1,4 @@
-# HALO Button Card par [@MilesTEG1](https://github.com/MilesTEG1) <!-- omit in toc -->
+# HALO Button Card <!-- omit in toc -->
 
 [![Stable][releases-shield]][releases] [![Beta][releases-dev-shield]][releases-dev] [![Badge HACS][hacs-badge]][hacs-link] ![Maintenance du Projet][maintenance-shield] <br/> ![Téléchargements][downloads] [![Activité GitHub][commits-shield]][commits] [![Licence][license-shield]](LICENSE) ![Co-Développé avec Antigravity][antigravity-shield]
 
