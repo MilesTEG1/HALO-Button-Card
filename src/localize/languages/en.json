@@ -38,7 +38,13 @@
     "closed": "Shutter Closed",
     "partial": "Shutter Partial",
     "open": "Shutter Open",
-    "moving": "Moving"
+    "moving": "Moving",
+    "picker_title": "Color Customization",
+    "brightness": "Brightness",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "halo_presets": "Official HALO Palette",
+    "native_picker": "Open eyedropper / native picker"
   },
   "separator": {
     "section": "Section",
