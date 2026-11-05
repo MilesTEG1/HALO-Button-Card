@@ -10,11 +10,15 @@ var HaloButtonCard = (function (exports) {
      *                    génération dynamique des feuilles CSS des cartes.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.5.2
+     * 📅 Date         : 2026-11-02
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 💡 v1.5.2 (2026-11-02) : Alias 'Cyan HOLM' ajouté à HALO_PALETTE pour compatibilité.
+     *   - ✨ v1.5.1 (2026-11-01) : Support des mots-clés 'theme' et 'auto' dans resolveThemeColor
+     *                              pour résolution dynamique vers l'entité de thème ou thèmes globaux,
+     *                              et support des codes hexadécimaux directs dans les entités d'état.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
      *                              (`HALO_PALETTE`) et renommage de la teinte `Cyan`.
      *   - ✨ v1.3.0 (2026-10-30) : Support de l'épaisseur de bordure paramétrable (`border_width`).
@@ -23,6 +27,7 @@ var HaloButtonCard = (function (exports) {
      */
     const HALO_PALETTE = {
         'Cyan': '#26c6da',
+        'Cyan HOLM': '#26c6da',
         'Bleu Céleste': '#38bdf8',
         'Saphir Océan': '#2f86ff',
         'Menthe Givrée': '#00e5a3',
@@ -98,7 +103,9 @@ var HaloButtonCard = (function (exports) {
         return fallback;
     }
     function resolveThemeColor(hass, explicitColor, themeEntity, fallback = '#26c6da') {
-        if (explicitColor && typeof explicitColor === 'string' && explicitColor.trim() !== '') {
+        const isThemeKeyword = typeof explicitColor === 'string' &&
+            (explicitColor.trim().toLowerCase() === 'theme' || explicitColor.trim().toLowerCase() === 'auto');
+        if (explicitColor && !isThemeKeyword) {
             return toHexColor(explicitColor, fallback);
         }
         const states = hass?.states || {};
@@ -120,6 +127,8 @@ var HaloButtonCard = (function (exports) {
             const st = states[ent]?.state;
             if (st && HALO_PALETTE[st])
                 return HALO_PALETTE[st];
+            if (st && st.startsWith('#'))
+                return st;
         }
         return fallback;
     }
@@ -175,11 +184,14 @@ var HaloButtonCard = (function (exports) {
      *                    call-service, more-info, navigate, url, toggle, confirmation).
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.2.0
-     * 📅 Date         : 2026-10-30
+     * 📦 Version      : 1.5.1
+     * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🩹 v1.5.1 (2026-11-01) : Tolérance aux actions non définies avec fallback intelligent
+     *                              (toggle automatique pour domaines commutables, more-info sinon)
+     *                              et réinitialisation stricte de hasMoved sur pointercancel.
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale du moteur d'actions universel HALO.
      * ==============================================================================
      */
@@ -200,16 +212,37 @@ var HaloButtonCard = (function (exports) {
         node.dispatchEvent(event);
     }
     async function handleAction(node, hass, config, defaultEntityId) {
-        if (!config || !hass)
+        if (!hass)
             return;
-        const action = config.action || (config.service ? 'call-service' : (defaultEntityId ? 'more-info' : 'none'));
+        const effectiveConfig = config || (defaultEntityId ? {} : { action: 'none' });
+        let action = effectiveConfig.action;
+        if (!action) {
+            if (effectiveConfig.service || effectiveConfig.perform_action) {
+                action = 'call-service';
+            }
+            else if (effectiveConfig.navigation_path) {
+                action = 'navigate';
+            }
+            else if (effectiveConfig.url_path) {
+                action = 'url';
+            }
+            else if (effectiveConfig.entity || defaultEntityId) {
+                const target = effectiveConfig.entity || defaultEntityId;
+                const domain = target?.split('.')[0] || '';
+                const toggleableDomains = ['light', 'switch', 'input_boolean', 'fan', 'cover', 'lock', 'automation'];
+                action = toggleableDomains.includes(domain) ? 'toggle' : 'more-info';
+            }
+            else {
+                action = 'none';
+            }
+        }
         if (action === 'none')
             return;
         // Confirmation dialog
-        if (config.confirmation) {
-            const text = typeof config.confirmation === 'string'
-                ? config.confirmation
-                : (config.confirmation.text || 'Confirmer l\'action ?');
+        if (effectiveConfig.confirmation) {
+            const text = typeof effectiveConfig.confirmation === 'string'
+                ? effectiveConfig.confirmation
+                : (effectiveConfig.confirmation.text || 'Confirmer l\'action ?');
             if (!window.confirm(text)) {
                 return;
             }
@@ -218,24 +251,24 @@ var HaloButtonCard = (function (exports) {
         switch (action) {
             case 'call-service':
             case 'perform-action': {
-                const fullService = config.service || config.perform_action;
+                const fullService = effectiveConfig.service || effectiveConfig.perform_action;
                 if (!fullService)
                     return;
                 const [domain, service] = fullService.split('.');
                 const serviceData = {
-                    ...(config.data || config.service_data || {})
+                    ...(effectiveConfig.data || effectiveConfig.service_data || {})
                 };
-                if (config.target) {
-                    Object.assign(serviceData, config.target);
+                if (effectiveConfig.target) {
+                    Object.assign(serviceData, effectiveConfig.target);
                 }
-                else if (!serviceData.entity_id && (config.entity || defaultEntityId)) {
-                    serviceData.entity_id = config.entity || defaultEntityId;
+                else if (!serviceData.entity_id && (effectiveConfig.entity || defaultEntityId)) {
+                    serviceData.entity_id = effectiveConfig.entity || defaultEntityId;
                 }
                 await hass.callService(domain, service, serviceData);
                 break;
             }
             case 'toggle': {
-                const targetEntity = config.entity || defaultEntityId;
+                const targetEntity = effectiveConfig.entity || defaultEntityId;
                 if (!targetEntity)
                     return;
                 const domain = targetEntity.split('.')[0] || 'homeassistant';
@@ -243,14 +276,14 @@ var HaloButtonCard = (function (exports) {
                 break;
             }
             case 'more-info': {
-                const targetEntity = config.entity || defaultEntityId;
+                const targetEntity = effectiveConfig.entity || defaultEntityId;
                 if (!targetEntity)
                     return;
                 fireEvent(node, 'hass-more-info', { entityId: targetEntity });
                 break;
             }
             case 'navigate': {
-                const path = config.navigation_path;
+                const path = effectiveConfig.navigation_path;
                 if (!path)
                     return;
                 window.history.pushState(null, '', path);
@@ -262,7 +295,7 @@ var HaloButtonCard = (function (exports) {
                 break;
             }
             case 'url': {
-                const url = config.url_path;
+                const url = effectiveConfig.url_path;
                 if (!url)
                     return;
                 window.open(url, '_blank');
@@ -340,6 +373,7 @@ var HaloButtonCard = (function (exports) {
                 holdTimer = null;
             }
             isHold = false;
+            hasMoved = false;
         };
         el.addEventListener('pointerdown', onPointerDown);
         el.addEventListener('pointermove', onPointerMove);
@@ -371,11 +405,24 @@ var HaloButtonCard = (function (exports) {
      *                    et support complet des sous-boutons interactifs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.7.0-beta.1
+     * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Logique d'état tripartite (active, inactive, unavailable),
+     *                                     gestion du style sobre subtle_inactive à l'état fermé
+     *                                     (bordure fine, zéro halo, médaillon neutre),
+     *                                     support de binary_mode / is_door / is_velux avec icônes
+     *                                     et sous-titres d'ouverture automatiques.
+     *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
+     *                              color_off, active_color, inactive_color), correction du cycle de vie
+     *                              DOM (connectedCallback) évitant la perte d'interactions lors du
+     *                              changement d'onglets, et nettoyage hermétique des écouteurs.
+     *   - ✨ v1.5.0 (2026-11-01) : Support de `linked_entity`, `linked_attribute` et
+     *                              `display_format` (date_short, date_long, date_time_fr,
+     *                              time_only, relative) pour l'affichage de valeurs externes
+     *                              (ex. input_datetime) dans le sous-titre.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO.
      *   - 🩹 v1.2.1 (2026-10-30) : Ajout du contour net (border 1.5px solid) et
      *                              du halo lumineux permanent (box-shadow) sur ha-card.
@@ -442,6 +489,13 @@ var HaloButtonCard = (function (exports) {
         getCardSize() {
             return this._config?.layout === 'vertical' ? 2 : 1;
         }
+        connectedCallback() {
+            // Si la carte a déjà été construite et que les interactions ont été détachées
+            // (ex: retour de vue Lovelace sans changement d'état d'entité), réactiver immédiatement
+            if (this._cardEl && !this._unbindCardTouch) {
+                this._bindInteractions();
+            }
+        }
         disconnectedCallback() {
             this._cleanupBindings();
         }
@@ -460,9 +514,19 @@ var HaloButtonCard = (function (exports) {
         _hasChanged(oldHass, newHass) {
             if (!oldHass || !newHass || !this._config)
                 return true;
+            // Changement de thème d'interface ou langue
+            if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+                return true;
+            }
             // Entité principale
             if (this._config.entity) {
                 if (oldHass.states[this._config.entity] !== newHass.states[this._config.entity]) {
+                    return true;
+                }
+            }
+            // Entité liée
+            if (this._config.linked_entity) {
+                if (oldHass.states[this._config.linked_entity] !== newHass.states[this._config.linked_entity]) {
                     return true;
                 }
             }
@@ -493,18 +557,95 @@ var HaloButtonCard = (function (exports) {
             }
             return false;
         }
+        _getEntityStateCategory() {
+            if (!this._config.entity || !this._hass?.states?.[this._config.entity]) {
+                return 'active'; // En l'absence d'entité, le bouton reste actif (déclencheur d'action pur)
+            }
+            const state = this._hass.states[this._config.entity].state?.toLowerCase();
+            if (state === 'unavailable' || state === 'unknown') {
+                return 'unavailable';
+            }
+            const inactiveStates = [
+                'off',
+                'closed',
+                'closing',
+                'idle',
+                'standby',
+                'paused',
+                'not_home'
+            ];
+            if (inactiveStates.includes(state)) {
+                return 'inactive';
+            }
+            return 'active';
+        }
+        _isEntityActive() {
+            return this._getEntityStateCategory() === 'active';
+        }
+        _isBinaryMode() {
+            if (this._config.binary_mode !== undefined) {
+                return Boolean(this._config.binary_mode);
+            }
+            if (this._config.entity) {
+                if (this._config.entity.startsWith('binary_sensor.')) {
+                    return true;
+                }
+                const devClass = this._hass?.states?.[this._config.entity]?.attributes?.device_class;
+                if (devClass && ['window', 'door', 'opening', 'garage_door'].includes(devClass)) {
+                    return true;
+                }
+            }
+            return Boolean(this._config.is_door || this._config.is_velux);
+        }
+        _isDoor() {
+            if (this._config.is_door !== undefined) {
+                return Boolean(this._config.is_door);
+            }
+            if (this._config.entity) {
+                const devClass = this._hass?.states?.[this._config.entity]?.attributes?.device_class;
+                if (devClass === 'door' || devClass === 'garage_door') {
+                    return true;
+                }
+            }
+            return false;
+        }
+        _isVelux() {
+            return Boolean(this._config.is_velux);
+        }
         _getEffectiveColor() {
+            const stateCat = this._getEntityStateCategory();
+            const colorUnavail = this._config.color_unavailable || this._config.color_unavail || this._config.unavail_color;
+            const colorOn = this._config.color_on || this._config.active_color;
+            const colorOff = this._config.color_off || this._config.inactive_color;
+            // 1. Couleurs distinctes par état si explicitement activées ou définies
+            if (this._config.state_colors || colorOn || colorOff || colorUnavail) {
+                if (stateCat === 'unavailable') {
+                    const unavailSpec = colorUnavail || '#f59e0b';
+                    return resolveThemeColor(this._hass, unavailSpec, this._config.theme_entity, '#f59e0b');
+                }
+                else if (stateCat === 'active') {
+                    const activeSpec = colorOn || this._config.color || this._config.halo_color || this._config.accent_color || '#f43f5e';
+                    return resolveThemeColor(this._hass, activeSpec, this._config.theme_entity, '#f43f5e');
+                }
+                else {
+                    const inactiveSpec = colorOff || '#64748b';
+                    return resolveThemeColor(this._hass, inactiveSpec, this._config.theme_entity, '#64748b');
+                }
+            }
+            // 2. Si l'état est unavailable : Ambre Doré par défaut
+            if (stateCat === 'unavailable') {
+                return resolveThemeColor(this._hass, colorUnavail || '#f59e0b', this._config.theme_entity, '#f59e0b');
+            }
+            // 3. Couleur explicite unique définie (color / halo_color / accent_color)
             const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
             if (explicit) {
                 return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#26c6da');
             }
-            // Si entité liée (ex: light ou switch)
-            if (this._config.entity && this._hass?.states?.[this._config.entity]) {
-                const stateObj = this._hass.states[this._config.entity];
-                if (stateObj.state === 'off') {
-                    return '#94a3b8';
-                }
+            // 4. Entité liée sans couleur configurée : état inactif => gris ardoise
+            if (stateCat === 'inactive') {
+                return '#64748b';
             }
+            // 5. Entité liée active sans couleur configurée : hériter de la palette du thème
             return resolveThemeColor(this._hass, undefined, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
         }
         _buildDom() {
@@ -703,6 +844,8 @@ var HaloButtonCard = (function (exports) {
             if (!this._cardEl) {
                 this._buildDom();
             }
+            const stateCat = this._getEntityStateCategory();
+            const isSubtleInactive = stateCat === 'inactive' && Boolean(this._config.subtle_inactive || this._config.hybrid_style);
             const color = this._getEffectiveColor();
             const layout = this._config.layout || 'horizontal';
             const isVertical = layout === 'vertical';
@@ -712,8 +855,16 @@ var HaloButtonCard = (function (exports) {
             const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
                 ? this._config.border_width
                 : 1.5;
-            const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
-            const cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            let cardBorder;
+            let cardShadow;
+            if (isSubtleInactive) {
+                cardBorder = '1px solid rgba(255, 255, 255, 0.08)';
+                cardShadow = '0 4px 12px rgba(0, 0, 0, 0.25)';
+            }
+            else {
+                cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
+                cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            }
             if (this._cardEl.style.border !== cardBorder) {
                 this._cardEl.style.border = cardBorder;
             }
@@ -722,15 +873,54 @@ var HaloButtonCard = (function (exports) {
             }
             // Icon button styling
             if (this._iconBtnEl) {
-                this._iconBtnEl.style.background = `${color}1A`;
-                this._iconBtnEl.style.borderColor = `${color}40`;
-                this._iconBtnEl.style.border = `1px solid ${color}40`;
-                this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+                if (isSubtleInactive) {
+                    this._iconBtnEl.style.background = 'rgba(255, 255, 255, 0.05)';
+                    this._iconBtnEl.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    this._iconBtnEl.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                    this._iconBtnEl.style.boxShadow = 'none';
+                }
+                else {
+                    this._iconBtnEl.style.background = `${color}1A`;
+                    this._iconBtnEl.style.borderColor = `${color}40`;
+                    this._iconBtnEl.style.border = `1px solid ${color}40`;
+                    this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+                }
             }
-            // Icon
+            // Icon resolution
             let icon = this._config.icon;
+            const isBinary = this._isBinaryMode();
+            const isDoor = this._isDoor();
+            const isVelux = this._isVelux();
+            const getBinaryIcon = () => {
+                if (stateCat === 'unavailable') {
+                    return 'mdi:alert-circle';
+                }
+                if (isDoor) {
+                    return stateCat === 'active' ? 'mdi:door-open' : 'mdi:door-closed';
+                }
+                if (isVelux) {
+                    return stateCat === 'active' ? 'mdi:window-open-variant' : 'mdi:window-closed-variant';
+                }
+                return stateCat === 'active' ? 'mdi:window-open-variant' : 'mdi:window-closed';
+            };
+            if (isBinary && !icon) {
+                icon = getBinaryIcon();
+            }
             if (!icon && this._config.entity && this._hass?.states?.[this._config.entity]) {
-                icon = this._hass.states[this._config.entity].attributes?.icon || 'mdi:gesture-tap-button';
+                const haIcon = this._hass.states[this._config.entity].attributes?.icon;
+                const genericOpenIcons = [
+                    'mdi:door-open',
+                    'mdi:door-closed',
+                    'mdi:window-open',
+                    'mdi:window-open-variant',
+                    'mdi:window-closed'
+                ];
+                if (isBinary && (!haIcon || genericOpenIcons.includes(haIcon))) {
+                    icon = getBinaryIcon();
+                }
+                else {
+                    icon = haIcon || 'mdi:gesture-tap-button';
+                }
             }
             if (!icon)
                 icon = 'mdi:gesture-tap-button';
@@ -753,7 +943,28 @@ var HaloButtonCard = (function (exports) {
                 }
             }
             // Subtitle / Label
-            const subtitle = this._config.label || this._config.subtitle;
+            let subtitle = this._config.label || this._config.subtitle;
+            if (!subtitle && (isBinary || (!this._config.linked_entity && this._config.entity))) {
+                const stateObj = this._config.entity ? this._hass?.states?.[this._config.entity] : undefined;
+                const entityName = (this._config.name ||
+                    this._config.title ||
+                    stateObj?.attributes?.friendly_name ||
+                    '').toLowerCase();
+                const isMasculine = isDoor && !entityName.includes('porte');
+                if (stateCat === 'unavailable') {
+                    subtitle = stateObj?.state === 'unknown' ? 'Inconnu' : 'Indisponible';
+                }
+                else if (stateCat === 'active') {
+                    subtitle = isMasculine ? 'Ouvert' : 'Ouverte';
+                }
+                else {
+                    subtitle = isMasculine ? 'Fermé' : 'Fermée';
+                }
+            }
+            const linkedVal = this._formatLinkedValue();
+            if (linkedVal !== null) {
+                subtitle = subtitle ? `${subtitle} • ${linkedVal}` : linkedVal;
+            }
             if (this._subtitleEl) {
                 this._subtitleEl.textContent = subtitle || '';
                 this._subtitleEl.style.display = subtitle ? 'block' : 'none';
@@ -801,6 +1012,60 @@ var HaloButtonCard = (function (exports) {
                 this._subButtonEls.push(btnEl);
             });
         }
+        _formatLinkedValue() {
+            if (!this._config.linked_entity || !this._hass?.states?.[this._config.linked_entity]) {
+                return null;
+            }
+            const stateObj = this._hass.states[this._config.linked_entity];
+            let rawValue;
+            if (this._config.linked_attribute && stateObj.attributes) {
+                rawValue = stateObj.attributes[this._config.linked_attribute];
+            }
+            else {
+                rawValue = stateObj.state;
+            }
+            if (rawValue === undefined || rawValue === null || rawValue === 'unavailable' || rawValue === 'unknown') {
+                return String(rawValue ?? '');
+            }
+            const fmt = this._config.display_format || 'raw';
+            if (fmt === 'raw')
+                return String(rawValue);
+            // Tentative de parsing Date
+            const d = new Date(rawValue);
+            if (isNaN(d.getTime())) {
+                return String(rawValue);
+            }
+            const lang = this._hass.locale?.language || this._hass.language || 'fr';
+            switch (fmt) {
+                case 'date_short':
+                    return d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' });
+                case 'date_long':
+                    return d.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
+                case 'date_time_fr':
+                    return `${d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}`;
+                case 'time_only':
+                    return d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+                case 'relative': {
+                    const now = Date.now();
+                    const diffSec = Math.round((d.getTime() - now) / 1000);
+                    try {
+                        const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
+                        if (Math.abs(diffSec) < 60)
+                            return rtf.format(diffSec, 'second');
+                        if (Math.abs(diffSec) < 3600)
+                            return rtf.format(Math.round(diffSec / 60), 'minute');
+                        if (Math.abs(diffSec) < 86400)
+                            return rtf.format(Math.round(diffSec / 3600), 'hour');
+                        return rtf.format(Math.round(diffSec / 86400), 'day');
+                    }
+                    catch {
+                        return `${d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}`;
+                    }
+                }
+                default:
+                    return String(rawValue);
+            }
+        }
         _bindInteractions() {
             this._cleanupBindings();
             // 1. Actions sur la carte globale
@@ -825,7 +1090,10 @@ var HaloButtonCard = (function (exports) {
             const iconHoldAction = this._config.icon_hold_action;
             const iconDoubleTapAction = this._config.icon_double_tap_action;
             if (this._iconBtnEl && (iconTapAction || iconHoldAction || iconDoubleTapAction)) {
-                this._unbindIconTouch = bindTouchActions(this._iconBtnEl, {
+                const stopProp = (e) => e.stopPropagation();
+                this._iconBtnEl.addEventListener('pointerdown', stopProp);
+                this._iconBtnEl.addEventListener('click', stopProp);
+                const rawUnbind = bindTouchActions(this._iconBtnEl, {
                     onTap: () => {
                         if (iconTapAction) {
                             handleAction(this, this._hass, iconTapAction, this._config.entity);
@@ -841,9 +1109,11 @@ var HaloButtonCard = (function (exports) {
                         handleAction(this, this._hass, iconDoubleTapAction, this._config.entity);
                     } : undefined
                 });
-                // Stop propagation pour ne pas déclencher le tap carte
-                this._iconBtnEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-                this._iconBtnEl.addEventListener('click', (e) => e.stopPropagation());
+                this._unbindIconTouch = () => {
+                    rawUnbind();
+                    this._iconBtnEl?.removeEventListener('pointerdown', stopProp);
+                    this._iconBtnEl?.removeEventListener('click', stopProp);
+                };
             }
             // 3. Actions sur les sous-boutons
             if (this._config.sub_buttons && this._subButtonEls.length > 0) {
@@ -851,8 +1121,9 @@ var HaloButtonCard = (function (exports) {
                     const el = this._subButtonEls[idx];
                     if (!el)
                         return;
-                    el.addEventListener('pointerdown', (e) => e.stopPropagation());
-                    el.addEventListener('click', (e) => e.stopPropagation());
+                    const stopSubProp = (e) => e.stopPropagation();
+                    el.addEventListener('pointerdown', stopSubProp);
+                    el.addEventListener('click', stopSubProp);
                     const unbind = bindTouchActions(el, {
                         onTap: () => {
                             const act = sb.tap_action || { action: 'toggle', entity: sb.entity || this._config.entity };
@@ -865,7 +1136,11 @@ var HaloButtonCard = (function (exports) {
                             handleAction(this, this._hass, sb.double_tap_action, sb.entity || this._config.entity);
                         } : undefined
                     });
-                    this._unbindSubTouch.push(unbind);
+                    this._unbindSubTouch.push(() => {
+                        unbind();
+                        el.removeEventListener('pointerdown', stopSubProp);
+                        el.removeEventListener('click', stopSubProp);
+                    });
                 });
             }
         }
@@ -1150,6 +1425,8 @@ var HaloButtonCard = (function (exports) {
       "state": {
         "on": "On",
         "off": "Off",
+        "active": "Active",
+        "inactive": "Inactive",
         "unavailable": "Unavailable",
         "unknown": "Unknown",
         "closed": "Closed",
@@ -1199,6 +1476,34 @@ var HaloButtonCard = (function (exports) {
         "lg_name": "Tile name",
         "lg_name_d": " : Light details"
       },
+      "fold": {
+        "default_title": "Details & Devices",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "counter": {
+        "cover_default_title": "Roller Shutters",
+        "cover_moving_single": "1 shutter moving…",
+        "cover_moving_plural": "{count} shutters moving…",
+        "cover_all_closed": "All shutters are closed",
+        "cover_all_open": "All shutters are open",
+        "closed_single": "1 closed",
+        "closed_plural": "{count} closed",
+        "partial_single": "1 partial",
+        "partial_plural": "{count} partial",
+        "open_single": "1 open",
+        "open_plural": "{count} open",
+        "closed_label": "Closed",
+        "open_label": "Open",
+        "binary_all_closed": "All openings are closed",
+        "binary_open_single": "1 opening open",
+        "binary_open_plural": "{count} openings open",
+        "binary_unavail_single": "1 sensor unavailable",
+        "binary_unavail_plural": "{count} sensors unavailable",
+        "binary_subtitle": "{count} open out of {total}",
+        "binary_all_ok": "Optimal perimeter security",
+        "indispo_short": "Unavail"
+      },
       "halo": {
         "Cyan": "Cyan",
         "Bleu Céleste": "Sky Blue",
@@ -1237,6 +1542,7 @@ var HaloButtonCard = (function (exports) {
         "color_default_cyan": "Cyan (Default)",
         "color_active_theme": "Active HALO theme",
         "color_default_grey": "Default (#64748B)",
+        "color_default_amber": "Golden Amber (Default)",
         "button": {
           "name": "Main title",
           "label": "Subtitle / description",
@@ -1248,8 +1554,52 @@ var HaloButtonCard = (function (exports) {
           "align_left": "Left",
           "align_center": "Centered",
           "align_right": "Right",
-          "entity": "Linked entity (optional)",
+          "entity": "Primary entity (optional)",
+          "state_colors": "State colors (Active / Inactive / Unavailable)",
+          "state_colors_helper": "Define separate halo and border colors depending on the entity state.",
+          "state_active": "Active",
+          "state_inactive": "Inactive",
+          "state_unavailable": "Unavailable",
+          "subtle_inactive": "Subtle style when inactive (Discrete)",
+          "subtle_inactive_helper": "Removes the glowing halo and softens the border when the entity is closed or off.",
+          "binary_mode": "Binary opening / sensor mode (Doors & Windows)",
+          "binary_mode_helper": "Enables dynamic opening icons (open/closed) and automatic subtitles.",
+          "linked_entity": "Displayed secondary entity (e.g. absence date, sensor)",
+          "linked_attribute": "Specific attribute of linked entity (optional)",
+          "display_format": "Linked value display format",
+          "format_raw": "Raw (Direct value)",
+          "format_date_short": "Short date (DD/MM)",
+          "format_date_long": "Long date (DD Month YYYY)",
+          "format_date_time_fr": "Date & Time (DD/MM HH:mm)",
+          "format_time_only": "Time only (HH:mm)",
+          "format_relative": "Relative time (e.g. in / ago)",
+          "tap_action": "Tap action",
           "theme_entity": "Theme selector entity (optional)"
+        },
+        "scene": {
+          "name": "Scene title",
+          "label": "Subtitle / description",
+          "icon": "MDI icon",
+          "layout": "Layout",
+          "layout_horizontal": "Horizontal (wide card, text on the right)",
+          "layout_vertical": "Vertical (compact card, text centered below)",
+          "text_align": "Text alignment",
+          "align_left": "Left",
+          "align_center": "Centered",
+          "align_right": "Right",
+          "title_size": "Title font size (e.g. 11px, optional)",
+          "label_size": "Subtitle font size (e.g. 9.5px, optional)",
+          "toggle_on_reclick": "Turn off lights on second tap (if already on)",
+          "show_badge": "Show target count badge",
+          "mode": "Adjustment mode",
+          "mode_individual": "Individual (Precise per device)",
+          "mode_common": "Harmonized (Common setting for all targets)",
+          "theme_entity": "Theme selector entity (optional)",
+          "targets_title": "Scene Devices & Presets",
+          "add_target": "Add device (Light or Shutter)",
+          "no_targets": "No devices configured. Click 'Add device' to get started.",
+          "select_entity": "Select entity",
+          "delete": "Delete"
         },
         "cover": {
           "entity": "Shutter or group entity",
@@ -1321,6 +1671,60 @@ var HaloButtonCard = (function (exports) {
           "title": "Section title (optional)",
           "icon": "MDI icon (optional)",
           "columns": "Number of columns"
+        },
+        "markdown": {
+          "title": "Banner title (optional)",
+          "title_helper": "Title displayed above callout",
+          "content": "Markdown Content",
+          "content_helper": "Supports rich Markdown (bold, lists, links, code) and Jinja2 templates",
+          "theme_entity": "Theme selector entity (optional)",
+          "theme_entity_helper": "E.g.: input_select.couleur_theme_chauffage",
+          "bar_tab": "Sidebar",
+          "gradient_tab": "Background Gradient",
+          "bar_width_title": "Bar width",
+          "bar_none": "No bar",
+          "bar_default": "Default (4 px)",
+          "bar_max": "Max (8 px)",
+          "bar_badge_off": "0 px (No bar)",
+          "bar_badge_default": "{v} px (Default)",
+          "target_color": "Color: {target}"
+        },
+        "fold": {
+          "name": "Foldable container title",
+          "icon": "MDI icon",
+          "theme_entity": "Theme selector entity (optional)",
+          "initial_collapsed": "Initially collapsed / hidden by default",
+          "columns": "Columns for child cards",
+          "cols_1": "1 column (Full width — recommended for light/cover cards)",
+          "cols_2": "2 columns (Side-by-side grid)",
+          "cols_3": "3 columns (Compact grid)",
+          "label_on": "Button label when expanded (e.g. Hide)",
+          "label_off": "Button label when collapsed (e.g. Show)",
+          "toggle_entity": "Synchronized external boolean entity (optional)",
+          "show_border": "Border outline enclosing all folded cards",
+          "border_style": "Border style",
+          "style_dashed": "Fine dashed line (Recommended)",
+          "style_dotted": "Regular dots",
+          "style_solid": "Solid line",
+          "show_halo": "Soft ambient halo around enclosure",
+          "border_width": "Border width (px)",
+          "enclosure_padding": "Inner enclosure padding (px)",
+          "cards_title": "Drawer Child Cards",
+          "cards_subtitle": "Lovelace cards displayed when the drawer is expanded",
+          "add_card": "+ Add card",
+          "no_cards": "No child cards configured. Click '+ Add card' to pick a card from the list."
+        },
+        "counter": {
+          "mode": "Operating mode",
+          "mode_auto": "Automatic (detected from entity: Shutters or Openings)",
+          "mode_cover": "Roller shutters (4-state counter + movement, without list)",
+          "mode_binary": "Openings / Windows (Counter + open & fault pills)",
+          "entity": "Primary group entity (e.g. cover.volets_maison or binary_sensor.groupe_ouvertures)",
+          "name": "Custom title (optional)",
+          "ok_text": "Security message when all closed (Openings mode, optional)",
+          "counter_label": "Label below counter (optional, e.g. Closed)",
+          "show_counter": "Show right-hand numeric counter (X / Total)",
+          "show_details": "Show item details (open and unavailable pills)"
         }
       }
     }
@@ -1330,6 +1734,8 @@ var HaloButtonCard = (function (exports) {
       "state": {
         "on": "Allumé",
         "off": "Éteint",
+        "active": "Activé",
+        "inactive": "Désactivé",
         "unavailable": "Indisponible",
         "unknown": "Inconnu",
         "closed": "Fermé",
@@ -1379,6 +1785,34 @@ var HaloButtonCard = (function (exports) {
         "lg_name": "Nom tuile",
         "lg_name_d": " : Détails lampe"
       },
+      "fold": {
+        "default_title": "Détails & Appareils",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "counter": {
+        "cover_default_title": "Volets Roulants",
+        "cover_moving_single": "1 volet en mouvement…",
+        "cover_moving_plural": "{count} volets en mouvement…",
+        "cover_all_closed": "Tous les volets sont fermés",
+        "cover_all_open": "Tous les volets sont ouverts",
+        "closed_single": "1 fermé",
+        "closed_plural": "{count} fermés",
+        "partial_single": "1 partiel",
+        "partial_plural": "{count} partiels",
+        "open_single": "1 ouvert",
+        "open_plural": "{count} ouverts",
+        "closed_label": "Fermés",
+        "open_label": "Ouvertes",
+        "binary_all_closed": "Toutes les ouvertures sont fermées",
+        "binary_open_single": "1 ouverture ouverte",
+        "binary_open_plural": "{count} ouvertures ouvertes",
+        "binary_unavail_single": "1 capteur indisponible",
+        "binary_unavail_plural": "{count} capteurs indisponibles",
+        "binary_subtitle": "{count} ouverte(s) sur {total}",
+        "binary_all_ok": "Sécurité périmétrique optimale",
+        "indispo_short": "Indispo"
+      },
       "halo": {
         "Cyan": "Cyan",
         "Bleu Céleste": "Bleu Céleste",
@@ -1417,6 +1851,7 @@ var HaloButtonCard = (function (exports) {
         "color_default_cyan": "Cyan (Défaut)",
         "color_active_theme": "Thème HALO actif",
         "color_default_grey": "Défaut (#64748B)",
+        "color_default_amber": "Ambre Doré (Défaut)",
         "button": {
           "name": "Titre principal",
           "label": "Sous-titre / Description",
@@ -1428,8 +1863,52 @@ var HaloButtonCard = (function (exports) {
           "align_left": "Gauche",
           "align_center": "Centré",
           "align_right": "Droite",
-          "entity": "Entité liée (optionnel)",
+          "entity": "Entité principale (optionnel)",
+          "state_colors": "Couleurs par état (Activé / Désactivé / Indisponible)",
+          "state_colors_helper": "Définit des teintes de halo et bordure distinctes selon l'état de l'entité.",
+          "state_active": "Activé",
+          "state_inactive": "Désactivé",
+          "state_unavailable": "Indisponible",
+          "subtle_inactive": "Style sobre à l'état inactif (Discret)",
+          "subtle_inactive_helper": "Supprime le halo envahissant et adoucit la bordure quand l'entité est fermée ou éteinte.",
+          "binary_mode": "Mode binaire / ouvertures (Portes & Fenêtres)",
+          "binary_mode_helper": "Active les icônes dynamiques d'ouvertures (ouverte/fermée) et les sous-titres automatiques.",
+          "linked_entity": "Entité tierce affichée (ex. date d'absence, capteur)",
+          "linked_attribute": "Attribut spécifique de l'entité liée (optionnel)",
+          "display_format": "Format d'affichage de la valeur liée",
+          "format_raw": "Brut (Valeur directe)",
+          "format_date_short": "Date courte (JJ/MM)",
+          "format_date_long": "Date longue (JJ Mois AAAA)",
+          "format_date_time_fr": "Date et heure (JJ/MM HH:mm)",
+          "format_time_only": "Heure uniquement (HH:mm)",
+          "format_relative": "Temps relatif (ex. il y a / dans X j)",
+          "tap_action": "Action lors du clic",
           "theme_entity": "Entité sélecteur de thème (optionnel)"
+        },
+        "scene": {
+          "name": "Titre de l'ambiance",
+          "label": "Sous-titre / Description",
+          "icon": "Icône MDI",
+          "layout": "Disposition (Layout)",
+          "layout_horizontal": "Horizontal (Carte large avec texte à droite)",
+          "layout_vertical": "Vertical (Carte compacte avec texte centré en dessous)",
+          "text_align": "Alignement du texte",
+          "align_left": "Gauche",
+          "align_center": "Centré",
+          "align_right": "Droite",
+          "title_size": "Taille du titre (ex. 11px, optionnel)",
+          "label_size": "Taille du sous-titre (ex. 9.5px, optionnel)",
+          "toggle_on_reclick": "Éteindre les lumières lors d'un second clic (si déjà allumées)",
+          "show_badge": "Afficher la pastille du nombre d'appareils",
+          "mode": "Mode de réglage",
+          "mode_individual": "Individuel (Réglage précis par appareil)",
+          "mode_common": "Harmonisé (Réglage commun à toutes les cibles)",
+          "theme_entity": "Entité sélecteur de thème (optionnel)",
+          "targets_title": "Appareils & Réglages de l'ambiance",
+          "add_target": "Ajouter un appareil (Lumière ou Volet)",
+          "no_targets": "Aucun appareil configuré. Cliquez sur « Ajouter un appareil » pour commencer.",
+          "select_entity": "Sélectionner une entité",
+          "delete": "Supprimer"
         },
         "cover": {
           "entity": "Entité Volet ou Groupe",
@@ -1501,6 +1980,60 @@ var HaloButtonCard = (function (exports) {
           "title": "Titre de la section (optionnel)",
           "icon": "Icône MDI (optionnel)",
           "columns": "Nombre de colonnes"
+        },
+        "markdown": {
+          "title": "Titre du bandeau (optionnel)",
+          "title_helper": "Titre affiché au-dessus du callout",
+          "content": "Contenu Markdown",
+          "content_helper": "Supporte la syntaxe Markdown riche (gras, listes, liens, code) et les templates Jinja2",
+          "theme_entity": "Entité sélecteur de thème (optionnel)",
+          "theme_entity_helper": "Ex : input_select.couleur_theme_chauffage",
+          "bar_tab": "Barre latérale",
+          "gradient_tab": "Dégradé de fond",
+          "bar_width_title": "Largeur de la barre",
+          "bar_none": "Sans barre",
+          "bar_default": "Défaut (4 px)",
+          "bar_max": "Maxi (8 px)",
+          "bar_badge_off": "0 px (Sans barre)",
+          "bar_badge_default": "{v} px (Défaut)",
+          "target_color": "Couleur : {target}"
+        },
+        "fold": {
+          "name": "Titre du conteneur repliable",
+          "icon": "Icône MDI",
+          "theme_entity": "Entité sélecteur de thème (optionnel)",
+          "initial_collapsed": "Initialement replié / masqué par défaut",
+          "columns": "Nombre de colonnes pour les cartes enfants",
+          "cols_1": "1 colonne (Pleine largeur — recommandé pour cartes lumières/volets)",
+          "cols_2": "2 colonnes (Grille côte à côte)",
+          "cols_3": "3 colonnes (Grille compacte)",
+          "label_on": "Libellé bouton quand déplié (ex. Masquer)",
+          "label_off": "Libellé bouton quand replié (ex. Afficher)",
+          "toggle_entity": "Entité booléenne externe synchronisée (optionnel)",
+          "show_border": "Contour entourant toutes les cartes repliées",
+          "border_style": "Style du contour",
+          "style_dashed": "Pointillés / Tirets fins (Recommandé)",
+          "style_dotted": "Points réguliers",
+          "style_solid": "Ligne continue",
+          "show_halo": "Halo lumineux léger autour de l'enclos",
+          "border_width": "Épaisseur du contour (px)",
+          "enclosure_padding": "Espacement interne de l'enclos (px)",
+          "cards_title": "Cartes Enfants du Tiroir",
+          "cards_subtitle": "Cartes Lovelace affichées lorsque le volet est déplié",
+          "add_card": "+ Ajouter une carte",
+          "no_cards": "Aucune carte enfant configurée. Cliquez sur « + Ajouter une carte » pour choisir une carte dans la liste."
+        },
+        "counter": {
+          "mode": "Mode de fonctionnement",
+          "mode_auto": "Automatique (détecté selon l'entité : Volets ou Ouvertures)",
+          "mode_cover": "Volets roulants (Compteur 4 états + mouvement, sans liste)",
+          "mode_binary": "Ouvertures / Fenêtres (Compteur + pastilles ouvertes & défauts)",
+          "entity": "Entité de groupe principale (ex. cover.volets_maison ou binary_sensor.groupe_ouvertures)",
+          "name": "Titre personnalisé (optionnel)",
+          "ok_text": "Message de sécurité quand tout est fermé (mode Ouvertures, optionnel)",
+          "counter_label": "Libellé sous le compteur (optionnel, ex. Fermés)",
+          "show_counter": "Afficher le compteur numérique à droite (X / Total)",
+          "show_details": "Afficher le détail nominatif (pastilles des ouverts et indisponibles)"
         }
       }
     }
@@ -1574,11 +2107,13 @@ var HaloButtonCard = (function (exports) {
      *                    nom d'affichage des couleurs.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.5.1
+     * 📅 Date         : 2026-11-01
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.5.1 (2026-11-01) : Support du mot-clé 'theme'/'auto' dans colorDisplayName pour
+     *                              affichage clair du label 'Thème HALO actif'.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
      *                              (`HALO_PALETTE`, `localizeHalo`, `color_default_halo`)
      *                              et renommage de la teinte `Cyan`.
@@ -1688,6 +2223,10 @@ var HaloButtonCard = (function (exports) {
         if (!raw)
             return t(emptyKey);
         if (typeof raw === 'string') {
+            const trimmed = raw.trim().toLowerCase();
+            if (trimmed === 'theme' || trimmed === 'auto') {
+                return t('editor.color_active_theme');
+            }
             if (HALO_PALETTE[raw])
                 return localizeHalo(hass, raw);
             for (const [name, hex] of Object.entries(HALO_PALETTE)) {
@@ -1704,14 +2243,23 @@ var HaloButtonCard = (function (exports) {
      * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-button-card.
      *                    Combine le composant natif <ha-form> pour les métadonnées et un
      *                    panneau Liquid Glass avec médaillon halo interactif, nuancier
-     *                    rapide HALO et curseur d'épaisseur de bordure.
+     *                    rapide HALO, onglets d'états dynamiques (Activé / Désactivé)
+     *                    et curseur d'épaisseur de bordure.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.7.0-beta.1
+     * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Ajout du 3ème onglet d'état Indisponible (color_unavailable)
+     *                                     dans le nuancier Liquid Glass et des sélecteurs
+     *                                     subtle_inactive et binary_mode dans le schéma ha-form.
+     *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
+     *                              color_off) avec onglets dynamiques Activé / Désactivé dans
+     *                              le panneau de style Liquid Glass et synchronisation instantanée.
+     *   - ✨ v1.5.0 (2026-11-01) : Ajout des sélecteurs pour `linked_entity`, `linked_attribute`,
+     *                              `display_format` et configuration de l'action `tap_action`.
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
      *                              (`HALO_PALETTE`, `color_default_halo`).
      *   - ✨ v1.2.1 (2026-10-30) : Sélecteur de couleur Mix A+B (Halo Swatch + Nuancier
@@ -1720,7 +2268,27 @@ var HaloButtonCard = (function (exports) {
      *   - 💡 v1.2.0 (2026-10-30) : Création initiale de l'éditeur halo-button-card.
      * ==============================================================================
      */
-    const buildSchema$2 = (t) => [
+    const BUTTON_STATES = [
+        {
+            key: 'color_on',
+            tk: 'active',
+            icon: 'mdi:toggle-switch',
+            fallback: '#26c6da'
+        },
+        {
+            key: 'color_off',
+            tk: 'inactive',
+            icon: 'mdi:toggle-switch-off-outline',
+            fallback: '#64748b'
+        },
+        {
+            key: 'color_unavailable',
+            tk: 'unavailable',
+            icon: 'mdi:alert-circle-outline',
+            fallback: '#f59e0b'
+        }
+    ];
+    const buildSchema$6 = (t) => [
         { name: 'name', selector: { text: {} } },
         { name: 'label', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -1741,17 +2309,40 @@ var HaloButtonCard = (function (exports) {
             }
         },
         { name: 'entity', selector: { entity: {} } },
+        { name: 'state_colors', selector: { boolean: {} } },
+        { name: 'subtle_inactive', selector: { boolean: {} } },
+        { name: 'binary_mode', selector: { boolean: {} } },
+        { name: 'linked_entity', selector: { entity: {} } },
+        { name: 'linked_attribute', selector: { text: {} } },
+        {
+            name: 'display_format',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'button', [
+                        ['raw', 'format_raw'],
+                        ['date_short', 'format_date_short'],
+                        ['date_long', 'format_date_long'],
+                        ['date_time_fr', 'format_date_time_fr'],
+                        ['time_only', 'format_time_only'],
+                        ['relative', 'format_relative']
+                    ])
+                }
+            }
+        },
+        { name: 'tap_action', selector: { 'ui-action': {} } },
         { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
     ];
     class HaloButtonCardEditor extends HTMLElement {
         constructor() {
             super(...arguments);
             this._lang = "en";
+            this._activeStateKey = 'color_on';
             // Références DOM Style Panel
             this._swatchCircleEl = null;
             this._colorInputEl = null;
             this._swatchNameEl = null;
             this._swatchHexEl = null;
+            this._stateTitleEl = null;
             this._chipsContainerEl = null;
             this._borderSliderEl = null;
             this._borderValBadgeEl = null;
@@ -1760,6 +2351,999 @@ var HaloButtonCard = (function (exports) {
             this._config = {
                 layout: 'horizontal',
                 border_width: 1.5,
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
+            const form = this.querySelector('#form');
+            if (form) {
+                form.hass = hass;
+            }
+            this._syncStylePanel();
+        }
+        _fireConfigChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _isStateColorsEnabled() {
+            return Boolean(this._config?.state_colors ||
+                this._config?.color_on ||
+                this._config?.color_off ||
+                this._config?.color_unavailable ||
+                this._config?.color_unavail ||
+                this._config?.unavail_color);
+        }
+        _getStateDef(key) {
+            return BUTTON_STATES.find(s => s.key === key) || BUTTON_STATES[0];
+        }
+        _getColorHex(key) {
+            if (this._isStateColorsEnabled()) {
+                const activeKey = key || this._activeStateKey;
+                if (activeKey === 'color_on') {
+                    const raw = this._config?.color_on || this._config?.active_color || this._config?.color;
+                    if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                        return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#26c6da');
+                    }
+                    return toHexColor(raw, '#26c6da');
+                }
+                else if (activeKey === 'color_off') {
+                    const raw = this._config?.color_off || this._config?.inactive_color;
+                    if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                        return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#64748b');
+                    }
+                    return toHexColor(raw, '#64748b');
+                }
+                else if (activeKey === 'color_unavailable') {
+                    const raw = this._config?.color_unavailable || this._config?.color_unavail || this._config?.unavail_color;
+                    if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                        return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#f59e0b');
+                    }
+                    return toHexColor(raw, '#f59e0b');
+                }
+            }
+            const raw = this._config?.color || 'Cyan';
+            if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#26c6da');
+            }
+            return toHexColor(raw, '#26c6da');
+        }
+        _getColorDisplayName(key) {
+            if (this._isStateColorsEnabled()) {
+                const activeKey = key || this._activeStateKey;
+                if (activeKey === 'color_on') {
+                    const raw = this._config?.color_on || this._config?.active_color || this._config?.color;
+                    return colorDisplayName(this._hass, raw, 'editor.color_active_theme');
+                }
+                else if (activeKey === 'color_off') {
+                    const raw = this._config?.color_off || this._config?.inactive_color;
+                    return colorDisplayName(this._hass, raw, 'editor.color_default_grey');
+                }
+                else if (activeKey === 'color_unavailable') {
+                    const raw = this._config?.color_unavailable || this._config?.color_unavail || this._config?.unavail_color;
+                    return colorDisplayName(this._hass, raw, 'editor.color_default_amber');
+                }
+            }
+            return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_cyan');
+        }
+        _updateColor(colorValue) {
+            if (this._isStateColorsEnabled()) {
+                this._config = {
+                    ...this._config,
+                    [this._activeStateKey]: colorValue
+                };
+            }
+            else {
+                this._config = {
+                    ...this._config,
+                    color: colorValue
+                };
+            }
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _updateBorderWidth(widthValue) {
+            this._config = {
+                ...this._config,
+                border_width: widthValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _setActiveState(key) {
+            this._activeStateKey = key;
+            this._syncStylePanel();
+        }
+        _syncStylePanel() {
+            if (!this._config)
+                return;
+            const isStateMode = this._isStateColorsEnabled();
+            // 1. Si mode par état : synchroniser les onglets
+            if (isStateMode) {
+                BUTTON_STATES.forEach(state => {
+                    const tabEl = this.querySelector(`#tab-${state.key}`);
+                    const dotEl = this.querySelector(`#tab-dot-${state.key}`);
+                    const hex = this._getColorHex(state.key);
+                    if (tabEl) {
+                        tabEl.classList.toggle('active', state.key === this._activeStateKey);
+                    }
+                    if (dotEl) {
+                        dotEl.style.backgroundColor = hex;
+                        dotEl.style.boxShadow = `0 0 6px ${hex}88`;
+                    }
+                });
+            }
+            const hex = this._getColorHex(isStateMode ? this._activeStateKey : undefined);
+            const name = this._getColorDisplayName(isStateMode ? this._activeStateKey : undefined);
+            const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.5;
+            // 2. Titre de colonne
+            if (this._stateTitleEl) {
+                const t = useLocalize(this._hass);
+                if (isStateMode) {
+                    const activeDef = this._getStateDef(this._activeStateKey);
+                    this._stateTitleEl.textContent = t('editor.state_color', 'state', t(`state.${activeDef.tk}`));
+                }
+                else {
+                    this._stateTitleEl.textContent = t('editor.halo_color');
+                }
+            }
+            // 3. Swatch Circle & Halo (Option A)
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = hex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = hex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = hex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = name;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = hex.toUpperCase();
+            }
+            // 4. Nuancier rapide Chips (Option B)
+            if (this._chipsContainerEl) {
+                const activeRaw = isStateMode
+                    ? this._config[this._activeStateKey]
+                    : (this._config.color || 'Cyan');
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = (chipName === activeRaw || chipHex?.toLowerCase() === hex.toLowerCase());
+                    btn.classList.toggle('active', isActive);
+                });
+            }
+            // 5. Border Slider & Badge
+            if (this._borderSliderEl) {
+                this._borderSliderEl.value = String(bw);
+            }
+            if (this._borderValBadgeEl) {
+                this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
+            }
+        }
+        _render() {
+            if (!this._config)
+                return;
+            let form = this.querySelector('#form');
+            if (!form) {
+                const t = useLocalize(this._hass);
+                this._lang = getLang(this._hass);
+                const isStateMode = this._isStateColorsEnabled();
+                const first = this._getStateDef(this._activeStateKey);
+                this.innerHTML = `
+        <style>
+          ${COMMON_EDITOR_STYLES}
+        </style>
+
+        <div class="halo-editor-wrap">
+          <ha-form id="form"></ha-form>
+          ${stylePanelHtml(t, {
+                title: isStateMode ? t('editor.style_title_colors') : t('editor.style_title'),
+                tabs: isStateMode ? BUTTON_STATES.map(s => ({
+                    key: s.key,
+                    icon: s.icon,
+                    label: t(`state.${s.tk}`),
+                    active: s.key === this._activeStateKey
+                })) : undefined,
+                leftTitle: isStateMode
+                    ? t('editor.state_color', 'state', t(`state.${first.tk}`))
+                    : t('editor.halo_color'),
+                borderTitle: isStateMode
+                    ? t('editor.border_title_single')
+                    : t('editor.border_title')
+            })}
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    applyFormI18n(form, this._hass, "button", buildSchema$6(useLocalize(this._hass)));
+                    form.data = this._formMetadata();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+                this._initDomBindings();
+            }
+            else {
+                form.data = this._formMetadata();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+            this._syncStylePanel();
+        }
+        _initDomBindings() {
+            this._swatchCircleEl = this.querySelector('#swatch-circle');
+            this._colorInputEl = this.querySelector('#native-color-input');
+            this._swatchNameEl = this.querySelector('#swatch-name');
+            this._swatchHexEl = this.querySelector('#swatch-hex');
+            this._stateTitleEl = this.querySelector('#state-title');
+            this._chipsContainerEl = this.querySelector('#chips-grid');
+            this._borderSliderEl = this.querySelector('#border-slider-input');
+            this._borderValBadgeEl = this.querySelector('#border-val-text');
+            // 1. Clics sur les onglets d'états
+            if (this._isStateColorsEnabled()) {
+                BUTTON_STATES.forEach(s => {
+                    this.querySelector(`#tab-${s.key}`)?.addEventListener('click', () => {
+                        this._setActiveState(s.key);
+                    });
+                });
+            }
+            // 2. Déclencheur input color natif
+            const triggerColor = () => {
+                if (this._colorInputEl) {
+                    this._colorInputEl.click();
+                }
+            };
+            this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+            this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+            this._colorInputEl?.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val)
+                    this._updateColor(val);
+            });
+            // 3. Génération des chips HALO (Option B)
+            if (this._chipsContainerEl) {
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
+            }
+            // 4. Slider de bordure
+            this._borderSliderEl?.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    this._updateBorderWidth(val);
+                }
+            });
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            delete data.color;
+            delete data.color_on;
+            delete data.color_off;
+            delete data.color_unavailable;
+            delete data.color_unavail;
+            delete data.unavail_color;
+            delete data.active_color;
+            delete data.inactive_color;
+            delete data.border_width;
+            data.state_colors = this._isStateColorsEnabled();
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const oldStateColors = this._isStateColorsEnabled();
+            const newStateColors = Boolean(ev.detail.value.state_colors);
+            this._config = {
+                ...this._config,
+                ...ev.detail.value
+            };
+            // Si bascule de l'option Couleurs par état, réinitialiser la vue pour afficher/masquer les onglets
+            if (oldStateColors !== newStateColors) {
+                if (newStateColors) {
+                    if (!this._config.color_on)
+                        this._config.color_on = this._config.color || 'Cyan';
+                    if (!this._config.color_off)
+                        this._config.color_off = '#64748b';
+                    if (!this._config.color_unavailable && !this._config.color_unavail && !this._config.unavail_color) {
+                        this._config.color_unavailable = '#f59e0b';
+                    }
+                }
+                this.innerHTML = '';
+                this._render();
+                this._fireConfigChanged();
+                return;
+            }
+            this._fireConfigChanged();
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-scene-card.ts
+     * 📝 Description   : Composant Web custom:halo-scene-card.
+     *                    Tuile d'ambiance et de préréglages visuels (Lumières & Volets)
+     *                    Liquid Glass avec halo néon spéculaire réactif, feedback haptique,
+     *                    bascule extinction au re-clic et déclenchement multi-cibles direct.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.6.0-beta.2
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.6.0-beta.2 (2026-11-02) : Améliorations ergonomiques de la tuile d'ambiance :
+     *                                     1) Retrait par défaut de la pastille compteur de cibles
+     *                                        (show_badge: false par défaut) pour dégager la lecture.
+     *                                     2) Extinction des lumières commandées lors d'un second clic
+     *                                        sur une tuile déjà active (toggle_on_reclick: true par défaut).
+     *                                     3) Typographie compacte multi-lignes sans troncature en layout
+     *                                        vertical, hauteur uniforme des cartes en grille (height: 100%)
+     *                                        et options title_size / label_size / min_height.
+     *   - 🩹 v1.5.1 (2026-11-01) : Ajout du cycle de vie connectedCallback pour restaurer les interactions
+     *                              après reconnexion DOM sans changement d'état.
+     *   - 🆕 v1.5.0 (2026-11-01) : Création initiale de la carte d'ambiance custom:halo-scene-card :
+     *                              - Déclenchement multi-cibles (light & cover) en mode individuel ou harmonisé.
+     *                              - Réglages de luminosité (%), température (Kelvin), couleur (RGB) et volets (%).
+     *                              - Design System Liquid Glass avec animation d'activation lumineuse.
+     *                              - Absence totale de scripts intermédiaires dans Home Assistant.
+     * ==============================================================================
+     */
+    class HaloSceneCard extends HTMLElement {
+        constructor() {
+            super();
+            // Références DOM
+            this._cardEl = null;
+            this._iconBtnEl = null;
+            this._iconEl = null;
+            this._textColEl = null;
+            this._titleEl = null;
+            this._subtitleEl = null;
+            this._badgeWrapEl = null;
+            this._badgeEl = null;
+            // État d'animation
+            this._isActivating = false;
+            this._unbindCardTouch = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        static getConfigElement() {
+            return document.createElement('halo-scene-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                name: 'Ambiance Soirée',
+                label: 'Ambiance tamisée',
+                icon: 'mdi:weather-night',
+                layout: 'horizontal',
+                color: 'Améthyste',
+                mode: 'individual',
+                toggle_on_reclick: true,
+                show_badge: false,
+                targets: []
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-scene-card');
+            }
+            this._config = {
+                layout: 'horizontal',
+                mode: 'individual',
+                text_align: config.layout === 'vertical' ? 'center' : 'left',
+                toggle_on_reclick: true,
+                show_badge: false,
+                targets: [],
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            if (!this._cardEl) {
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            return this._config?.layout === 'vertical' ? 2 : 1;
+        }
+        connectedCallback() {
+            if (this._cardEl && !this._unbindCardTouch) {
+                this._bindInteractions();
+            }
+        }
+        disconnectedCallback() {
+            this._cleanupBindings();
+        }
+        _cleanupBindings() {
+            if (this._unbindCardTouch) {
+                this._unbindCardTouch();
+                this._unbindCardTouch = null;
+            }
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            // Changement de thème d'interface ou langue
+            if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+                return true;
+            }
+            // Cibles configurées
+            if (this._config.targets) {
+                for (const target of this._config.targets) {
+                    if (target.entity && oldHass.states[target.entity] !== newHass.states[target.entity]) {
+                        return true;
+                    }
+                }
+            }
+            // Entité de thème
+            if (this._config.theme_entity) {
+                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
+                    return true;
+                }
+            }
+            // Thèmes globaux HALO
+            const commonThemeEntities = [
+                'input_select.couleur_theme_eclairages',
+                'input_select.couleur_theme_ouvertures',
+                'input_select.couleur_theme_chauffage',
+                'input_select.couleur_theme_global'
+            ];
+            for (const te of commonThemeEntities) {
+                if (oldHass.states[te] !== newHass.states[te])
+                    return true;
+            }
+            return false;
+        }
+        _getEffectiveColor() {
+            const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
+            if (explicit) {
+                return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#a855f7');
+            }
+            return resolveThemeColor(this._hass, undefined, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#a855f7');
+        }
+        /**
+         * Détermine si les lumières contrôlées par la scène sont actuellement allumées (`on`).
+         */
+        _areSceneLightsActive() {
+            if (!this._hass || !this._config?.targets)
+                return false;
+            const activeLightTargets = this._config.targets.filter(t => {
+                if (!t.entity)
+                    return false;
+                const domain = t.domain || t.entity.split('.')[0];
+                return domain === 'light' && t.state !== 'off';
+            });
+            if (activeLightTargets.length === 0)
+                return false;
+            return activeLightTargets.some(t => {
+                const stateObj = this._hass.states[t.entity];
+                return stateObj && stateObj.state === 'on';
+            });
+        }
+        _formatCssSize(val) {
+            if (val === undefined || val === null || val === '')
+                return '';
+            if (typeof val === 'number')
+                return `${val}px`;
+            const trimmed = String(val).trim();
+            if (!trimmed)
+                return '';
+            return /^\d+(\.\d+)?$/.test(trimmed) ? `${trimmed}px` : trimmed;
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          height: 100%;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        ha-card {
+          position: relative;
+          display: flex;
+          height: 100%;
+          box-sizing: border-box;
+          border-radius: 16px;
+          border: 1.5px solid transparent;
+          background: linear-gradient(160deg, rgba(20, 28, 38, 0.85), rgba(10, 15, 22, 0.92));
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          transition: border 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                      transform 0.15s ease,
+                      filter 0.15s ease;
+          overflow: hidden;
+          cursor: pointer;
+        }
+        ha-card:hover {
+          filter: brightness(1.06);
+        }
+        ha-card:active {
+          transform: scale(0.985);
+        }
+        ha-card.activating {
+          filter: brightness(1.25);
+          transform: scale(0.99);
+        }
+
+        /* Layout Horizontal */
+        ha-card.layout-horizontal {
+          flex-direction: row;
+          align-items: center;
+          padding: 12px 14px;
+          gap: 12px;
+          min-height: 64px;
+        }
+        ha-card.layout-horizontal .main-icon-btn {
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        ha-card.layout-horizontal .text-column {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+          gap: 2px;
+        }
+        ha-card.layout-horizontal .badge-container {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+
+        /* Layout Vertical (Tuile carrée / grille d'ambiances) */
+        ha-card.layout-vertical {
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 10px 6px;
+          gap: 5px;
+          min-height: 112px;
+        }
+        ha-card.layout-vertical .main-icon-btn {
+          width: 42px;
+          height: 42px;
+          min-width: 42px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        ha-card.layout-vertical .text-column {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          gap: 2px;
+        }
+        ha-card.layout-vertical .badge-container {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+        }
+
+        /* Typography */
+        .title {
+          font-size: 13.5px;
+          font-weight: 600;
+          color: #f1f5f9;
+          letter-spacing: 0.15px;
+          line-height: 1.25;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        ha-card.layout-vertical .title {
+          font-size: 11px;
+          text-align: center;
+          white-space: normal;
+          overflow: visible;
+          text-overflow: clip;
+          word-break: break-word;
+          overflow-wrap: anywhere;
+          line-height: 1.2;
+          width: 100%;
+        }
+
+        .subtitle {
+          font-size: 11.5px;
+          font-weight: 400;
+          color: rgba(220, 235, 240, 0.65);
+          line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: normal;
+        }
+        ha-card.layout-vertical .subtitle {
+          font-size: 9.5px;
+          text-align: center;
+          white-space: normal;
+          overflow: visible;
+          text-overflow: clip;
+          word-break: break-word;
+          overflow-wrap: anywhere;
+          line-height: 1.15;
+          width: 100%;
+        }
+
+        @media (max-width: 480px) {
+          ha-card.layout-vertical {
+            padding: 8px 4px;
+            gap: 4px;
+            min-height: 106px;
+          }
+          ha-card.layout-vertical .main-icon-btn {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 10px;
+          }
+          ha-card.layout-vertical .title {
+            font-size: 10.5px;
+          }
+          ha-card.layout-vertical .subtitle {
+            font-size: 9px;
+          }
+        }
+
+        /* Icon styling */
+        ha-icon {
+          --mdc-icon-size: 22px;
+          width: 22px;
+          height: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.25s ease, transform 0.25s ease;
+        }
+        ha-card.activating ha-icon {
+          transform: scale(1.12);
+        }
+
+        /* Badge indicator (optionnel) */
+        .scene-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          height: 22px;
+          padding: 0 7px;
+          border-radius: 11px;
+          font-size: 10.5px;
+          font-weight: 600;
+          box-sizing: border-box;
+          transition: all 0.2s ease;
+        }
+        .scene-badge ha-icon {
+          --mdc-icon-size: 13px;
+          width: 13px;
+          height: 13px;
+        }
+      </style>
+
+      <ha-card id="card">
+        <div class="main-icon-btn" id="icon-btn">
+          <ha-icon id="main-icon"></ha-icon>
+        </div>
+        <div class="text-column" id="text-col">
+          <div class="title" id="title"></div>
+          <div class="subtitle" id="subtitle"></div>
+        </div>
+        <div class="badge-container" id="badge-wrap" style="display: none;">
+          <div class="scene-badge" id="scene-badge"></div>
+        </div>
+      </ha-card>
+    `;
+            this._cardEl = this._root.getElementById('card');
+            this._iconBtnEl = this._root.getElementById('icon-btn');
+            this._iconEl = this._root.getElementById('main-icon');
+            this._textColEl = this._root.getElementById('text-col');
+            this._titleEl = this._root.getElementById('title');
+            this._subtitleEl = this._root.getElementById('subtitle');
+            this._badgeWrapEl = this._root.getElementById('badge-wrap');
+            this._badgeEl = this._root.getElementById('scene-badge');
+        }
+        _render() {
+            if (!this._config)
+                return;
+            if (!this._cardEl) {
+                this._buildDom();
+            }
+            const color = this._getEffectiveColor();
+            const layout = this._config.layout || 'horizontal';
+            const isVertical = layout === 'vertical';
+            const isSceneActive = this._areSceneLightsActive();
+            // Classes & Layout
+            this._cardEl.className = `${isVertical ? 'layout-vertical' : 'layout-horizontal'} ${this._isActivating ? 'activating' : ''} ${isSceneActive ? 'scene-active' : ''}`;
+            // Hauteur minimale personnalisée éventuelle
+            const customMinHeight = this._formatCssSize(this._config.min_height);
+            this._cardEl.style.minHeight = customMinHeight;
+            // Card styling (Border & Glowing Specular Halo)
+            const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
+                ? this._config.border_width
+                : 1.5;
+            const cardBorder = bw > 0
+                ? `${bw}px solid ${isSceneActive ? color : `${color}B3`}`
+                : 'none';
+            const cardShadow = this._isActivating
+                ? `0 0 28px ${color}AA, 0 0 10px ${color}88, inset 0 1px 0 rgba(255, 255, 255, 0.35)`
+                : isSceneActive
+                    ? `0 0 22px ${color}80, 0 0 8px ${color}55, inset 0 1px 0 rgba(255, 255, 255, 0.25)`
+                    : `0 0 16px ${color}45, 0 0 5px ${color}30, inset 0 1px 0 rgba(255, 255, 255, 0.14)`;
+            this._cardEl.style.border = cardBorder;
+            this._cardEl.style.boxShadow = cardShadow;
+            // Icon button styling
+            if (this._iconBtnEl) {
+                this._iconBtnEl.style.background = isSceneActive ? `${color}30` : `${color}1A`;
+                this._iconBtnEl.style.border = `1px solid ${isSceneActive ? `${color}88` : `${color}40`}`;
+                this._iconBtnEl.style.boxShadow = isSceneActive ? `0 0 14px ${color}55` : `0 0 10px ${color}26`;
+            }
+            // Icon
+            const icon = this._config.icon || 'mdi:palette-swatch-outline';
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = color;
+            }
+            // Name / Title
+            const title = this._config.name || 'Ambiance HALO';
+            if (this._titleEl) {
+                this._titleEl.textContent = title;
+                this._titleEl.style.textAlign = this._config.text_align || (isVertical ? 'center' : 'left');
+                this._titleEl.style.fontSize = this._formatCssSize(this._config.title_size);
+            }
+            // Subtitle / Targets count & description
+            let subtitle = this._config.label || this._config.subtitle;
+            if (!subtitle) {
+                const targets = this._config.targets || [];
+                const lightCount = targets.filter(t => (t.domain || t.entity.split('.')[0]) === 'light').length;
+                const coverCount = targets.filter(t => (t.domain || t.entity.split('.')[0]) === 'cover').length;
+                const parts = [];
+                if (lightCount > 0)
+                    parts.push(`${lightCount} éclairage${lightCount > 1 ? 's' : ''}`);
+                if (coverCount > 0)
+                    parts.push(`${coverCount} volet${coverCount > 1 ? 's' : ''}`);
+                subtitle = parts.length > 0 ? parts.join(' • ') : 'Appuyer pour appliquer';
+            }
+            if (this._subtitleEl) {
+                this._subtitleEl.textContent = subtitle;
+                this._subtitleEl.style.textAlign = this._config.text_align || (isVertical ? 'center' : 'left');
+                this._subtitleEl.style.fontSize = this._formatCssSize(this._config.label_size);
+            }
+            // Pastille compteur : désactivée par défaut (show_badge === true uniquement)
+            const showBadge = this._config.show_badge === true;
+            if (this._badgeWrapEl && this._badgeEl) {
+                const targetsCount = (this._config.targets || []).length;
+                if (showBadge && targetsCount > 0) {
+                    this._badgeWrapEl.style.display = isVertical ? 'block' : 'flex';
+                    this._badgeEl.style.display = 'inline-flex';
+                    this._badgeEl.style.background = `${color}20`;
+                    this._badgeEl.style.border = `1px solid ${color}44`;
+                    this._badgeEl.style.color = color;
+                    this._badgeEl.innerHTML = `<ha-icon icon="mdi:check-all"></ha-icon><span>${targetsCount}</span>`;
+                }
+                else {
+                    this._badgeWrapEl.style.display = 'none';
+                    this._badgeEl.style.display = 'none';
+                }
+            }
+            // Rebind touch gestures
+            this._bindInteractions();
+        }
+        _bindInteractions() {
+            this._cleanupBindings();
+            if (this._cardEl) {
+                this._unbindCardTouch = bindTouchActions(this._cardEl, {
+                    onTap: () => {
+                        this._applyScene();
+                    }
+                });
+            }
+        }
+        async _applyScene() {
+            if (!this._config || !this._hass)
+                return;
+            fireHaptic('medium');
+            this._isActivating = true;
+            this._render();
+            try {
+                const targets = this._config.targets || [];
+                const mode = this._config.mode || 'individual';
+                const toggleOnReclick = this._config.toggle_on_reclick !== false;
+                // Si le mode bascule au re-clic est actif (par défaut) et qu'au moins une lumière
+                // contrôlée par la tuile est déjà allumée, le second clic éteint toutes les lumières de la scène.
+                const shouldTurnOffLights = toggleOnReclick && this._areSceneLightsActive();
+                if (shouldTurnOffLights) {
+                    const lightEntityIds = targets
+                        .filter(t => t.entity && (t.domain || t.entity.split('.')[0]) === 'light')
+                        .map(t => t.entity);
+                    for (const entityId of lightEntityIds) {
+                        await this._hass.callService('light', 'turn_off', {
+                            entity_id: entityId
+                        });
+                    }
+                    return;
+                }
+                for (const target of targets) {
+                    if (!target.entity)
+                        continue;
+                    const domain = target.domain || target.entity.split('.')[0];
+                    if (domain === 'light') {
+                        if (target.state === 'off') {
+                            await this._hass.callService('light', 'turn_off', {
+                                entity_id: target.entity
+                            });
+                        }
+                        else {
+                            const serviceData = {
+                                entity_id: target.entity
+                            };
+                            // Mode commun ou individuel
+                            if (mode === 'common') {
+                                if (typeof this._config.common_light_brightness === 'number') {
+                                    serviceData.brightness_pct = this._config.common_light_brightness;
+                                }
+                                if (typeof this._config.common_light_kelvin === 'number') {
+                                    serviceData.color_temp_kelvin = this._config.common_light_kelvin;
+                                }
+                                if (this._config.common_light_rgb) {
+                                    serviceData.rgb_color = this._config.common_light_rgb;
+                                }
+                            }
+                            else {
+                                if (typeof target.brightness_pct === 'number') {
+                                    serviceData.brightness_pct = target.brightness_pct;
+                                }
+                                if (typeof target.color_temp_kelvin === 'number') {
+                                    serviceData.color_temp_kelvin = target.color_temp_kelvin;
+                                }
+                                if (target.rgb_color) {
+                                    serviceData.rgb_color = target.rgb_color;
+                                }
+                            }
+                            await this._hass.callService('light', 'turn_on', serviceData);
+                        }
+                    }
+                    else if (domain === 'cover') {
+                        let position;
+                        if (mode === 'common' && typeof this._config.common_cover_position === 'number') {
+                            position = this._config.common_cover_position;
+                        }
+                        else if (typeof target.position === 'number') {
+                            position = target.position;
+                        }
+                        if (position !== undefined) {
+                            await this._hass.callService('cover', 'set_cover_position', {
+                                entity_id: target.entity,
+                                position: position
+                            });
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                console.error('[halo-scene-card] Erreur lors de l\'application de la scène :', err);
+                fireHaptic('failure');
+            }
+            finally {
+                setTimeout(() => {
+                    this._isActivating = false;
+                    this._render();
+                }, 500);
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-scene-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-scene-card.
+     *                    Combine le composant natif <ha-form> pour les métadonnées,
+     *                    un panneau de gestion visuelle des cibles (lumières & volets),
+     *                    et le panneau de style Liquid Glass HALO (nuancier & bordure).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.6.0-beta.2
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - ✨ v1.6.0-beta.2 (2026-11-02) : Ajout des options title_size, label_size,
+     *                                     toggle_on_reclick et show_badge dans le schéma ha-form.
+     *   - 🆕 v1.5.0 (2026-11-01) : Création initiale de l'éditeur halo-scene-card :
+     *                              - Sélection d'entités cibles (light & cover).
+     *                              - Réglages fins individuels ou harmonisés (luminosité, kelvin, position).
+     *                              - Style Panel Mix A+B (Halo Swatch + Nuancier 16 teintes + Curseur bordure).
+     * ==============================================================================
+     */
+    const buildSchema$5 = (t) => [
+        { name: 'name', selector: { text: {} } },
+        { name: 'label', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
+        {
+            name: 'layout',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'scene', [['horizontal', 'layout_horizontal'], ['vertical', 'layout_vertical']])
+                }
+            }
+        },
+        {
+            name: 'text_align',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'scene', [['left', 'align_left'], ['center', 'align_center'], ['right', 'align_right']])
+                }
+            }
+        },
+        { name: 'title_size', selector: { text: {} } },
+        { name: 'label_size', selector: { text: {} } },
+        { name: 'toggle_on_reclick', selector: { boolean: {} } },
+        { name: 'show_badge', selector: { boolean: {} } },
+        {
+            name: 'mode',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'scene', [['individual', 'mode_individual'], ['common', 'mode_common']])
+                }
+            }
+        },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
+    ];
+    class HaloSceneCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = 'en';
+            // Références DOM Style Panel
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._chipsContainerEl = null;
+            this._borderSliderEl = null;
+            this._borderValBadgeEl = null;
+            this._targetsContainerEl = null;
+        }
+        setConfig(config) {
+            this._config = {
+                layout: 'horizontal',
+                mode: 'individual',
+                border_width: 1.5,
+                toggle_on_reclick: true,
+                show_badge: false,
+                targets: [],
                 ...config
             };
             this._render();
@@ -1785,11 +3369,11 @@ var HaloButtonCard = (function (exports) {
             this.dispatchEvent(event);
         }
         _getColorHex() {
-            const raw = this._config?.color || 'Cyan';
-            return toHexColor(raw, '#26c6da');
+            const raw = this._config?.color || 'Améthyste';
+            return toHexColor(raw, '#a855f7');
         }
         _getColorDisplayName() {
-            return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_cyan');
+            return colorDisplayName(this._hass, this._config?.color, 'editor.color_default_halo');
         }
         _updateColor(colorValue) {
             this._config = {
@@ -1811,7 +3395,6 @@ var HaloButtonCard = (function (exports) {
             const hex = this._getColorHex();
             const name = this._getColorDisplayName();
             const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.5;
-            // 1. Swatch Circle & Halo (Option A)
             if (this._swatchCircleEl) {
                 this._swatchCircleEl.style.background = hex;
                 this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
@@ -1826,9 +3409,8 @@ var HaloButtonCard = (function (exports) {
             if (this._swatchHexEl) {
                 this._swatchHexEl.textContent = hex.toUpperCase();
             }
-            // 2. Nuancier rapide Chips (Option B)
             if (this._chipsContainerEl) {
-                const activeRaw = this._config.color || 'Cyan';
+                const activeRaw = this._config.color || 'Améthyste';
                 const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
                 chipButtons.forEach(btn => {
                     const chipName = btn.getAttribute('data-name');
@@ -1837,7 +3419,6 @@ var HaloButtonCard = (function (exports) {
                     btn.classList.toggle('active', isActive);
                 });
             }
-            // 3. Border Slider & Badge
             if (this._borderSliderEl) {
                 this._borderSliderEl.value = String(bw);
             }
@@ -1855,10 +3436,110 @@ var HaloButtonCard = (function (exports) {
                 this.innerHTML = `
         <style>
           ${COMMON_EDITOR_STYLES}
+          .scene-targets-section {
+            margin-top: 16px;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .scene-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #f1f5f9;
+          }
+          .scene-section-title ha-icon {
+            --mdc-icon-size: 18px;
+            color: #a855f7;
+          }
+          .target-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .target-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+          }
+          .target-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+          }
+          .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 11px;
+            color: rgba(226, 232, 240, 0.8);
+          }
+          .control-group input[type="range"] {
+            width: 100%;
+          }
+          .btn-delete-target {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #ef4444;
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          .btn-delete-target:hover {
+            background: rgba(239, 68, 68, 0.3);
+          }
+          .btn-add-target {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            color: #c084fc;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          .btn-add-target:hover {
+            background: rgba(168, 85, 247, 0.25);
+            border-color: #c084fc;
+          }
         </style>
 
         <div class="halo-editor-wrap">
           <ha-form id="form"></ha-form>
+
+          <!-- Section Targets -->
+          <div class="scene-targets-section">
+            <div class="scene-section-title">
+              <ha-icon icon="mdi:tune-variant"></ha-icon>
+              <span>${t('editor.scene.targets_title')}</span>
+            </div>
+            <div id="targets-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            <button type="button" class="btn-add-target" id="btn-add-target">
+              <ha-icon icon="mdi:plus-circle-outline"></ha-icon>
+              <span>${t('editor.scene.add_target')}</span>
+            </button>
+          </div>
+
           ${stylePanelHtml(t, {
                 title: t('editor.style_title'),
                 leftTitle: t('editor.halo_color'),
@@ -1868,7 +3549,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "button", buildSchema$2(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, 'scene', buildSchema$5(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -1881,6 +3562,7 @@ var HaloButtonCard = (function (exports) {
                 if (this._hass)
                     form.hass = this._hass;
             }
+            this._renderTargets();
             this._syncStylePanel();
         }
         _initDomBindings() {
@@ -1891,7 +3573,7 @@ var HaloButtonCard = (function (exports) {
             this._chipsContainerEl = this.querySelector('#chips-grid');
             this._borderSliderEl = this.querySelector('#border-slider-input');
             this._borderValBadgeEl = this.querySelector('#border-val-text');
-            // 1. Déclencheur input color natif
+            this._targetsContainerEl = this.querySelector('#targets-list');
             const triggerColor = () => {
                 if (this._colorInputEl) {
                     this._colorInputEl.click();
@@ -1904,16 +3586,127 @@ var HaloButtonCard = (function (exports) {
                 if (val)
                     this._updateColor(val);
             });
-            // 2. Génération des chips HALO (Option B)
             if (this._chipsContainerEl) {
                 buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
             }
-            // 3. Slider de bordure
             this._borderSliderEl?.addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value);
                 if (!isNaN(val)) {
                     this._updateBorderWidth(val);
                 }
+            });
+            this.querySelector('#btn-add-target')?.addEventListener('click', () => {
+                const targets = [...(this._config.targets || [])];
+                targets.push({
+                    entity: '',
+                    domain: 'light',
+                    state: 'on',
+                    brightness_pct: 50
+                });
+                this._config = { ...this._config, targets };
+                this._renderTargets();
+                this._fireConfigChanged();
+            });
+        }
+        _renderTargets() {
+            if (!this._targetsContainerEl)
+                return;
+            const targets = this._config.targets || [];
+            const t = useLocalize(this._hass);
+            if (targets.length === 0) {
+                this._targetsContainerEl.innerHTML = `
+        <div style="font-size: 11.5px; opacity: 0.6; text-align: center; padding: 8px;">
+          ${t('editor.scene.no_targets')}
+        </div>
+      `;
+                return;
+            }
+            this._targetsContainerEl.innerHTML = '';
+            targets.forEach((target, index) => {
+                const card = document.createElement('div');
+                card.className = 'target-card';
+                const domain = target.domain || (target.entity ? target.entity.split('.')[0] : 'light');
+                const isLight = domain === 'light';
+                const isCover = domain === 'cover';
+                card.innerHTML = `
+        <div class="target-header">
+          <span>#${index + 1} — ${target.entity || t('editor.scene.select_entity')}</span>
+          <button type="button" class="btn-delete-target" data-index="${index}">
+            ✕ ${t('editor.scene.delete')}
+          </button>
+        </div>
+        <div class="control-group">
+          <input type="text" class="input-target-entity" data-index="${index}" value="${target.entity || ''}" placeholder="light.salon ou cover.volet" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 6px; color: #fff; font-size: 11.5px;" />
+        </div>
+        ${isLight ? `
+          <div class="target-controls">
+            <div class="control-group">
+              <label>Luminosité : <b class="val-brightness">${target.brightness_pct ?? 100}%</b></label>
+              <input type="range" class="input-target-brightness" data-index="${index}" min="0" max="100" value="${target.brightness_pct ?? 100}" />
+            </div>
+            <div class="control-group">
+              <label>Température : <b class="val-kelvin">${target.color_temp_kelvin ?? 2700}K</b></label>
+              <input type="range" class="input-target-kelvin" data-index="${index}" min="2000" max="6500" step="100" value="${target.color_temp_kelvin ?? 2700}" />
+            </div>
+          </div>
+        ` : ''}
+        ${isCover ? `
+          <div class="target-controls">
+            <div class="control-group">
+              <label>Position volet : <b class="val-position">${target.position ?? 100}%</b></label>
+              <input type="range" class="input-target-position" data-index="${index}" min="0" max="100" value="${target.position ?? 100}" />
+            </div>
+          </div>
+        ` : ''}
+      `;
+                // Handlers
+                card.querySelector('.btn-delete-target')?.addEventListener('click', () => {
+                    const updated = [...targets];
+                    updated.splice(index, 1);
+                    this._config = { ...this._config, targets: updated };
+                    this._renderTargets();
+                    this._fireConfigChanged();
+                });
+                card.querySelector('.input-target-entity')?.addEventListener('change', (e) => {
+                    const val = e.target.value.trim();
+                    const updated = [...targets];
+                    const newDomain = val.startsWith('cover.') ? 'cover' : 'light';
+                    updated[index] = { ...updated[index], entity: val, domain: newDomain };
+                    this._config = { ...this._config, targets: updated };
+                    this._renderTargets();
+                    this._fireConfigChanged();
+                });
+                card.querySelector('.input-target-brightness')?.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value, 10);
+                    const valEl = card.querySelector('.val-brightness');
+                    if (valEl)
+                        valEl.textContent = `${val}%`;
+                    const updated = [...targets];
+                    updated[index] = { ...updated[index], brightness_pct: val };
+                    this._config = { ...this._config, targets: updated };
+                    this._fireConfigChanged();
+                });
+                card.querySelector('.input-target-kelvin')?.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value, 10);
+                    const valEl = card.querySelector('.val-kelvin');
+                    if (valEl)
+                        valEl.textContent = `${val}K`;
+                    const updated = [...targets];
+                    updated[index] = { ...updated[index], color_temp_kelvin: val };
+                    this._config = { ...this._config, targets: updated };
+                    this._fireConfigChanged();
+                });
+                card.querySelector('.input-target-position')?.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value, 10);
+                    const valEl = card.querySelector('.val-position');
+                    if (valEl)
+                        valEl.textContent = `${val}%`;
+                    const updated = [...targets];
+                    updated[index] = { ...updated[index], position: val };
+                    this._config = { ...this._config, targets: updated };
+                    this._fireConfigChanged();
+                });
+                this._targetsContainerEl.appendChild(card);
             });
         }
         _formMetadata() {
@@ -1922,6 +3715,7 @@ var HaloButtonCard = (function (exports) {
             const data = { ...this._config };
             delete data.color;
             delete data.border_width;
+            delete data.targets;
             return data;
         }
         _valueChanged(ev) {
@@ -2030,6 +3824,7 @@ var HaloButtonCard = (function (exports) {
                         for (let j = 0; j < all.length; j++) {
                             const e = all[j];
                             if (e.tagName === 'HALO-COVER-CARD' ||
+                                e.tagName === 'HALO-COUNTER-CARD' ||
                                 e.tagName === 'BUTTON-CARD' ||
                                 e.tagName === 'CUSTOM-BUTTON-CARD') {
                                 this.forceCardUpdate(e);
@@ -2747,7 +4542,7 @@ var HaloButtonCard = (function (exports) {
             stateEntityKey: 'input_text.couleur_volet_en_mouvement'
         }
     ];
-    const buildSchema$1 = (_t) => [
+    const buildSchema$4 = (_t) => [
         { name: 'entity', selector: { entity: { domain: 'cover' } } },
         { name: 'name', selector: { text: {} } }
     ];
@@ -2937,7 +4732,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "cover", buildSchema$1(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "cover", buildSchema$4(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -4038,7 +5833,7 @@ var HaloButtonCard = (function (exports) {
             fallback: '#64748b'
         }
     ];
-    const buildSchema = (_t) => [
+    const buildSchema$3 = (_t) => [
         { name: 'entity', selector: { entity: { domain: 'light' } } },
         { name: 'name', selector: { text: {} } },
         { name: 'icon', selector: { icon: {} } },
@@ -4244,7 +6039,7 @@ var HaloButtonCard = (function (exports) {
       `;
                 form = this.querySelector('#form');
                 if (form) {
-                    applyFormI18n(form, this._hass, "light", buildSchema(useLocalize(this._hass)));
+                    applyFormI18n(form, this._hass, "light", buildSchema$3(useLocalize(this._hass)));
                     form.data = this._formMetadata();
                     if (this._hass)
                         form.hass = this._hass;
@@ -6102,6 +7897,2738 @@ var HaloButtonCard = (function (exports) {
 
     /**
      * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-markdown-card.ts
+     * 📝 Description   : Composant Web custom:halo-markdown-card.
+     *                    Encadré de message / callout Markdown au style Liquid Glass
+     *                    avec barre verticale d'accent néon, dégradé horizontal translucide,
+     *                    coins arrondis et support de la synchronisation de thème.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.5.2
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.5.2 (2026-11-02) : Création initiale de la carte custom:halo-markdown-card :
+     *                              - Style Liquid Glass callout (barre verticale gauche 4px,
+     *                                dégradé 90deg translucide, coins arrondis 12px).
+     *                              - Personnalisation séparée ou harmonisée des teintes
+     *                                (barre latérale bar_color et dégradé gradient_color).
+     *                              - Support de synchronisation dynamique theme_entity.
+     *                              - Support de l'évaluation native Jinja2 via WebSocket HA
+     *                                et rendu propre des blockquotes sans redondance.
+     * ==============================================================================
+     */
+    class HaloMarkdownCard extends HTMLElement {
+        constructor() {
+            super();
+            // Références DOM
+            this._cardEl = null;
+            this._boxEl = null;
+            this._markdownEl = null;
+            this._titleEl = null;
+            // Souscription aux templates Jinja2 temps réel
+            this._unsubRenderTemplate = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        static getConfigElement() {
+            return document.createElement('halo-markdown-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                type: 'custom:halo-markdown-card',
+                content: '> 💡 **Information importante :**  \n> • **Point 1 :** Votre texte d\'explication ou d\'aide.  \n> • **Point 2 :** Mise en forme riche avec gras, listes et emojis.',
+                bar_width: 4,
+                border_radius: 12
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-markdown-card');
+            }
+            this._config = {
+                bar_width: 4,
+                border_radius: 12,
+                gradient_opacity: 0.10,
+                text_color: 'rgba(230, 242, 245, 0.90)',
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+                this._updateContent();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            if (!this._cardEl) {
+                this._render();
+                this._updateContent();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._updateStyles();
+            }
+        }
+        getCardSize() {
+            return 2;
+        }
+        connectedCallback() {
+            if (!this._cardEl && this._config && this._hass) {
+                this._render();
+            }
+            this._updateContent();
+        }
+        disconnectedCallback() {
+            this._cleanupTemplateSubscription();
+        }
+        _cleanupTemplateSubscription() {
+            if (this._unsubRenderTemplate) {
+                this._unsubRenderTemplate.then(unsub => unsub()).catch(() => { });
+                this._unsubRenderTemplate = null;
+            }
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            // Changement de langue ou de thèmes
+            if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+                return true;
+            }
+            // Entité de thème dynamique
+            if (this._config.theme_entity) {
+                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        _getColors() {
+            const baseColor = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity, '#26c6da');
+            const barColor = this._config.bar_color
+                ? resolveThemeColor(this._hass, this._config.bar_color, this._config.theme_entity, baseColor)
+                : baseColor;
+            const gradientColor = this._config.gradient_color
+                ? resolveThemeColor(this._hass, this._config.gradient_color, this._config.theme_entity, baseColor)
+                : baseColor;
+            const opacity = typeof this._config.gradient_opacity === 'number'
+                ? Math.max(0, Math.min(1, this._config.gradient_opacity))
+                : 0.10;
+            const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+            return {
+                barColor: toHexColor(barColor, '#26c6da'),
+                gradientColor: toHexColor(gradientColor, '#26c6da'),
+                alphaHex
+            };
+        }
+        _updateStyles() {
+            if (!this._boxEl)
+                return;
+            const { barColor, gradientColor, alphaHex } = this._getColors();
+            const barWidth = typeof this._config.bar_width === 'number' ? this._config.bar_width : 4;
+            const borderRadius = typeof this._config.border_radius === 'number' ? this._config.border_radius : 12;
+            const textColor = this._config.text_color || 'rgba(230, 242, 245, 0.90)';
+            this._boxEl.style.setProperty('--halo-bar-color', barColor);
+            this._boxEl.style.setProperty('--halo-gradient-color-alpha', `${gradientColor}${alphaHex}`);
+            this._boxEl.style.setProperty('--halo-text-color', textColor);
+            this._boxEl.style.setProperty('--primary-color', barColor);
+            this._boxEl.style.setProperty('--accent-color', barColor);
+            if (barWidth > 0) {
+                this._boxEl.style.borderLeft = `${barWidth}px solid ${barColor}`;
+            }
+            else {
+                this._boxEl.style.borderLeft = 'none';
+            }
+            this._boxEl.style.background = `linear-gradient(90deg, ${gradientColor}${alphaHex} 0%, transparent 100%)`;
+            this._boxEl.style.borderRadius = `0 ${borderRadius}px ${borderRadius}px 0`;
+        }
+        _updateContent() {
+            const rawContent = this._config?.content || '';
+            // Détection de syntaxe Jinja2 {{ ... }} ou {% ... %}
+            if (this._hass?.connection && (rawContent.includes('{{') || rawContent.includes('{%'))) {
+                this._cleanupTemplateSubscription();
+                try {
+                    this._unsubRenderTemplate = this._hass.connection.subscribeMessage((msg) => {
+                        if (msg.result !== undefined && this._markdownEl) {
+                            this._markdownEl.content = msg.result;
+                        }
+                    }, {
+                        type: 'render_template',
+                        template: rawContent,
+                        variables: { config: this._config }
+                    });
+                }
+                catch (err) {
+                    console.warn('HALO Markdown Card: Erreur de souscription au template Jinja2, rendu brut appliqué.', err);
+                    if (this._markdownEl) {
+                        this._markdownEl.content = rawContent;
+                    }
+                }
+            }
+            else {
+                this._cleanupTemplateSubscription();
+                if (this._markdownEl) {
+                    this._markdownEl.content = rawContent;
+                }
+            }
+            if (this._markdownEl && this._hass) {
+                this._markdownEl.hass = this._hass;
+            }
+        }
+        _render() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+        ha-card {
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          padding: 0;
+          margin: 0;
+          overflow: hidden;
+          box-sizing: border-box;
+        }
+        .halo-markdown-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #ffffff;
+          margin-bottom: 6px;
+          padding-left: 2px;
+          letter-spacing: 0.2px;
+        }
+        .halo-markdown-box {
+          position: relative;
+          box-sizing: border-box;
+          border-left: 4px solid var(--halo-bar-color, #26c6da);
+          background: linear-gradient(90deg, var(--halo-gradient-color-alpha, rgba(38, 198, 218, 0.1)) 0%, transparent 100%);
+          border-radius: 0 12px 12px 0;
+          padding: 10px 14px;
+          margin: 0;
+          color: var(--halo-text-color, rgba(230, 242, 245, 0.90));
+          transition: border-color 0.3s ease, background 0.3s ease, border-radius 0.2s ease;
+        }
+        ha-markdown {
+          display: block;
+          font-size: 0.93rem;
+          line-height: 1.5;
+        }
+        /* Intégration propre des blockquotes sans double bordure ni double marge */
+        ha-markdown blockquote {
+          border: none !important;
+          background: transparent !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          color: inherit !important;
+        }
+        ha-markdown p {
+          margin: 0 0 6px 0;
+          line-height: 1.5;
+        }
+        ha-markdown p:last-child {
+          margin-bottom: 0;
+        }
+        ha-markdown strong,
+        ha-markdown b {
+          color: #ffffff;
+          font-weight: 600;
+        }
+        ha-markdown a {
+          color: var(--primary-color, var(--halo-bar-color, #26c6da));
+          text-decoration: none;
+        }
+        ha-markdown a:hover {
+          text-decoration: underline;
+        }
+        ha-markdown code {
+          background: rgba(0, 0, 0, 0.35);
+          padding: 2px 5px;
+          border-radius: 4px;
+          font-family: monospace;
+          font-size: 0.9em;
+          color: #f1f5f9;
+        }
+        ha-markdown ul,
+        ha-markdown ol {
+          margin: 4px 0 6px 18px;
+          padding: 0;
+        }
+        ha-markdown li {
+          margin-bottom: 3px;
+        }
+        ha-markdown li:last-child {
+          margin-bottom: 0;
+        }
+      </style>
+
+      <ha-card id="card">
+        ${this._config.title ? `<div class="halo-markdown-title" id="title">${this._config.title}</div>` : ''}
+        <div class="halo-markdown-box" id="box">
+          <ha-markdown id="markdown"></ha-markdown>
+        </div>
+      </ha-card>
+    `;
+            this._cardEl = this._root.querySelector('#card');
+            this._boxEl = this._root.querySelector('#box');
+            this._markdownEl = this._root.querySelector('#markdown');
+            this._titleEl = this._root.querySelector('#title');
+            this._updateStyles();
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-markdown-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-markdown-card.
+     *                    Combine le composant natif <ha-form> pour le contenu Markdown
+     *                    et les options générales avec le panneau de style Liquid Glass
+     *                    HALO (onglets Barre / Dégradé, nuancier 16 teintes et curseur).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.5.2
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.5.2 (2026-11-02) : Création initiale de l'éditeur halo-markdown-card :
+     *                              - Saisie du Markdown riche via champ multiligne natif.
+     *                              - Panneau Liquid Glass avec onglets dédiés Barre / Dégradé.
+     *                              - Sélecteur de couleur Mix A+B (Médaillon halo + Nuancier 16 teintes + Pipette).
+     *                              - Curseur interactif de largeur de barre (0 à 8 px).
+     * ==============================================================================
+     */
+    const TABS = [
+        { key: 'bar', icon: 'mdi:border-left-variant', labelKey: 'bar_tab' },
+        { key: 'gradient', icon: 'mdi:gradient-horizontal', labelKey: 'gradient_tab' }
+    ];
+    const buildSchema$2 = (_t) => [
+        { name: 'title', selector: { text: {} } },
+        { name: 'content', selector: { text: { multiline: true } } },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } }
+    ];
+    class HaloMarkdownCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = 'en';
+            this._activeTab = 'bar';
+            // Références DOM Style Panel
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._targetTitleEl = null;
+            this._chipsContainerEl = null;
+            this._barSliderEl = null;
+            this._barValBadgeEl = null;
+        }
+        setConfig(config) {
+            this._config = {
+                content: '',
+                bar_width: 4,
+                border_radius: 12,
+                gradient_opacity: 0.10,
+                text_color: 'rgba(230, 242, 245, 0.90)',
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
+            const form = this.querySelector('#form');
+            if (form) {
+                form.hass = hass;
+            }
+        }
+        _fireConfigChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _getCurrentTabColor() {
+            if (this._activeTab === 'bar') {
+                const raw = this._config?.bar_color || this._config?.color || 'Cyan';
+                return toHexColor(raw, '#26c6da');
+            }
+            const raw = this._config?.gradient_color || this._config?.color || 'Cyan';
+            return toHexColor(raw, '#26c6da');
+        }
+        _getCurrentTabRawColor() {
+            if (this._activeTab === 'bar') {
+                return this._config?.bar_color || this._config?.color || 'Cyan';
+            }
+            return this._config?.gradient_color || this._config?.color || 'Cyan';
+        }
+        _getColorDisplayName() {
+            const raw = this._getCurrentTabRawColor();
+            return colorDisplayName(this._hass, raw, 'editor.color_default_halo');
+        }
+        _updateColor(colorValue) {
+            if (this._activeTab === 'bar') {
+                this._config = {
+                    ...this._config,
+                    bar_color: colorValue
+                };
+            }
+            else {
+                this._config = {
+                    ...this._config,
+                    gradient_color: colorValue
+                };
+            }
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _updateBarWidth(widthValue) {
+            this._config = {
+                ...this._config,
+                bar_width: widthValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _setActiveTab(tabKey) {
+            this._activeTab = tabKey;
+            TABS.forEach(tab => {
+                const tabEl = this.querySelector(`#tab-${tab.key}`);
+                if (tabEl) {
+                    if (tab.key === tabKey) {
+                        tabEl.classList.add('active');
+                    }
+                    else {
+                        tabEl.classList.remove('active');
+                    }
+                }
+            });
+            const t = useLocalize(this._hass);
+            if (this._targetTitleEl) {
+                const activeDef = TABS.find(tDef => tDef.key === tabKey);
+                this._targetTitleEl.textContent = t('editor.markdown.target_color', 'target', t(`editor.markdown.${activeDef.labelKey}`));
+            }
+            this._syncStylePanel();
+        }
+        _barBadgeText(bw) {
+            const t = useLocalize(this._hass);
+            if (bw === 0)
+                return t('editor.markdown.bar_badge_off');
+            if (bw === 4)
+                return t('editor.markdown.bar_badge_default', 'v', String(bw));
+            return `${bw} px`;
+        }
+        _syncStylePanel() {
+            const hex = this._getCurrentTabColor();
+            const name = this._getColorDisplayName();
+            const bw = typeof this._config?.bar_width === 'number' ? this._config.bar_width : 4;
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = hex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = hex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = hex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = name;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = hex.toUpperCase();
+            }
+            // Pastilles témoins d'onglets
+            const barHex = toHexColor(this._config?.bar_color || this._config?.color || 'Cyan', '#26c6da');
+            const gradHex = toHexColor(this._config?.gradient_color || this._config?.color || 'Cyan', '#26c6da');
+            const dotBar = this.querySelector('#tab-dot-bar');
+            if (dotBar) {
+                dotBar.style.backgroundColor = barHex;
+                dotBar.style.boxShadow = `0 0 6px ${barHex}`;
+            }
+            const dotGrad = this.querySelector('#tab-dot-gradient');
+            if (dotGrad) {
+                dotGrad.style.backgroundColor = gradHex;
+                dotGrad.style.boxShadow = `0 0 6px ${gradHex}`;
+            }
+            // Nuancier rapide
+            if (this._chipsContainerEl) {
+                const activeRaw = this._getCurrentTabRawColor();
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = (chipName === activeRaw || chipHex?.toLowerCase() === hex.toLowerCase());
+                    btn.classList.toggle('active', Boolean(isActive));
+                });
+            }
+            // Slider barre
+            if (this._barSliderEl && parseFloat(this._barSliderEl.value) !== bw) {
+                this._barSliderEl.value = String(bw);
+            }
+            if (this._barValBadgeEl) {
+                this._barValBadgeEl.textContent = this._barBadgeText(bw);
+            }
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            delete data.color;
+            delete data.bar_color;
+            delete data.gradient_color;
+            delete data.bar_width;
+            delete data.border_radius;
+            delete data.gradient_opacity;
+            delete data.text_color;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            this._config = {
+                ...this._config,
+                ...ev.detail.value
+            };
+            this._fireConfigChanged();
+        }
+        _render() {
+            this._lang = getLang(this._hass);
+            const t = useLocalize(this._hass);
+            let form = this.querySelector('#form');
+            if (!form) {
+                const activeDef = TABS.find(tab => tab.key === this._activeTab);
+                const small = (k) => `<small style="opacity: 0.6;">${t(`editor.markdown.${k}`)}</small>`;
+                this.innerHTML = `
+        <style>
+          ${COMMON_EDITOR_STYLES}
+        </style>
+
+        <div class="halo-editor-wrap">
+          <ha-form id="form"></ha-form>
+
+          <div class="halo-style-section">
+            <div class="halo-section-header">
+              <ha-icon icon="mdi:palette-swatch"></ha-icon>
+              <span>${t('editor.style_title_colors')}</span>
+            </div>
+
+            <div class="halo-state-tabs">
+              ${TABS.map(tab => `
+                <div class="halo-state-tab ${tab.key === this._activeTab ? 'active' : ''}" id="tab-${tab.key}" data-key="${tab.key}">
+                  <span class="halo-state-tab-dot" id="tab-dot-${tab.key}"></span>
+                  <ha-icon icon="${tab.icon}"></ha-icon>
+                  <span>${t(`editor.markdown.${tab.labelKey}`)}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="halo-style-grid">
+              <div class="halo-col">
+                <div class="halo-col-header">
+                  <span class="halo-col-title" id="state-title">
+                    ${t('editor.markdown.target_color', 'target', t(`editor.markdown.${activeDef.labelKey}`))}
+                  </span>
+                </div>
+                <div class="halo-swatch-card" id="swatch-card">
+                  <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="${t('editor.open_palette')}">
+                    <div class="halo-swatch-circle" id="swatch-circle"></div>
+                    <input type="color" id="native-color-input" class="hidden-color-input" />
+                  </div>
+                  <div class="halo-swatch-meta">
+                    <span class="halo-color-title" id="swatch-name"></span>
+                    <span class="halo-color-hex" id="swatch-hex"></span>
+                  </div>
+                  <button type="button" class="halo-pipette-btn" id="pipette-btn" title="${t('editor.open_wheel')}">
+                    <ha-icon icon="mdi:eyedropper"></ha-icon>
+                  </button>
+                </div>
+                <div class="halo-chips-label">${t('editor.chips_label')}</div>
+                <div class="halo-chips-grid" id="chips-grid"></div>
+              </div>
+
+              <div class="halo-col">
+                <div class="halo-col-header">
+                  <span class="halo-col-title">${t('editor.markdown.bar_width_title')}</span>
+                  <span class="halo-badge-val" id="border-val-text"></span>
+                </div>
+                <div class="halo-border-card">
+                  <input type="range" id="border-slider-input" min="0" max="8" step="0.5" value="4" class="halo-range-slider" />
+                  <div class="slider-ticks">
+                    <span>0 px<br>${small('bar_none')}</span>
+                    <span style="text-align: center;">4 px<br>${small('bar_default')}</span>
+                    <span style="text-align: right;">8 px<br>${small('bar_max')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    applyFormI18n(form, this._hass, 'markdown', buildSchema$2(useLocalize(this._hass)));
+                    form.data = this._formMetadata();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+                this._initDomBindings();
+            }
+            else {
+                form.data = this._formMetadata();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+            this._syncStylePanel();
+        }
+        _initDomBindings() {
+            this._swatchCircleEl = this.querySelector('#swatch-circle');
+            this._colorInputEl = this.querySelector('#native-color-input');
+            this._swatchNameEl = this.querySelector('#swatch-name');
+            this._swatchHexEl = this.querySelector('#swatch-hex');
+            this._targetTitleEl = this.querySelector('#state-title');
+            this._chipsContainerEl = this.querySelector('#chips-grid');
+            this._barSliderEl = this.querySelector('#border-slider-input');
+            this._barValBadgeEl = this.querySelector('#border-val-text');
+            // 1. Clics sur les onglets (Barre latérale / Dégradé de fond)
+            TABS.forEach(tab => {
+                this.querySelector(`#tab-${tab.key}`)?.addEventListener('click', () => {
+                    this._setActiveTab(tab.key);
+                });
+            });
+            // 2. Déclencheur input color natif
+            const triggerColor = () => {
+                if (this._colorInputEl) {
+                    this._colorInputEl.click();
+                }
+            };
+            this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+            this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+            this._colorInputEl?.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val)
+                    this._updateColor(val);
+            });
+            // 3. Nuancier officiel HALO 16 teintes
+            if (this._chipsContainerEl) {
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
+            }
+            // 4. Curseur de largeur de barre
+            this._barSliderEl?.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    this._updateBarWidth(val);
+                }
+            });
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-fold-card.ts
+     * 📝 Description   : Composant Web custom:halo-fold-card.
+     *                    Conteneur accordéon repliable Liquid Glass permettant
+     *                    d'encapsuler n'importe quelles cartes Lovelace enfants
+     *                    (ex. lampes individuelles d'un groupe) sous une barre
+     *                    d'en-tête compacte avec ligne dégradée néon, badge de
+     *                    compteur et bouton pill Afficher / Masquer.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.7.1-beta.1
+     * 📅 Date         : 2026-11-03
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Ajout du conteneur d'enclos avec contour en pointillé
+     *                                     paramétrable (dashed, dotted, solid) et halo néon léger
+     *                                     Liquid Glass matérialisant le bloc complet des cartes
+     *                                     repliées sans découper chaque carte individuellement
+     *                                     (show_border, border_style, border_width, border_color,
+     *                                     show_halo, halo_color, enclosure_padding, border_radius).
+     *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Création initiale du composant conteneur
+     *                                     repliable custom:halo-fold-card :
+     *                                     • En-tête raffiné aligné sur halo-separator-card
+     *                                       (icône MDI, titre, ligne dégradée néon, badge
+     *                                       compteur et bouton pill Afficher / Masquer).
+     *                                     • Tiroir accordéon fluide avec grille CSS interne
+     *                                       responsive (1, 2 ou 3 colonnes, repli 1 col mobile).
+     *                                     • Instanciation dynamique des cartes enfants via
+     *                                       window.loadCardHelpers() et fallback DOM direct.
+     *                                     • Propagation réactive de hass aux cartes enfants.
+     * ==============================================================================
+     */
+    class HaloFoldCard extends HTMLElement {
+        constructor() {
+            super();
+            // État interne (replié par défaut)
+            this._isExpanded = false;
+            this._childCards = [];
+            this._cardsBuildToken = 0;
+            // Références DOM persistantes
+            this._containerEl = null;
+            this._headerEl = null;
+            this._iconEl = null;
+            this._titleEl = null;
+            this._badgeEl = null;
+            this._lineEl = null;
+            this._toggleBtnEl = null;
+            this._toggleLabelEl = null;
+            this._toggleIconEl = null;
+            this._drawerEl = null;
+            this._enclosureEl = null;
+            this._gridEl = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        get _t() {
+            return useLocalize(this._hass);
+        }
+        static getConfigElement() {
+            return document.createElement('halo-fold-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                name: 'Détails & Appareils individuels',
+                icon: 'mdi:tune-vertical',
+                initial_collapsed: true,
+                columns: 1,
+                show_border: true,
+                border_style: 'dashed',
+                border_width: 1.5,
+                show_halo: true,
+                enclosure_padding: 10,
+                cards: []
+            };
+        }
+        connectedCallback() {
+            if (this._config && !this._containerEl) {
+                this._buildDom();
+                this._buildChildCards();
+                this._render();
+            }
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-fold-card');
+            }
+            this._config = {
+                columns: 1,
+                gap: 10,
+                initial_collapsed: true,
+                show_border: true,
+                border_style: 'dashed',
+                border_width: 1.5,
+                show_halo: true,
+                enclosure_padding: 10,
+                border_radius: 14,
+                ...config
+            };
+            if (config.expanded !== undefined) {
+                this._isExpanded = Boolean(config.expanded);
+            }
+            else if (config.initial_collapsed !== undefined) {
+                this._isExpanded = !config.initial_collapsed;
+            }
+            else {
+                this._isExpanded = false;
+            }
+            if (!this._containerEl) {
+                this._buildDom();
+            }
+            this._buildChildCards();
+            this._render();
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            // Propagation réactive de hass à toutes les cartes enfants instanciées
+            for (const card of this._childCards) {
+                if (card) {
+                    try {
+                        card.hass = hass;
+                    }
+                    catch (_e) {
+                        // Ignorer les erreurs éventuelles d'une carte enfant
+                    }
+                }
+            }
+            if (!this._containerEl) {
+                this._buildDom();
+                this._buildChildCards();
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            if (!this._isExpanded)
+                return 1;
+            const count = Array.isArray(this._config?.cards) ? this._config.cards.length : 1;
+            return 1 + Math.max(1, count);
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            if (this._config.toggle_entity) {
+                if (oldHass.states[this._config.toggle_entity] !== newHass.states[this._config.toggle_entity]) {
+                    return true;
+                }
+            }
+            if (this._config.theme_entity) {
+                if (oldHass.states[this._config.theme_entity] !== newHass.states[this._config.theme_entity]) {
+                    return true;
+                }
+            }
+            const themeEntities = [
+                'input_select.couleur_theme_eclairages',
+                'input_select.couleur_theme_ouvertures',
+                'input_select.couleur_theme_chauffage',
+                'input_select.couleur_theme_global'
+            ];
+            for (const te of themeEntities) {
+                if (oldHass.states[te] !== newHass.states[te])
+                    return true;
+            }
+            return false;
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          margin: 0;
+          padding: 0;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .halo-fold-wrapper {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 6px 0px 4px 0px;
+        }
+        .halo-fold-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          box-sizing: border-box;
+          cursor: pointer;
+          padding: 4px 2px;
+          border-radius: 10px;
+          transition: background 0.2s ease;
+        }
+        .halo-fold-header:hover {
+          background: rgba(255, 255, 255, 0.03);
+        }
+        .halo-fold-icon {
+          width: 18px;
+          height: 18px;
+          min-width: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: translateY(-2px);
+          flex-shrink: 0;
+        }
+        .halo-fold-icon ha-icon {
+          --mdc-icon-size: 18px;
+          width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.3s ease;
+        }
+        .halo-fold-title {
+          color: #e6f2f5;
+          font-size: 13.5px;
+          font-weight: 600;
+          letter-spacing: -0.2px;
+          white-space: nowrap;
+          line-height: 1.2;
+          flex-shrink: 0;
+        }
+        .halo-fold-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 5px;
+          border-radius: 9px;
+          font-size: 10.5px;
+          font-weight: 700;
+          line-height: 1;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          transition: all 0.25s ease;
+        }
+        .halo-fold-line {
+          flex: 1;
+          height: 2px;
+          min-height: 2px;
+          border-radius: 2px;
+          transition: background 0.3s ease;
+        }
+        .halo-toggle-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 8px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          line-height: 14px;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all 0.25s ease;
+        }
+        .halo-toggle-btn:hover {
+          filter: brightness(1.2);
+        }
+        .halo-toggle-btn:active {
+          transform: scale(0.95);
+        }
+        .halo-toggle-btn ha-icon {
+          --mdc-icon-size: 14px;
+          width: 14px;
+          height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: -1px;
+        }
+        .halo-fold-drawer {
+          max-height: 0;
+          opacity: 0;
+          overflow: hidden;
+          margin-top: 0;
+          transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                      opacity 0.3s ease,
+                      margin-top 0.3s ease;
+          pointer-events: none;
+        }
+        .halo-fold-drawer.expanded {
+          max-height: 3500px;
+          opacity: 1;
+          margin-top: 10px;
+          overflow: visible;
+          pointer-events: auto;
+        }
+        .halo-fold-enclosure {
+          width: 100%;
+          box-sizing: border-box;
+          border-radius: var(--halo-fold-radius, 14px);
+          padding: var(--halo-fold-padding, 10px);
+          border: var(--halo-fold-border, 1.5px dashed rgba(38, 198, 218, 0.5));
+          box-shadow: var(--halo-fold-shadow, 0 0 14px rgba(38, 198, 218, 0.25), inset 0 0 12px rgba(38, 198, 218, 0.08));
+          background: var(--halo-fold-bg, linear-gradient(135deg, rgba(38, 198, 218, 0.04), rgba(15, 23, 42, 0.40)));
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: border 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+        .halo-fold-enclosure.no-border {
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          padding: 0 !important;
+        }
+        .halo-fold-grid {
+          display: grid;
+          grid-template-columns: repeat(var(--halo-fold-cols, 1), minmax(0, 1fr));
+          gap: var(--halo-fold-gap, 10px);
+          width: 100%;
+          box-sizing: border-box;
+        }
+        @media (max-width: 600px) {
+          .halo-fold-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
+      <div class="halo-fold-wrapper" id="container">
+        <div class="halo-fold-header" id="header">
+          <div class="halo-fold-icon">
+            <ha-icon id="fold-icon"></ha-icon>
+          </div>
+          <span class="halo-fold-title" id="fold-title"></span>
+          <span class="halo-fold-badge" id="fold-badge" style="display: none;"></span>
+          <div class="halo-fold-line" id="fold-line"></div>
+          <div class="halo-toggle-btn" id="toggle-btn">
+            <span id="toggle-label">Afficher</span>
+            <ha-icon id="toggle-icon" icon="mdi:chevron-down"></ha-icon>
+          </div>
+        </div>
+        <div class="halo-fold-drawer" id="fold-drawer">
+          <div class="halo-fold-enclosure" id="fold-enclosure">
+            <div class="halo-fold-grid" id="fold-grid"></div>
+          </div>
+        </div>
+      </div>
+    `;
+            this._containerEl = this._root.getElementById('container');
+            this._headerEl = this._root.getElementById('header');
+            this._iconEl = this._root.getElementById('fold-icon');
+            this._titleEl = this._root.getElementById('fold-title');
+            this._badgeEl = this._root.getElementById('fold-badge');
+            this._lineEl = this._root.getElementById('fold-line');
+            this._toggleBtnEl = this._root.getElementById('toggle-btn');
+            this._toggleLabelEl = this._root.getElementById('toggle-label');
+            this._toggleIconEl = this._root.getElementById('toggle-icon');
+            this._drawerEl = this._root.getElementById('fold-drawer');
+            this._enclosureEl = this._root.getElementById('fold-enclosure');
+            this._gridEl = this._root.getElementById('fold-grid');
+            if (this._headerEl) {
+                this._headerEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._handleToggle();
+                });
+            }
+        }
+        _handleToggle() {
+            this._isExpanded = !this._isExpanded;
+            fireHaptic('light');
+            if (this._config.toggle_entity && this._hass) {
+                const ent = this._config.toggle_entity;
+                const domain = ent.split('.')[0] || 'input_boolean';
+                this._hass.callService(domain, 'toggle', { entity_id: ent });
+            }
+            this._render();
+        }
+        async _createCardElement(cardConfig) {
+            try {
+                const loadHelpers = window.loadCardHelpers;
+                if (typeof loadHelpers === 'function') {
+                    const helpers = await loadHelpers();
+                    if (helpers && typeof helpers.createCardElement === 'function') {
+                        const el = helpers.createCardElement(cardConfig);
+                        if (this._hass) {
+                            el.hass = this._hass;
+                        }
+                        return el;
+                    }
+                }
+            }
+            catch (_err) {
+                // Fallback direct ci-dessous
+            }
+            const rawType = String(cardConfig.type || 'div');
+            const tag = rawType.startsWith('custom:') ? rawType.slice(7) : `hui-${rawType}-card`;
+            if (rawType.startsWith('custom:') && !customElements.get(tag)) {
+                try {
+                    await Promise.race([
+                        customElements.whenDefined(tag),
+                        new Promise(resolve => setTimeout(resolve, 2000))
+                    ]);
+                }
+                catch (_e) {
+                    // Ignorer timeout
+                }
+            }
+            const el = document.createElement(tag);
+            if (typeof el.setConfig === 'function') {
+                el.setConfig(cardConfig);
+            }
+            if (this._hass) {
+                el.hass = this._hass;
+            }
+            return el;
+        }
+        async _buildChildCards() {
+            if (!this._gridEl)
+                return;
+            const token = ++this._cardsBuildToken;
+            const cardsConfig = Array.isArray(this._config?.cards) ? this._config.cards : [];
+            this._childCards = [];
+            this._gridEl.innerHTML = '';
+            for (const cardCfg of cardsConfig) {
+                if (!cardCfg || typeof cardCfg !== 'object')
+                    continue;
+                const cardEl = await this._createCardElement(cardCfg);
+                if (token !== this._cardsBuildToken)
+                    return;
+                if (this._hass) {
+                    cardEl.hass = this._hass;
+                }
+                this._childCards.push(cardEl);
+                this._gridEl.appendChild(cardEl);
+            }
+        }
+        _render() {
+            if (!this._config)
+                return;
+            if (!this._containerEl) {
+                this._buildDom();
+            }
+            const name = this._config.name || this._config.title || this._t('fold.default_title');
+            const icon = this._config.icon || 'mdi:tune-vertical';
+            const col = resolveThemeColor(this._hass, this._config.color, this._config.theme_entity || 'input_select.couleur_theme_eclairages', '#26c6da');
+            if (this._config.toggle_entity && this._hass?.states?.[this._config.toggle_entity]) {
+                const extState = this._hass.states[this._config.toggle_entity].state;
+                this._isExpanded = (extState === 'on');
+            }
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = col;
+            }
+            if (this._titleEl && this._titleEl.textContent !== name) {
+                this._titleEl.textContent = name;
+            }
+            const cardCount = Array.isArray(this._config.cards) ? this._config.cards.length : 0;
+            if (this._badgeEl) {
+                if (cardCount > 0) {
+                    this._badgeEl.style.display = 'inline-flex';
+                    this._badgeEl.textContent = String(cardCount);
+                    this._badgeEl.style.background = `${col}22`;
+                    this._badgeEl.style.border = `1px solid ${col}55`;
+                    this._badgeEl.style.color = col;
+                }
+                else {
+                    this._badgeEl.style.display = 'none';
+                }
+            }
+            if (this._lineEl) {
+                const gradient = `linear-gradient(90deg, ${col} 0%, ${col}44 60%, transparent 100%)`;
+                if (this._lineEl.style.background !== gradient) {
+                    this._lineEl.style.background = gradient;
+                }
+            }
+            if (this._toggleBtnEl) {
+                this._toggleBtnEl.style.background = this._isExpanded ? `${col}26` : 'rgba(255, 255, 255, 0.05)';
+                this._toggleBtnEl.style.border = this._isExpanded ? `1px solid ${col}66` : '1px solid rgba(255, 255, 255, 0.10)';
+                this._toggleBtnEl.style.boxShadow = this._isExpanded ? `0 0 8px ${col}40` : 'none';
+                this._toggleBtnEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
+                const labelText = this._isExpanded
+                    ? (this._config.label_on || this._t('fold.hide'))
+                    : (this._config.label_off || this._t('fold.show'));
+                if (this._toggleLabelEl) {
+                    this._toggleLabelEl.textContent = labelText;
+                }
+                const chevronIcon = this._isExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down';
+                if (this._toggleIconEl) {
+                    if (this._toggleIconEl.getAttribute('icon') !== chevronIcon) {
+                        this._toggleIconEl.setAttribute('icon', chevronIcon);
+                    }
+                    this._toggleIconEl.style.color = this._isExpanded ? col : 'rgba(220, 235, 240, 0.70)';
+                }
+            }
+            if (this._drawerEl) {
+                this._drawerEl.className = this._isExpanded ? 'halo-fold-drawer expanded' : 'halo-fold-drawer';
+            }
+            const borderColor = resolveThemeColor(this._hass, this._config.border_color, this._config.theme_entity, col);
+            const haloColor = resolveThemeColor(this._hass, this._config.halo_color, this._config.theme_entity, borderColor);
+            if (this._enclosureEl) {
+                const showBorder = this._config.show_border !== false;
+                const borderStyle = this._config.border_style || 'dashed';
+                const cardCount = Array.isArray(this._config.cards) ? this._config.cards.length : 0;
+                if (cardCount === 0 || !showBorder || borderStyle === 'none') {
+                    this._enclosureEl.className = 'halo-fold-enclosure no-border';
+                    this._enclosureEl.style.removeProperty('--halo-fold-border');
+                    this._enclosureEl.style.removeProperty('--halo-fold-shadow');
+                    this._enclosureEl.style.removeProperty('--halo-fold-bg');
+                    this._enclosureEl.style.removeProperty('--halo-fold-padding');
+                    this._enclosureEl.style.removeProperty('--halo-fold-radius');
+                }
+                else {
+                    this._enclosureEl.className = 'halo-fold-enclosure';
+                    const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.5;
+                    const pad = typeof this._config.enclosure_padding === 'number' ? this._config.enclosure_padding : 10;
+                    const radius = typeof this._config.border_radius === 'number' ? this._config.border_radius : 14;
+                    const showHalo = this._config.show_halo !== false;
+                    const borderCss = `${bw}px ${borderStyle} ${borderColor}80`;
+                    const haloCss = showHalo
+                        ? `0 0 14px ${haloColor}33, inset 0 0 14px ${haloColor}10`
+                        : 'none';
+                    const bgCss = `linear-gradient(135deg, ${borderColor}0a, rgba(15, 23, 42, 0.40))`;
+                    this._enclosureEl.style.setProperty('--halo-fold-border', borderCss);
+                    this._enclosureEl.style.setProperty('--halo-fold-shadow', haloCss);
+                    this._enclosureEl.style.setProperty('--halo-fold-bg', bgCss);
+                    this._enclosureEl.style.setProperty('--halo-fold-padding', `${pad}px`);
+                    this._enclosureEl.style.setProperty('--halo-fold-radius', `${radius}px`);
+                }
+            }
+            if (this._gridEl) {
+                let colCount = 1;
+                if (this._config.columns !== undefined) {
+                    const parsed = parseInt(String(this._config.columns), 10);
+                    if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) {
+                        colCount = parsed;
+                    }
+                }
+                const gapPx = typeof this._config.gap === 'number' ? this._config.gap : 10;
+                this._gridEl.style.setProperty('--halo-fold-cols', String(colCount));
+                this._gridEl.style.setProperty('--halo-fold-gap', `${gapPx}px`);
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-fold-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-fold-card.
+     *                    Combine <ha-form> (titre, icône, thème, état initial,
+     *                    colonnes, libellés et entité synchronisée), le panneau
+     *                    visuel Mix A+B 16 teintes HALO et un gestionnaire des
+     *                    cartes enfants Lovelace (cards).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.7.1-beta.1
+     * 📅 Date         : 2026-11-03
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Intégration des contrôles GUI pour le contour en pointillé,
+     *                                     le style de ligne (pointillés, points, continu), le halo néon léger,
+     *                                     l'épaisseur de bordure et l'espacement interne de l'enclos.
+     *   - ✨ v1.6.0-beta.3 (2026-11-02) : Cartes enfants sans YAML : sélecteur natif
+     *                                     hui-card-picker + éditeur natif complet
+     *                                     hui-card-element-editor par carte enfant.
+     *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Création initiale de l'éditeur visuel
+     *                                     halo-fold-card-editor.
+     * ==============================================================================
+     */
+    const buildSchema$1 = (t) => [
+        { name: 'name', selector: { text: {} } },
+        { name: 'icon', selector: { icon: {} } },
+        { name: 'theme_entity', selector: { entity: { domain: 'input_select' } } },
+        { name: 'initial_collapsed', selector: { boolean: {} } },
+        {
+            name: 'columns',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'fold', [['1', 'cols_1'], ['2', 'cols_2'], ['3', 'cols_3']])
+                }
+            }
+        },
+        { name: 'label_on', selector: { text: {} } },
+        { name: 'label_off', selector: { text: {} } },
+        { name: 'toggle_entity', selector: { entity: { domain: 'input_boolean' } } },
+        { name: 'show_border', selector: { boolean: {} } },
+        {
+            name: 'border_style',
+            selector: {
+                select: {
+                    options: selectOptions(t, 'fold', [
+                        ['dashed', 'style_dashed'],
+                        ['dotted', 'style_dotted'],
+                        ['solid', 'style_solid']
+                    ])
+                }
+            }
+        },
+        { name: 'show_halo', selector: { boolean: {} } },
+        {
+            name: 'border_width',
+            selector: {
+                number: {
+                    min: 1,
+                    max: 4,
+                    step: 0.5,
+                    mode: 'slider'
+                }
+            }
+        },
+        {
+            name: 'enclosure_padding',
+            selector: {
+                number: {
+                    min: 0,
+                    max: 24,
+                    step: 2,
+                    mode: 'slider'
+                }
+            }
+        }
+    ];
+    class HaloFoldCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = 'en';
+            this._picking = false;
+            this._expanded = -1;
+            this._renderToken = 0;
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._chipsContainerEl = null;
+        }
+        get _t() {
+            return useLocalize(this._hass);
+        }
+        setConfig(config) {
+            this._config = {
+                columns: 1,
+                initial_collapsed: true,
+                cards: [],
+                ...config
+            };
+            this._render();
+        }
+        set lovelace(lovelace) {
+            this._lovelace = lovelace;
+        }
+        set hass(hass) {
+            this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
+            const form = this.querySelector('#form');
+            if (form) {
+                form.hass = hass;
+            }
+            this._syncStylePanel();
+        }
+        _fireConfigChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _getColorHex() {
+            const raw = this._config?.color || 'Cyan';
+            if (typeof raw === 'string' && (raw.trim().toLowerCase() === 'theme' || raw.trim().toLowerCase() === 'auto')) {
+                return resolveThemeColor(this._hass, 'theme', this._config?.theme_entity, '#26c6da');
+            }
+            return toHexColor(raw, '#26c6da');
+        }
+        _updateColor(colorValue) {
+            this._config = {
+                ...this._config,
+                color: colorValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _syncStylePanel() {
+            if (!this._config)
+                return;
+            const hex = this._getColorHex();
+            const name = colorDisplayName(this._hass, this._config.color, 'editor.color_default_cyan');
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = hex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${hex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = hex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = hex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = name;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = hex.toUpperCase();
+            }
+            if (this._chipsContainerEl) {
+                const activeRaw = this._config.color || 'Cyan';
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = (chipName === activeRaw || chipHex?.toLowerCase() === hex.toLowerCase());
+                    btn.classList.toggle('active', Boolean(isActive));
+                });
+            }
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            if (data.columns !== undefined) {
+                data.columns = String(data.columns);
+            }
+            if (data.show_border === undefined) {
+                data.show_border = true;
+            }
+            if (data.border_style === undefined) {
+                data.border_style = 'dashed';
+            }
+            if (data.show_halo === undefined) {
+                data.show_halo = true;
+            }
+            if (data.border_width === undefined) {
+                data.border_width = 1.5;
+            }
+            if (data.enclosure_padding === undefined) {
+                data.enclosure_padding = 10;
+            }
+            delete data.color;
+            delete data.cards;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const val = { ...ev.detail.value };
+            if (val.columns !== undefined) {
+                val.columns = parseInt(String(val.columns), 10) || 1;
+            }
+            if (val.border_width !== undefined) {
+                val.border_width = parseFloat(String(val.border_width)) || 1.5;
+            }
+            if (val.enclosure_padding !== undefined) {
+                val.enclosure_padding = parseInt(String(val.enclosure_padding), 10);
+                if (isNaN(val.enclosure_padding))
+                    val.enclosure_padding = 10;
+            }
+            this._config = {
+                ...this._config,
+                ...val
+            };
+            this._fireConfigChanged();
+        }
+        _getCards() {
+            return Array.isArray(this._config?.cards) ? [...this._config.cards] : [];
+        }
+        _toggleCardPicker() {
+            this._picking = !this._picking;
+            this._renderCardsManager();
+        }
+        _addCardFromPicker(cardConfig) {
+            if (!cardConfig || !cardConfig.type)
+                return;
+            const cards = this._getCards();
+            cards.push(cardConfig);
+            this._expanded = cards.length - 1;
+            this._picking = false;
+            this._config = { ...this._config, cards };
+            this._fireConfigChanged();
+            this._renderCardsManager();
+        }
+        _toggleExpand(index) {
+            this._expanded = this._expanded === index ? -1 : index;
+            this._renderCardsManager();
+        }
+        /** Charge les éditeurs natifs HA (hui-card-picker / hui-card-element-editor), enregistrés paresseusement. */
+        async _ensureHuiEditors() {
+            if (customElements.get('hui-card-picker') && customElements.get('hui-card-element-editor'))
+                return;
+            try {
+                const helpers = await window.loadCardHelpers();
+                const stack = await helpers.createCardElement({ type: 'vertical-stack', cards: [] });
+                await stack?.constructor?.getConfigElement?.();
+                await Promise.all([
+                    customElements.whenDefined('hui-card-picker'),
+                    customElements.whenDefined('hui-card-element-editor')
+                ]);
+            }
+            catch (_e) {
+                /* éditeurs natifs indisponibles : message d'erreur affiché au rendu */
+            }
+        }
+        _removeCard(index) {
+            const cards = this._getCards();
+            cards.splice(index, 1);
+            this._config = {
+                ...this._config,
+                cards
+            };
+            this._fireConfigChanged();
+            this._renderCardsManager();
+        }
+        _moveCard(index, direction) {
+            const cards = this._getCards();
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= cards.length)
+                return;
+            const tmp = cards[index];
+            cards[index] = cards[targetIndex];
+            cards[targetIndex] = tmp;
+            this._config = {
+                ...this._config,
+                cards
+            };
+            this._fireConfigChanged();
+            this._renderCardsManager();
+        }
+        _cardTitle(c) {
+            return c.name || c.title || c.entity || c.type || 'Card';
+        }
+        _escape(s) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+            return String(s).replace(/[&<>"']/g, ch => map[ch]);
+        }
+        async _renderCardsManager() {
+            const container = this.querySelector('#cards-container');
+            if (!container)
+                return;
+            const token = ++this._renderToken;
+            await this._ensureHuiEditors();
+            if (token !== this._renderToken)
+                return;
+            const cards = this._getCards();
+            const t = (k) => this._t(`editor.fold.${k}`);
+            const nativeOk = !!(customElements.get('hui-card-picker') && customElements.get('hui-card-element-editor'));
+            container.innerHTML = '';
+            if (!nativeOk) {
+                container.innerHTML = '<div style="padding:12px;color:var(--error-color,#f44336);font-size:13px;">hui-card-picker / hui-card-element-editor indisponibles.</div>';
+                return;
+            }
+            if (cards.length === 0 && !this._picking) {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; color: var(--secondary-text-color); font-size: 13px;';
+                empty.textContent = t('no_cards');
+                container.appendChild(empty);
+            }
+            cards.forEach((c, idx) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'background: var(--card-background-color, rgba(255,255,255,0.05)); border: 1px solid var(--divider-color, rgba(255,255,255,0.1)); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px;';
+                const open = this._expanded === idx;
+                const header = document.createElement('div');
+                header.style.cssText = 'display: flex; align-items: center; justify-content: space-between;';
+                header.innerHTML = `
+        <div class="btn-toggle" style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;cursor:pointer;flex:1;">
+          <ha-icon icon="${open ? 'mdi:chevron-down' : 'mdi:chevron-right'}" style="--mdc-icon-size:18px;"></ha-icon>
+          <span>#${idx + 1} — ${this._escape(this._cardTitle(c))}</span>
+          <span style="font-weight:400;font-size:11px;color:var(--secondary-text-color);">${this._escape(c.type || '')}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button type="button" class="btn-up" style="background:none;border:none;color:var(--primary-text-color);cursor:pointer;padding:2px 6px;" ${idx === 0 ? 'disabled' : ''}>▲</button>
+          <button type="button" class="btn-down" style="background:none;border:none;color:var(--primary-text-color);cursor:pointer;padding:2px 6px;" ${idx === cards.length - 1 ? 'disabled' : ''}>▼</button>
+          <button type="button" class="btn-del" style="background:none;border:none;color:var(--error-color,#f44336);cursor:pointer;padding:2px 6px;">✕</button>
+        </div>`;
+                header.querySelector('.btn-toggle')?.addEventListener('click', () => this._toggleExpand(idx));
+                header.querySelector('.btn-up')?.addEventListener('click', () => this._moveCard(idx, 'up'));
+                header.querySelector('.btn-down')?.addEventListener('click', () => this._moveCard(idx, 'down'));
+                header.querySelector('.btn-del')?.addEventListener('click', () => this._removeCard(idx));
+                row.appendChild(header);
+                if (open) {
+                    // Éditeur natif HA : bascule GUI/YAML, formulaire complet de la carte enfant
+                    const ed = document.createElement('hui-card-element-editor');
+                    ed.hass = this._hass;
+                    ed.lovelace = this._lovelace;
+                    ed.value = c;
+                    ed.addEventListener('config-changed', (ev) => {
+                        ev.stopPropagation();
+                        const newCfg = ev.detail?.config;
+                        if (!newCfg)
+                            return;
+                        const list = this._getCards();
+                        list[idx] = newCfg;
+                        this._config = { ...this._config, cards: list };
+                        this._fireConfigChanged();
+                    });
+                    ed.addEventListener('GUImode-changed', (ev) => ev.stopPropagation());
+                    row.appendChild(ed);
+                }
+                container.appendChild(row);
+            });
+            if (this._picking) {
+                const picker = document.createElement('hui-card-picker');
+                picker.hass = this._hass;
+                picker.lovelace = this._lovelace;
+                picker.addEventListener('config-changed', (ev) => {
+                    ev.stopPropagation();
+                    this._addCardFromPicker(ev.detail?.config);
+                });
+                container.appendChild(picker);
+            }
+        }
+        _render() {
+            if (!this._config)
+                return;
+            const t = this._t;
+            this._lang = getLang(this._hass);
+            let form = this.querySelector('#form');
+            if (!form) {
+                this.innerHTML = `
+        <style>
+          ${COMMON_EDITOR_STYLES}
+        </style>
+        <div class="halo-editor-wrap">
+          <ha-form id="form"></ha-form>
+
+          <div class="halo-style-section">
+            <div class="halo-section-header">
+              <ha-icon icon="mdi:palette-swatch"></ha-icon>
+              <span>${t('editor.style_title')}</span>
+            </div>
+            <div class="halo-col">
+              <div class="halo-col-header">
+                <span class="halo-col-title">${t('editor.halo_color')}</span>
+              </div>
+              <div class="halo-swatch-card" id="swatch-card">
+                <div class="halo-swatch-circle-wrap" id="swatch-circle-wrap" title="${t('editor.open_palette')}">
+                  <div class="halo-swatch-circle" id="swatch-circle"></div>
+                  <input type="color" id="native-color-input" class="hidden-color-input" />
+                </div>
+                <div class="halo-swatch-meta">
+                  <span class="halo-color-title" id="swatch-name"></span>
+                  <span class="halo-color-hex" id="swatch-hex"></span>
+                </div>
+                <button type="button" class="halo-pipette-btn" id="pipette-btn" title="${t('editor.open_wheel')}">
+                  <ha-icon icon="mdi:eyedropper"></ha-icon>
+                </button>
+              </div>
+              <div class="halo-chips-label">${t('editor.chips_label')}</div>
+              <div class="halo-chips-grid" id="chips-grid"></div>
+            </div>
+          </div>
+
+          <div id="fold-cards-manager" style="margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--divider-color, rgba(255,255,255,0.1));">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div>
+                <span style="font-weight: 600; font-size: 14px; color: var(--primary-text-color);">${t('editor.fold.cards_title')}</span>
+                <span style="display: block; font-size: 11px; color: var(--secondary-text-color);">${t('editor.fold.cards_subtitle')}</span>
+              </div>
+              <button type="button" id="btn-add-card" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; background: var(--primary-color, #0288d1); color: #fff; border: none; cursor: pointer; font-size: 12px; font-weight: 600;">
+                <span>${t('editor.fold.add_card')}</span>
+              </button>
+            </div>
+            <div id="cards-container"></div>
+          </div>
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    applyFormI18n(form, this._hass, 'fold', buildSchema$1(t));
+                    form.data = this._formMetadata();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+                this._swatchCircleEl = this.querySelector('#swatch-circle');
+                this._colorInputEl = this.querySelector('#native-color-input');
+                this._swatchNameEl = this.querySelector('#swatch-name');
+                this._swatchHexEl = this.querySelector('#swatch-hex');
+                this._chipsContainerEl = this.querySelector('#chips-grid');
+                const triggerColor = () => this._colorInputEl?.click();
+                this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+                this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+                this._colorInputEl?.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    if (val)
+                        this._updateColor(val);
+                });
+                if (this._chipsContainerEl) {
+                    buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
+                }
+                this.querySelector('#btn-add-card')?.addEventListener('click', () => this._toggleCardPicker());
+                this._renderCardsManager();
+            }
+            else {
+                form.data = this._formMetadata();
+                if (this._hass)
+                    form.hass = this._hass;
+                this._renderCardsManager();
+            }
+            this._syncStylePanel();
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/components/halo-counter-card.ts
+     * 📝 Description   : Composant Web custom:halo-counter-card.
+     *                    Tuile récapitulative et compteur intelligent Liquid Glass HALO
+     *                    pour volets roulants (mode 'cover' : 4 états + détection de
+     *                    mouvement synchrone sans liste nominative par défaut) et
+     *                    ouvertures / fenêtres & portes (mode 'binary' : compteur +
+     *                    pastilles nominatives des ouvertures actives et capteurs en défaut).
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.6.0-beta.5
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Création initiale de custom:halo-counter-card
+     *                                     unifiant tuile_recap_volets_holm et
+     *                                     tuile_recap_ouvertures_holm en Web Component natif.
+     * ==============================================================================
+     */
+    const DEFAULT_COVER_ENTITIES = [
+        'cover.volet_roulant_salon_tv_n03',
+        'cover.volet_roulant_salon_poele_n02',
+        'cover.volet_roulant_salon_terrasse_n01',
+        'cover.volet_roulant_cuisine_n04',
+        'cover.volet_roulant_bureau_pierrick_n06',
+        'cover.volet_roulant_salle_de_bains_n07',
+        'cover.volet_roulant_chambre_parents_n09',
+        'cover.volet_roulant_salle_de_douche_parents_n10',
+        'cover.volet_roulant_chambre_charlotte_n05',
+        'cover.volet_roulant_palier_etage_n08',
+        'cover.volet_roulant_atelier_cecile_rue_n11',
+        'cover.volet_roulant_atelier_cecile_servitude_n12'
+    ];
+    const DEFAULT_ENTITY_LABELS = {
+        'binary_sensor.capteur_porte_entree_contact': "Porte d'entrée",
+        'binary_sensor.capteur_fenetre_toilettes_rdc_contact': 'Toilettes RdC',
+        'binary_sensor.capteur_fenetre_cuisine_contact': 'Cuisine',
+        'binary_sensor.capteur_fenetre_salon_terrasse_contact': 'Porte-Fenêtre Terrasse',
+        'binary_sensor.capteur_fenetre_salon_tv_contact': 'Salon TV',
+        'binary_sensor.capteur_fenetre_salon_poele_contact': 'Salon Poêle',
+        'binary_sensor.capteur_fenetre_chambre_parents_contact': 'Chambre Parents',
+        'binary_sensor.capteur_fenetre_sdd_parentale_contact': 'SdD Parents',
+        'binary_sensor.capteur_fenetre_salle_de_bains_contact': 'Salle de Bains',
+        'binary_sensor.capteur_fenetre_bureau_contact': 'Bureau',
+        'binary_sensor.capteur_fenetre_piece_artistique_cote_rue_contact': 'Atelier Cécile (Rue)',
+        'binary_sensor.capteur_fenetre_piece_artistique_cote_servitude_contact': 'Atelier Cécile (Servitude)',
+        'binary_sensor.capteur_fenetre_chambre_enfant_1_contact': 'Chambre Charlotte',
+        'binary_sensor.capteur_fenetre_palier_etage_contact': 'Palier Étage',
+        'binary_sensor.capteur_fenetre_velux_escalier_contact': 'Velux Escalier',
+        'binary_sensor.capteur_fenetre_velux_chambre_parents_contact': 'Velux Parents',
+        'binary_sensor.capteur_fenetre_velux_salle_de_douche_contact': 'Velux Salle de Douche',
+        'binary_sensor.capteur_fenetre_velux_chambre_charlotte_contact': 'Velux Charlotte',
+        'binary_sensor.capteur_fenetre_velux_chambre_enfant_2_velux_petite_chambre': 'Velux Petite Chambre',
+        'binary_sensor.capteur_fenetre_velux_sdd_etage_velux_sdd_etage': 'Velux SdD Étage',
+        'binary_sensor.capteur_fenetre_vasistas_soussol_linky_vasistas': 'Vasistas Sous-Sol Linky',
+        'binary_sensor.capteur_fenetre_vasistas_soussol_atelier_vasistas': 'Vasistas Sous-Sol Atelier',
+        'binary_sensor.capteur_fenetre_vasistas_soussol_buanderie_vasistas': 'Vasistas Sous-Sol Buanderie'
+    };
+    class HaloCounterCard extends HTMLElement {
+        constructor() {
+            super();
+            this._updateTimerMS = 0;
+            // Persistent DOM references
+            this._cardEl = null;
+            this._iconBadgeEl = null;
+            this._iconEl = null;
+            this._titleEl = null;
+            this._subtitleEl = null;
+            this._counterWrapEl = null;
+            this._counterNumEl = null;
+            this._counterTotalEl = null;
+            this._counterLabelEl = null;
+            this._detailWrapEl = null;
+            this._unbindCardTouch = null;
+            this._root = this.attachShadow({ mode: 'open' });
+        }
+        get _t() {
+            return useLocalize(this._hass);
+        }
+        get _helper() {
+            return window._voletHelper || voletHelperInstance;
+        }
+        static getConfigElement() {
+            return document.createElement('halo-counter-card-editor');
+        }
+        static getStubConfig() {
+            return {
+                mode: 'cover',
+                entity: 'cover.volets_maison',
+                name: 'Volets Roulants'
+            };
+        }
+        setConfig(config) {
+            if (!config) {
+                throw new Error('Invalid configuration for halo-counter-card');
+            }
+            this._config = {
+                mode: 'auto',
+                border_width: 1.25,
+                ...config
+            };
+            if (this._hass) {
+                this._render();
+            }
+        }
+        set hass(hass) {
+            const oldHass = this._hass;
+            this._hass = hass;
+            this._helper.register(this);
+            if (!this._cardEl) {
+                this._render();
+                return;
+            }
+            if (this._hasChanged(oldHass, hass)) {
+                this._render();
+            }
+        }
+        getCardSize() {
+            return 1;
+        }
+        refresh() {
+            this._render();
+        }
+        requestUpdate(_name, _oldValue) {
+            this._render();
+        }
+        connectedCallback() {
+            this._helper.register(this);
+            if (this._cardEl && !this._unbindCardTouch) {
+                this._bindInteractions();
+            }
+        }
+        disconnectedCallback() {
+            if (this._unbindCardTouch) {
+                this._unbindCardTouch();
+                this._unbindCardTouch = null;
+            }
+        }
+        _getEffectiveMode() {
+            if (this._config?.mode === 'cover')
+                return 'cover';
+            if (this._config?.mode === 'binary')
+                return 'binary';
+            const ent = this._config?.entity || '';
+            if (ent.startsWith('binary_sensor.') || ent.includes('ouverture') || ent.includes('fenetre')) {
+                return 'binary';
+            }
+            const first = this._config?.entities?.[0] || '';
+            if (first.startsWith('binary_sensor.')) {
+                return 'binary';
+            }
+            return 'cover';
+        }
+        _getTargetEntities(mode) {
+            if (Array.isArray(this._config?.entities) && this._config.entities.length > 0) {
+                return this._config.entities;
+            }
+            const states = this._hass?.states || {};
+            const entId = this._config?.entity;
+            if (entId && states[entId]) {
+                const attrs = states[entId].attributes || {};
+                if (Array.isArray(attrs.entity_id) && attrs.entity_id.length > 0) {
+                    return attrs.entity_id;
+                }
+                if (Array.isArray(attrs.group_entities) && attrs.group_entities.length > 0) {
+                    return attrs.group_entities;
+                }
+            }
+            if (mode === 'cover') {
+                const grp = states['cover.groupe_volets_tous']?.attributes?.entity_id
+                    || states['cover.volets_maison']?.attributes?.group_entities;
+                if (Array.isArray(grp) && grp.length > 0) {
+                    return grp;
+                }
+                return DEFAULT_COVER_ENTITIES;
+            }
+            const bGrp = states['binary_sensor.groupe_ouvertures']?.attributes?.entity_id;
+            if (Array.isArray(bGrp) && bGrp.length > 0) {
+                return bGrp;
+            }
+            return Object.keys(DEFAULT_ENTITY_LABELS);
+        }
+        _getEntityLabel(entityId) {
+            if (this._config?.entity_labels && this._config.entity_labels[entityId]) {
+                return this._config.entity_labels[entityId];
+            }
+            if (DEFAULT_ENTITY_LABELS[entityId]) {
+                return DEFAULT_ENTITY_LABELS[entityId];
+            }
+            const st = this._hass?.states?.[entityId];
+            let raw = st?.attributes?.friendly_name || entityId;
+            raw = raw
+                .replace(/^Volet\s+roulant\s+/i, '')
+                .replace(/^Fenêtre\s+/i, '')
+                .replace(/^Capteur\s+/i, '')
+                .replace(/\s+contact$/i, '');
+            return raw;
+        }
+        _hasChanged(oldHass, newHass) {
+            if (!oldHass || !newHass || !this._config)
+                return true;
+            if (oldHass.language !== newHass.language || oldHass.themes !== newHass.themes)
+                return true;
+            const mode = this._getEffectiveMode();
+            const entId = this._config.entity;
+            if (entId && oldHass.states[entId] !== newHass.states[entId])
+                return true;
+            const targets = this._getTargetEntities(mode);
+            for (const tid of targets) {
+                if (oldHass.states[tid] !== newHass.states[tid])
+                    return true;
+                const track = this._helper.tracking?.[tid];
+                if (track && track.moving)
+                    return true;
+            }
+            const helperEntities = [
+                'cover.volets_maison',
+                'cover.groupe_volets_tous',
+                'binary_sensor.groupe_ouvertures',
+                'sensor.nombre_fenetres_portes_ouvertes',
+                'sensor.nombre_fenetres_portes',
+                'input_text.couleur_volet_ferme',
+                'input_text.couleur_volet_ouvert',
+                'input_text.couleur_volet_partiel',
+                'input_text.couleur_volet_en_mouvement',
+                'input_select.couleur_theme_ouvertures'
+            ];
+            for (const he of helperEntities) {
+                if (oldHass.states[he] !== newHass.states[he])
+                    return true;
+            }
+            return false;
+        }
+        _buildDom() {
+            this._root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        ha-card.halo-counter-card {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          box-sizing: border-box;
+          border-radius: 18px;
+          padding: 12px 14px;
+          text-align: left;
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          overflow: hidden;
+        }
+        ha-card.halo-counter-card:hover {
+          filter: brightness(1.04);
+        }
+        ha-card.halo-counter-card:active {
+          transform: scale(0.99);
+        }
+        .counter-top-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .counter-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+          min-width: 0;
+          text-align: left;
+        }
+        .counter-icon-badge {
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: all 0.3s ease;
+        }
+        .counter-icon-badge ha-icon {
+          --mdc-icon-size: 24px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.3s ease;
+        }
+        .counter-titles {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          text-align: left;
+          min-width: 0;
+        }
+        .counter-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #ffffff;
+          letter-spacing: -0.2px;
+          line-height: 1.2;
+        }
+        .counter-subtitle {
+          font-size: 12px;
+          font-weight: 500;
+          color: rgba(220, 235, 240, 0.75);
+          line-height: 1.25;
+        }
+        .counter-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          justify-content: center;
+          min-width: 65px;
+          flex-shrink: 0;
+        }
+        .counter-score {
+          font-size: 18px;
+          font-weight: 800;
+          font-variant-numeric: tabular-nums;
+          line-height: 1.15;
+          transition: color 0.3s ease;
+        }
+        .counter-total {
+          font-size: 13px;
+          font-weight: 500;
+          color: rgba(220, 235, 240, 0.65);
+        }
+        .counter-unit {
+          font-size: 10px;
+          font-weight: 600;
+          color: rgba(220, 235, 240, 0.50);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-top: 1px;
+        }
+        .counter-details {
+          display: none;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .pills-wrap {
+          display: flex;
+          flex-wrap: wrap;
+          margin-top: 8px;
+          gap: 4px;
+        }
+        .pill {
+          display: inline-flex;
+          align-items: center;
+          color: #ffffff;
+          padding: 2px 8px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          margin: 2px 4px 2px 0;
+        }
+        .pill-open {
+          background: rgba(244, 63, 94, 0.22);
+          border: 1px solid rgba(244, 63, 94, 0.45);
+        }
+        .pill-unavail {
+          background: rgba(245, 158, 11, 0.22);
+          border: 1px solid rgba(245, 158, 11, 0.45);
+        }
+        .pill-partial {
+          background: rgba(56, 189, 248, 0.22);
+          border: 1px solid rgba(56, 189, 248, 0.45);
+        }
+        .ok-text {
+          display: block;
+          font-size: 12px;
+          font-weight: 500;
+          color: rgba(220, 235, 240, 0.65);
+          margin-top: 6px;
+        }
+      </style>
+      <ha-card class="halo-counter-card" id="card">
+        <div class="counter-top-row">
+          <div class="counter-left">
+            <div class="counter-icon-badge" id="icon-badge">
+              <ha-icon id="main-icon"></ha-icon>
+            </div>
+            <div class="counter-titles">
+              <span class="counter-title" id="title"></span>
+              <span class="counter-subtitle" id="subtitle"></span>
+            </div>
+          </div>
+          <div class="counter-right" id="counter-right">
+            <span class="counter-score" id="counter-score">
+              <span id="counter-num">0</span>
+              <span class="counter-total" id="counter-total">/ 0</span>
+            </span>
+            <span class="counter-unit" id="counter-label"></span>
+          </div>
+        </div>
+        <div class="counter-details" id="counter-details"></div>
+      </ha-card>
+    `;
+            this._cardEl = this._root.getElementById('card');
+            this._iconBadgeEl = this._root.getElementById('icon-badge');
+            this._iconEl = this._root.getElementById('main-icon');
+            this._titleEl = this._root.getElementById('title');
+            this._subtitleEl = this._root.getElementById('subtitle');
+            this._counterWrapEl = this._root.getElementById('counter-right');
+            this._counterNumEl = this._root.getElementById('counter-num');
+            this._counterTotalEl = this._root.getElementById('counter-total');
+            this._counterLabelEl = this._root.getElementById('counter-label');
+            this._detailWrapEl = this._root.getElementById('counter-details');
+            this._bindInteractions();
+        }
+        _bindInteractions() {
+            if (this._unbindCardTouch) {
+                this._unbindCardTouch();
+                this._unbindCardTouch = null;
+            }
+            if (!this._cardEl)
+                return;
+            const mode = this._getEffectiveMode();
+            const defaultEntity = this._config?.entity
+                || (mode === 'cover' ? 'cover.volets_maison' : 'binary_sensor.groupe_ouvertures');
+            const tapAction = this._config?.tap_action || { action: 'more-info', entity: defaultEntity };
+            const holdAction = this._config?.hold_action;
+            const doubleTapAction = this._config?.double_tap_action;
+            this._unbindCardTouch = bindTouchActions(this._cardEl, {
+                onTap: () => {
+                    handleAction(this, this._hass, tapAction, defaultEntity);
+                },
+                onHold: holdAction ? () => {
+                    handleAction(this, this._hass, holdAction, defaultEntity);
+                } : undefined,
+                onDoubleTap: doubleTapAction ? () => {
+                    handleAction(this, this._hass, doubleTapAction, defaultEntity);
+                } : undefined
+            });
+        }
+        _render() {
+            if (!this._config || !this._hass)
+                return;
+            if (!this._cardEl) {
+                this._buildDom();
+            }
+            const mode = this._getEffectiveMode();
+            if (mode === 'cover') {
+                this._renderCoverMode();
+            }
+            else {
+                this._renderBinaryMode();
+            }
+        }
+        _renderCoverMode() {
+            const t = this._t;
+            const states = this._hass.states || {};
+            const entities = this._getTargetEntities('cover');
+            const total = entities.length;
+            let closedCount = 0;
+            let partialCount = 0;
+            let openCount = 0;
+            let movingCount = 0;
+            const openNames = [];
+            const partialNames = [];
+            const movingNames = [];
+            const unavailNames = [];
+            entities.forEach(entId => {
+                const s = states[entId];
+                if (!s)
+                    return;
+                const label = this._getEntityLabel(entId);
+                const st = s.state || 'unavailable';
+                const isUnavail = st === 'unavailable' || st === 'unknown';
+                const p = this._helper.position(s);
+                const moveInfo = this._helper.checkMoving(entId, states);
+                if (moveInfo.moving) {
+                    movingCount++;
+                    movingNames.push(label);
+                }
+                else if (isUnavail) {
+                    unavailNames.push(label);
+                }
+                else if (p === 0 || st === 'closed') {
+                    closedCount++;
+                }
+                else if (p === 100 || (p == null && st === 'open')) {
+                    openCount++;
+                    openNames.push(label);
+                }
+                else if (p != null && p > 0 && p < 100) {
+                    partialCount++;
+                    partialNames.push(`${label} (${p}%)`);
+                }
+            });
+            const isAllClosed = total > 0 && closedCount === total;
+            const isAllOpen = total > 0 && openCount === total;
+            const colors = getCoverColors(this._hass, this._config);
+            let accentCol = colors.partial;
+            let cardBg = `linear-gradient(135deg, ${colors.partial}22, rgba(15, 23, 36, 0.90))`;
+            let cardShadow = `0 0 18px ${colors.partial}44, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            if (movingCount > 0) {
+                accentCol = colors.moving;
+                cardBg = `linear-gradient(135deg, ${colors.moving}26, rgba(15, 23, 36, 0.90))`;
+                cardShadow = `0 0 18px ${colors.moving}55, inset 0 1px 0 rgba(255, 255, 255, 0.20)`;
+            }
+            else if (isAllClosed) {
+                accentCol = colors.closed;
+                cardBg = `linear-gradient(135deg, ${colors.closed}1A, rgba(15, 23, 36, 0.88))`;
+                cardShadow = `0 0 18px ${colors.closed}44, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            }
+            else if (isAllOpen) {
+                accentCol = colors.open;
+                cardBg = `linear-gradient(135deg, ${colors.open}22, rgba(15, 23, 36, 0.90))`;
+                cardShadow = `0 0 18px ${colors.open}44, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+            }
+            const bw = typeof this._config.border_width === 'number' && !isNaN(this._config.border_width)
+                ? this._config.border_width
+                : 1.25;
+            const cardBorder = bw > 0 ? `${bw}px solid ${accentCol}` : 'none';
+            const icon = movingCount > 0
+                ? 'mdi:swap-vertical-bold'
+                : (isAllClosed ? 'mdi:window-shutter' : 'mdi:window-shutter-open');
+            const title = this._config.name || this._config.title || t('counter.cover_default_title');
+            let subText = '';
+            if (movingCount > 0) {
+                subText = movingCount > 1
+                    ? t('counter.cover_moving_plural', 'count', String(movingCount))
+                    : t('counter.cover_moving_single', 'count', '1');
+            }
+            else if (isAllClosed) {
+                subText = t('counter.cover_all_closed');
+            }
+            else if (isAllOpen) {
+                subText = t('counter.cover_all_open');
+            }
+            else {
+                const parts = [];
+                if (closedCount > 0) {
+                    parts.push(closedCount > 1 ? t('counter.closed_plural', 'count', String(closedCount)) : t('counter.closed_single'));
+                }
+                if (partialCount > 0) {
+                    parts.push(partialCount > 1 ? t('counter.partial_plural', 'count', String(partialCount)) : t('counter.partial_single'));
+                }
+                if (openCount > 0) {
+                    parts.push(openCount > 1 ? t('counter.open_plural', 'count', String(openCount)) : t('counter.open_single'));
+                }
+                subText = parts.join(' • ');
+            }
+            // Apply card styles
+            if (this._cardEl) {
+                this._cardEl.style.background = cardBg;
+                this._cardEl.style.border = cardBorder;
+                this._cardEl.style.boxShadow = cardShadow;
+            }
+            // Apply icon badge
+            if (this._iconBadgeEl) {
+                this._iconBadgeEl.style.background = `${accentCol}22`;
+                this._iconBadgeEl.style.border = `1.25px solid ${accentCol}66`;
+                this._iconBadgeEl.style.boxShadow = `0 0 12px ${accentCol}44`;
+            }
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = accentCol;
+            }
+            // Apply texts
+            if (this._titleEl) {
+                this._titleEl.textContent = title;
+                this._titleEl.style.color = '#ffffff';
+            }
+            if (this._subtitleEl) {
+                this._subtitleEl.textContent = subText;
+            }
+            // Apply right-hand counter (default ON in cover mode)
+            const showCounter = this._config.show_counter !== false;
+            if (this._counterWrapEl) {
+                this._counterWrapEl.style.display = showCounter ? 'flex' : 'none';
+            }
+            if (showCounter) {
+                if (this._counterNumEl) {
+                    this._counterNumEl.textContent = `${closedCount} `;
+                    this._counterNumEl.style.color = accentCol;
+                }
+                if (this._counterTotalEl) {
+                    this._counterTotalEl.textContent = `/ ${total}`;
+                }
+                if (this._counterLabelEl) {
+                    this._counterLabelEl.textContent = this._config.counter_label || t('counter.closed_label');
+                }
+            }
+            // Apply details pills (default OFF in cover mode: "sans afficher quel volet est ouvert ou fermé")
+            const showDetails = this._config.show_details === true;
+            if (this._detailWrapEl) {
+                if (!showDetails) {
+                    this._detailWrapEl.style.display = 'none';
+                    this._detailWrapEl.innerHTML = '';
+                }
+                else {
+                    const pills = [];
+                    movingNames.forEach(n => pills.push(`<span class="pill pill-unavail">↕ ${n}</span>`));
+                    partialNames.forEach(n => pills.push(`<span class="pill pill-partial">• ${n}</span>`));
+                    openNames.forEach(n => pills.push(`<span class="pill pill-open">• ${n}</span>`));
+                    unavailNames.forEach(n => pills.push(`<span class="pill pill-unavail">⚠️ ${n} (${t('counter.indispo_short')})</span>`));
+                    if (pills.length > 0) {
+                        this._detailWrapEl.style.display = 'block';
+                        this._detailWrapEl.innerHTML = `<div class="pills-wrap">${pills.join('')}</div>`;
+                    }
+                    else {
+                        this._detailWrapEl.style.display = 'none';
+                        this._detailWrapEl.innerHTML = '';
+                    }
+                }
+            }
+        }
+        _renderBinaryMode() {
+            const t = this._t;
+            const states = this._hass.states || {};
+            const entities = this._getTargetEntities('binary');
+            const total = entities.length;
+            const openNames = [];
+            const unavailNames = [];
+            entities.forEach(entId => {
+                const s = states[entId]?.state;
+                const label = this._getEntityLabel(entId);
+                if (s === 'on') {
+                    openNames.push(label);
+                }
+                else if (s !== 'off') {
+                    unavailNames.push(label);
+                }
+            });
+            const count = openNames.length;
+            const hasUnavail = unavailNames.length > 0;
+            const isOpen = count > 0;
+            const colClosed = toHexColor(this._config.color_closed, '#10b981');
+            const colOpen = toHexColor(this._config.color_open, '#f43f5e');
+            const colUnavail = toHexColor(this._config.color_unavail || this._config.color_moving, '#f59e0b');
+            let icon = 'mdi:window-closed-variant';
+            let iconColor = colClosed;
+            let iconBg = `${colClosed}2E`;
+            let iconGlow = 'none';
+            let title = this._config.name || this._config.title || t('counter.binary_all_closed');
+            let titleColor = '#e6f2f5';
+            if (hasUnavail) {
+                icon = 'mdi:alert-circle';
+                iconColor = colUnavail;
+                iconBg = `${colUnavail}40`;
+                iconGlow = `0 0 16px ${colUnavail}99`;
+                title = unavailNames.length > 1
+                    ? t('counter.binary_unavail_plural', 'count', String(unavailNames.length))
+                    : t('counter.binary_unavail_single', 'count', '1');
+                titleColor = '#ffffff';
+            }
+            else if (isOpen) {
+                icon = 'mdi:window-open-variant';
+                iconColor = colOpen;
+                iconBg = `${colOpen}40`;
+                iconGlow = `0 0 16px ${colOpen}99`;
+                title = count > 1
+                    ? t('counter.binary_open_plural', 'count', String(count))
+                    : t('counter.binary_open_single', 'count', '1');
+                titleColor = '#ffffff';
+            }
+            const bw = typeof this._config.border_width === 'number' && !isNaN(this._config.border_width)
+                ? this._config.border_width
+                : 1.25;
+            let cardBg = `linear-gradient(135deg, ${colClosed}24, rgba(15, 23, 36, 0.88))`;
+            let cardBorder = bw > 0 ? `1px solid ${colClosed}66` : 'none';
+            let cardShadow = `0 4px 18px rgba(0, 0, 0, 0.35), 0 0 14px ${colClosed}2E, inset 0 1px 0 rgba(255, 255, 255, 0.08)`;
+            if (isOpen) {
+                cardBg = `linear-gradient(135deg, ${colOpen}38, rgba(15, 23, 36, 0.92))`;
+                cardBorder = bw > 0 ? `${bw}px solid ${colOpen}` : 'none';
+                cardShadow = `0 0 20px ${colOpen}73, inset 0 1px 0 rgba(255, 255, 255, 0.25)`;
+            }
+            else if (hasUnavail) {
+                cardBg = `linear-gradient(135deg, ${colUnavail}38, rgba(15, 23, 36, 0.92))`;
+                cardBorder = bw > 0 ? `${bw}px solid ${colUnavail}` : 'none';
+                cardShadow = `0 0 20px ${colUnavail}73, inset 0 1px 0 rgba(255, 255, 255, 0.25)`;
+            }
+            if (this._cardEl) {
+                this._cardEl.style.background = cardBg;
+                this._cardEl.style.border = cardBorder;
+                this._cardEl.style.boxShadow = cardShadow;
+            }
+            if (this._iconBadgeEl) {
+                this._iconBadgeEl.style.background = iconBg;
+                this._iconBadgeEl.style.border = `1px solid ${iconColor}66`;
+                this._iconBadgeEl.style.boxShadow = iconGlow;
+            }
+            if (this._iconEl) {
+                if (this._iconEl.getAttribute('icon') !== icon) {
+                    this._iconEl.setAttribute('icon', icon);
+                }
+                this._iconEl.style.color = iconColor;
+            }
+            if (this._titleEl) {
+                this._titleEl.textContent = title;
+                this._titleEl.style.color = titleColor;
+            }
+            const subText = t('counter.binary_subtitle', 'count', String(count)).replace('{total}', String(total));
+            if (this._subtitleEl) {
+                this._subtitleEl.textContent = subText;
+            }
+            // Right-hand counter (default OFF in binary mode, optional ON)
+            const showCounter = this._config.show_counter === true;
+            if (this._counterWrapEl) {
+                this._counterWrapEl.style.display = showCounter ? 'flex' : 'none';
+            }
+            if (showCounter) {
+                if (this._counterNumEl) {
+                    this._counterNumEl.textContent = `${count} `;
+                    this._counterNumEl.style.color = iconColor;
+                }
+                if (this._counterTotalEl) {
+                    this._counterTotalEl.textContent = `/ ${total}`;
+                }
+                if (this._counterLabelEl) {
+                    this._counterLabelEl.textContent = this._config.counter_label || t('counter.open_label');
+                }
+            }
+            // Detail pills (default ON in binary mode: lists open and unavailable sensors)
+            const showDetails = this._config.show_details !== false;
+            if (this._detailWrapEl) {
+                if (!showDetails) {
+                    this._detailWrapEl.style.display = 'none';
+                    this._detailWrapEl.innerHTML = '';
+                }
+                else {
+                    const pills = [];
+                    openNames.forEach(name => {
+                        pills.push(`<span class="pill pill-open">• ${name}</span>`);
+                    });
+                    unavailNames.forEach(name => {
+                        pills.push(`<span class="pill pill-unavail">⚠️ ${name} (${t('counter.indispo_short')})</span>`);
+                    });
+                    this._detailWrapEl.style.display = 'block';
+                    if (pills.length > 0) {
+                        this._detailWrapEl.innerHTML = `<div class="pills-wrap">${pills.join('')}</div>`;
+                    }
+                    else {
+                        const okMsg = this._config.ok_text || this._config.subtitle || t('counter.binary_all_ok');
+                        this._detailWrapEl.innerHTML = `<span class="ok-text">${okMsg}</span>`;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * ==============================================================================
+     * 📌 Nom du fichier : src/editors/halo-counter-card-editor.ts
+     * 📝 Description   : Éditeur d'interface graphique UI pour custom:halo-counter-card.
+     *                    Combine le composant natif <ha-form> (mode Volets / Ouvertures,
+     *                    entité de groupe, options d'affichage du compteur et des pastilles
+     *                    nominatives) et le panneau Liquid Glass de personnalisation des
+     *                    teintes d'états et d'épaisseur de bordure.
+     * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
+     * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
+     * 📦 Version      : 1.6.0-beta.5
+     * 📅 Date         : 2026-11-02
+     * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
+     * ==============================================================================
+     * 📋 CHANGELOG (antéchronologique)
+     *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Création initiale de l'éditeur visuel pour
+     *                                     custom:halo-counter-card.
+     * ==============================================================================
+     */
+    const COUNTER_STATES = [
+        {
+            key: 'color_closed',
+            tk: 'closed',
+            icon: 'mdi:window-shutter',
+            fallback: '#FFB69C',
+            stateEntityKey: 'input_text.couleur_volet_ferme'
+        },
+        {
+            key: 'color_open',
+            tk: 'open',
+            icon: 'mdi:window-shutter-open',
+            fallback: '#96E1FF',
+            stateEntityKey: 'input_text.couleur_volet_ouvert'
+        },
+        {
+            key: 'color_partial',
+            tk: 'partial',
+            icon: 'mdi:window-shutter-cog',
+            fallback: '#38bdf8',
+            stateEntityKey: 'input_text.couleur_volet_partiel'
+        },
+        {
+            key: 'color_moving',
+            tk: 'moving',
+            icon: 'mdi:alert-circle',
+            fallback: '#f59e0b',
+            stateEntityKey: 'input_text.couleur_volet_en_mouvement'
+        }
+    ];
+    const buildSchema = (t) => [
+        {
+            name: 'mode',
+            selector: {
+                select: {
+                    mode: 'dropdown',
+                    options: selectOptions(t, 'counter', [
+                        ['auto', 'mode_auto'],
+                        ['cover', 'mode_cover'],
+                        ['binary', 'mode_binary']
+                    ])
+                }
+            }
+        },
+        { name: 'entity', selector: { entity: { domain: ['cover', 'binary_sensor', 'group'] } } },
+        { name: 'name', selector: { text: {} } },
+        { name: 'counter_label', selector: { text: {} } },
+        { name: 'ok_text', selector: { text: {} } },
+        { name: 'show_counter', selector: { boolean: {} } },
+        { name: 'show_details', selector: { boolean: {} } }
+    ];
+    class HaloCounterCardEditor extends HTMLElement {
+        constructor() {
+            super(...arguments);
+            this._lang = 'en';
+            this._activeStateKey = 'color_closed';
+            this._swatchCircleEl = null;
+            this._colorInputEl = null;
+            this._swatchNameEl = null;
+            this._swatchHexEl = null;
+            this._stateTitleEl = null;
+            this._chipsContainerEl = null;
+            this._borderSliderEl = null;
+            this._borderValBadgeEl = null;
+        }
+        setConfig(config) {
+            const isBinary = config?.mode === 'binary'
+                || (!config?.mode && config?.entity?.startsWith('binary_sensor.'));
+            this._config = {
+                mode: 'auto',
+                border_width: 1.25,
+                show_counter: isBinary ? false : true,
+                show_details: isBinary ? true : false,
+                ...config
+            };
+            this._render();
+        }
+        set hass(hass) {
+            this._hass = hass;
+            if (this._config && this.querySelector('#form') && getLang(hass) !== this._lang) {
+                this.innerHTML = '';
+                this._render();
+                return;
+            }
+            const form = this.querySelector('#form');
+            if (form) {
+                form.hass = hass;
+            }
+            this._syncStylePanel();
+        }
+        _fireConfigChanged() {
+            const event = new CustomEvent('config-changed', {
+                detail: { config: this._config },
+                bubbles: true,
+                composed: true
+            });
+            this.dispatchEvent(event);
+        }
+        _getStateDef(key) {
+            return COUNTER_STATES.find(s => s.key === key) || COUNTER_STATES[0];
+        }
+        _getStateFallback(key) {
+            const def = this._getStateDef(key);
+            const isBinary = this._config?.mode === 'binary'
+                || (this._config?.mode !== 'cover' && this._config?.entity?.startsWith('binary_sensor.'));
+            if (isBinary) {
+                if (key === 'color_closed')
+                    return '#10b981';
+                if (key === 'color_open')
+                    return '#f43f5e';
+                if (key === 'color_moving')
+                    return '#f59e0b';
+            }
+            const states = this._hass?.states || {};
+            return states[def.stateEntityKey]?.state || def.fallback;
+        }
+        _getColorHex(key) {
+            const raw = this._config?.[key];
+            const fallback = this._getStateFallback(key);
+            return toHexColor(raw, fallback);
+        }
+        _getColorDisplayName(key) {
+            return colorDisplayName(this._hass, this._config?.[key], 'editor.color_default_halo');
+        }
+        _updateColor(colorValue) {
+            this._config = {
+                ...this._config,
+                [this._activeStateKey]: colorValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _updateBorderWidth(widthValue) {
+            this._config = {
+                ...this._config,
+                border_width: widthValue
+            };
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _setActiveState(key) {
+            this._activeStateKey = key;
+            this._syncStylePanel();
+        }
+        _syncStylePanel() {
+            if (!this._config)
+                return;
+            COUNTER_STATES.forEach(state => {
+                const tabEl = this.querySelector(`#tab-${state.key}`);
+                const dotEl = this.querySelector(`#tab-dot-${state.key}`);
+                const hex = this._getColorHex(state.key);
+                if (tabEl) {
+                    tabEl.classList.toggle('active', state.key === this._activeStateKey);
+                }
+                if (dotEl) {
+                    dotEl.style.backgroundColor = hex;
+                    dotEl.style.boxShadow = `0 0 6px ${hex}88`;
+                }
+            });
+            const activeDef = this._getStateDef(this._activeStateKey);
+            const activeHex = this._getColorHex(this._activeStateKey);
+            const activeName = this._getColorDisplayName(this._activeStateKey);
+            if (this._stateTitleEl) {
+                this._stateTitleEl.textContent = useLocalize(this._hass)('editor.state_color', 'state', useLocalize(this._hass)(`state.${activeDef.tk}`));
+            }
+            if (this._swatchCircleEl) {
+                this._swatchCircleEl.style.background = activeHex;
+                this._swatchCircleEl.style.boxShadow = `0 0 12px ${activeHex}88, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
+                this._swatchCircleEl.style.borderColor = activeHex;
+            }
+            if (this._colorInputEl) {
+                this._colorInputEl.value = activeHex;
+            }
+            if (this._swatchNameEl) {
+                this._swatchNameEl.textContent = activeName;
+            }
+            if (this._swatchHexEl) {
+                this._swatchHexEl.textContent = activeHex.toUpperCase();
+            }
+            if (this._chipsContainerEl) {
+                const activeRaw = this._config[this._activeStateKey];
+                const chipButtons = this._chipsContainerEl.querySelectorAll('.halo-chip');
+                chipButtons.forEach(btn => {
+                    const chipName = btn.getAttribute('data-name');
+                    const chipHex = btn.getAttribute('data-hex');
+                    const isActive = chipName === activeRaw || chipHex?.toLowerCase() === activeHex.toLowerCase();
+                    btn.classList.toggle('active', isActive);
+                });
+            }
+            const bw = typeof this._config.border_width === 'number' ? this._config.border_width : 1.25;
+            if (this._borderSliderEl) {
+                this._borderSliderEl.value = String(bw);
+            }
+            if (this._borderValBadgeEl) {
+                this._borderValBadgeEl.textContent = borderBadge(useLocalize(this._hass), bw);
+            }
+        }
+        _formMetadata() {
+            if (!this._config)
+                return {};
+            const data = { ...this._config };
+            delete data.border_width;
+            delete data.color_closed;
+            delete data.color_open;
+            delete data.color_partial;
+            delete data.color_moving;
+            delete data.color_unavail;
+            return data;
+        }
+        _valueChanged(ev) {
+            if (!this._config || !ev.detail.value)
+                return;
+            const prevMode = this._config.mode;
+            const nextVal = ev.detail.value;
+            this._config = {
+                ...this._config,
+                ...nextVal
+            };
+            if (nextVal.mode && nextVal.mode !== prevMode) {
+                if (nextVal.mode === 'cover') {
+                    this._config.show_counter = true;
+                    this._config.show_details = false;
+                }
+                else if (nextVal.mode === 'binary') {
+                    this._config.show_counter = false;
+                    this._config.show_details = true;
+                }
+                const form = this.querySelector('#form');
+                if (form)
+                    form.data = this._formMetadata();
+            }
+            this._syncStylePanel();
+            this._fireConfigChanged();
+        }
+        _render() {
+            if (!this._config)
+                return;
+            let form = this.querySelector('#form');
+            if (!form) {
+                const t = useLocalize(this._hass);
+                this._lang = getLang(this._hass);
+                const first = this._getStateDef(this._activeStateKey);
+                this.innerHTML = `
+        <style>
+          ${COMMON_EDITOR_STYLES}
+        </style>
+
+        <div class="halo-editor-wrap">
+          <ha-form id="form"></ha-form>
+          ${stylePanelHtml(t, {
+                title: t('editor.style_title_colors'),
+                tabs: COUNTER_STATES.map(s => ({
+                    key: s.key,
+                    icon: s.icon,
+                    label: t(`state.${s.tk}`),
+                    active: s.key === this._activeStateKey
+                })),
+                leftTitle: t('editor.state_color', 'state', t(`state.${first.tk}`)),
+                borderTitle: t('editor.border_title_single')
+            })}
+        </div>
+      `;
+                form = this.querySelector('#form');
+                if (form) {
+                    applyFormI18n(form, this._hass, 'counter', buildSchema(useLocalize(this._hass)));
+                    form.data = this._formMetadata();
+                    if (this._hass)
+                        form.hass = this._hass;
+                    form.addEventListener('value-changed', (ev) => this._valueChanged(ev));
+                }
+                this._initDomBindings();
+            }
+            else {
+                form.data = this._formMetadata();
+                if (this._hass)
+                    form.hass = this._hass;
+            }
+            this._syncStylePanel();
+        }
+        _initDomBindings() {
+            this._swatchCircleEl = this.querySelector('#swatch-circle');
+            this._colorInputEl = this.querySelector('#native-color-input');
+            this._swatchNameEl = this.querySelector('#swatch-name');
+            this._swatchHexEl = this.querySelector('#swatch-hex');
+            this._stateTitleEl = this.querySelector('#state-title');
+            this._chipsContainerEl = this.querySelector('#chips-grid');
+            this._borderSliderEl = this.querySelector('#border-slider-input');
+            this._borderValBadgeEl = this.querySelector('#border-val-text');
+            COUNTER_STATES.forEach(s => {
+                this.querySelector(`#tab-${s.key}`)?.addEventListener('click', () => {
+                    this._setActiveState(s.key);
+                });
+            });
+            const triggerColor = () => {
+                if (this._colorInputEl) {
+                    this._colorInputEl.click();
+                }
+            };
+            this.querySelector('#swatch-circle-wrap')?.addEventListener('click', triggerColor);
+            this.querySelector('#pipette-btn')?.addEventListener('click', triggerColor);
+            this._colorInputEl?.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val)
+                    this._updateColor(val);
+            });
+            if (this._chipsContainerEl) {
+                buildChips(this._chipsContainerEl, this._hass, name => this._updateColor(name));
+            }
+            this._borderSliderEl?.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    this._updateBorderWidth(val);
+                }
+            });
+        }
+    }
+
+    /**
+     * ==============================================================================
      * 📌 Nom du fichier : src/halo-button-card.ts
      * 📝 Description   : Point d'entrée principal de la suite HALO Button Card.
      *                    Déclaration et enregistrement des Web Components Lovelace,
@@ -6109,11 +10636,38 @@ var HaloButtonCard = (function (exports) {
      *                    et exportation des composants et moteurs d'aide.
      * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
      * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-     * 📦 Version      : 1.4.2
-     * 📅 Date         : 2026-10-31
+     * 📦 Version      : 1.7.1-beta.1
+     * 📅 Date         : 2026-11-03
      * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
      * ==============================================================================
      * 📋 CHANGELOG (antéchronologique)
+     *   - 🌟 v1.7.1-beta.1 (2026-11-03) : custom:halo-fold-card : contour en pointillé paramétrable
+     *                                     avec halo néon léger et fond Liquid Glass matérialisant d'un
+     *                                     seul tenant l'ensemble des cartes repliées (show_border,
+     *                                     border_style, border_width, border_color, show_halo, halo_color,
+     *                                     enclosure_padding, border_radius) et contrôles éditeur UI.
+     *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Évolution majeure custom:halo-button-card :
+     *                                     - Support d'un 3ème statut de couleur 'unavailable' (fallback Ambre Doré).
+     *                                     - Style sobre 'subtle_inactive' (alias 'hybrid_style') sans halo envahissant
+     *                                       à l'état fermé / inactif avec médaillon neutre et icône colorée.
+     *                                     - Mode 'binary_mode', 'is_door', 'is_velux' et dynamisation automatique
+     *                                       des icônes d'ouverture et sous-titres d'états (Ouvert / Fermé, etc.).
+     *                                     - 3ème onglet de couleur 'color_unavailable' dans l'éditeur de carte UI.
+     *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Intégration de custom:halo-counter-card (tuile
+     *                                     récapitulative et compteur polyvalent pour volets
+     *                                     roulants et ouvertures/fenêtres avec détection des
+     *                                     capteurs indisponibles).
+     *   - ✨ v1.6.0-beta.2 (2026-11-02) : Amélioration ergonomique de custom:halo-scene-card :
+     *                                     retrait par défaut de la pastille compteur, bascule
+     *                                     d'extinction au second clic et typographie compacte
+     *                                     sans troncature à hauteur constante.
+     *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Intégration de custom:halo-fold-card (conteneur
+     *                                     accordéon repliable Liquid Glass pour cartes enfants).
+     *   - 🌟 v1.5.2 (2026-11-02) : Intégration de custom:halo-markdown-card (callout Liquid Glass
+     *                              avec barre latérale néon et dégradé horizontal personnalisables).
+     *   - 🌟 v1.5.0 (2026-11-01) : Intégration de custom:halo-scene-card (ambiances multi-cibles
+     *                              lumières et volets sans script backend) et enrichissement de
+     *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
      *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO,
      *                              renommage de la teinte `Cyan` et synchronisation de version.
      *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) en/fr de toute la suite :
@@ -6143,13 +10697,19 @@ var HaloButtonCard = (function (exports) {
      *   - 🆕 v1.0.0 (2026-10-29) : Création initiale avec halo-cover-card et halo-separator-card.
      * ==============================================================================
      */
-    const VERSION = '1.4.2';
+    const VERSION = '1.7.1-beta.1';
     console.info(`%c  HALO-BUTTON-CARD  %c v${VERSION} `, 'color: #0b0f19; background: #26c6da; font-weight: 700; border-radius: 4px 0 0 4px; padding: 2px 4px;', 'color: #ffffff; background: #1e293b; font-weight: 700; border-radius: 0 4px 4px 0; padding: 2px 4px;');
     window.customCards = window.customCards || [];
     window.customCards.push({
         type: 'halo-button-card',
         name: 'HALO Button Card',
-        description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts and sub-buttons.',
+        description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts, external entity linking and sub-buttons.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-scene-card',
+        name: 'HALO Scene Card',
+        description: 'Turnkey Liquid Glass scene & ambiance tile for direct multi-target light and cover control without HA scripts.',
         preview: true
     });
     window.customCards.push({
@@ -6182,12 +10742,36 @@ var HaloButtonCard = (function (exports) {
         description: 'Official 16-color HALO theme palette picker with glowing halos and active check badges.',
         preview: true
     });
+    window.customCards.push({
+        type: 'halo-markdown-card',
+        name: 'HALO Markdown Card',
+        description: 'Turnkey Liquid Glass markdown callout with customizable neon accent bar and horizontal gradient.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-fold-card',
+        name: 'HALO Fold Card',
+        description: 'Turnkey collapsible Liquid Glass container card with neon gradient header, badge counter and child cards drawer.',
+        preview: true
+    });
+    window.customCards.push({
+        type: 'halo-counter-card',
+        name: 'HALO Counter Card',
+        description: 'Turnkey Liquid Glass summary & counter card for roller shutters (4 states + movement) and window/door openings (open & fault pills).',
+        preview: true
+    });
     // Register Web Component custom elements
     if (!customElements.get('halo-button-card')) {
         customElements.define('halo-button-card', HaloButtonCard);
     }
     if (!customElements.get('halo-button-card-editor')) {
         customElements.define('halo-button-card-editor', HaloButtonCardEditor);
+    }
+    if (!customElements.get('halo-scene-card')) {
+        customElements.define('halo-scene-card', HaloSceneCard);
+    }
+    if (!customElements.get('halo-scene-card-editor')) {
+        customElements.define('halo-scene-card-editor', HaloSceneCardEditor);
     }
     if (!customElements.get('halo-light-card')) {
         customElements.define('halo-light-card', HaloLightCard);
@@ -6219,17 +10803,43 @@ var HaloButtonCard = (function (exports) {
     if (!customElements.get('halo-palette-card-editor')) {
         customElements.define('halo-palette-card-editor', HaloPaletteCardEditor);
     }
+    if (!customElements.get('halo-markdown-card')) {
+        customElements.define('halo-markdown-card', HaloMarkdownCard);
+    }
+    if (!customElements.get('halo-markdown-card-editor')) {
+        customElements.define('halo-markdown-card-editor', HaloMarkdownCardEditor);
+    }
+    if (!customElements.get('halo-fold-card')) {
+        customElements.define('halo-fold-card', HaloFoldCard);
+    }
+    if (!customElements.get('halo-fold-card-editor')) {
+        customElements.define('halo-fold-card-editor', HaloFoldCardEditor);
+    }
+    if (!customElements.get('halo-counter-card')) {
+        customElements.define('halo-counter-card', HaloCounterCard);
+    }
+    if (!customElements.get('halo-counter-card-editor')) {
+        customElements.define('halo-counter-card-editor', HaloCounterCardEditor);
+    }
 
     exports.HaloButtonCard = HaloButtonCard;
     exports.HaloButtonCardEditor = HaloButtonCardEditor;
+    exports.HaloCounterCard = HaloCounterCard;
+    exports.HaloCounterCardEditor = HaloCounterCardEditor;
     exports.HaloCoverCard = HaloCoverCard;
     exports.HaloCoverCardEditor = HaloCoverCardEditor;
     exports.HaloCoverColorCard = HaloCoverColorCard;
     exports.HaloCoverColorCardEditor = HaloCoverColorCardEditor;
+    exports.HaloFoldCard = HaloFoldCard;
+    exports.HaloFoldCardEditor = HaloFoldCardEditor;
     exports.HaloLightCard = HaloLightCard;
     exports.HaloLightCardEditor = HaloLightCardEditor;
+    exports.HaloMarkdownCard = HaloMarkdownCard;
+    exports.HaloMarkdownCardEditor = HaloMarkdownCardEditor;
     exports.HaloPaletteCard = HaloPaletteCard;
     exports.HaloPaletteCardEditor = HaloPaletteCardEditor;
+    exports.HaloSceneCard = HaloSceneCard;
+    exports.HaloSceneCardEditor = HaloSceneCardEditor;
     exports.HaloSeparatorCard = HaloSeparatorCard;
     exports.HaloSeparatorCardEditor = HaloSeparatorCardEditor;
     exports.actionHandler = actionHandler;

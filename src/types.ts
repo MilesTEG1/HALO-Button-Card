@@ -4,11 +4,33 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.2.0
- * 📅 Date         : 2026-10-30
+ * 📦 Version      : 1.7.1-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Ajout dans HaloFoldCardConfig des propriétés de contour
+ *                                     en pointillé et halo néon léger paramétrables (show_border,
+ *                                     border_style, border_width, border_color, show_halo, halo_color,
+ *                                     enclosure_padding, border_radius).
+ *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Ajout dans HaloButtonCardConfig des propriétés
+ *                                     color_unavailable (alias color_unavail, unavail_color),
+ *                                     subtle_inactive (alias hybrid_style), binary_mode,
+ *                                     is_door et is_velux.
+ *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Ajout de l'interface HaloCounterCardConfig pour
+ *                                     la tuile récapitulative et compteur custom:halo-counter-card
+ *                                     (modes volets et ouvertures/fenêtres).
+ *   - ✨ v1.6.0-beta.2 (2026-11-02) : Enrichissement de HaloSceneCardConfig (title_size,
+ *                                     label_size, min_height, toggle_on_reclick, show_badge).
+ *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Ajout de l'interface HaloFoldCardConfig pour
+ *                                     le conteneur repliable custom:halo-fold-card.
+ *   - 💡 v1.5.2 (2026-11-02) : Ajout du type HaloMarkdownCardConfig pour custom:halo-markdown-card.
+ *   - ✨ v1.5.1 (2026-11-01) : Ajout du support des couleurs par état (state_colors,
+ *                              color_on, color_off, active_color, inactive_color) pour
+ *                              custom:halo-button-card.
+ *   - 💡 v1.5.0 (2026-11-01) : Ajout des types pour custom:halo-scene-card (targets, modes,
+ *                              luminosité, kelvin, couleur, volets) et extensions de
+ *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
  *   - 💡 v1.2.0 (2026-10-30) : Ajout des types pour custom:halo-button-card, accordéon
  *                              séparateur et cartes de personnalisation de couleurs.
  *   - 💡 v1.1.0 (2026-10-29) : Ajout du type HaloLightCardConfig pour custom:halo-light-card.
@@ -17,6 +39,7 @@
  */
 
 export interface HomeAssistant {
+  connection?: any;
   states: Record<string, HassEntity>;
   callService: (domain: string, service: string, serviceData?: Record<string, any>) => Promise<void>;
   language?: string;
@@ -88,6 +111,22 @@ export interface SubButtonConfig {
 export interface HaloButtonCardConfig {
   type: string;
   entity?: string;
+  state_colors?: boolean;
+  color_on?: string | [number, number, number];
+  color_off?: string | [number, number, number];
+  color_unavailable?: string | [number, number, number];
+  color_unavail?: string | [number, number, number];
+  unavail_color?: string | [number, number, number];
+  active_color?: string | [number, number, number];
+  inactive_color?: string | [number, number, number];
+  subtle_inactive?: boolean;
+  hybrid_style?: boolean;
+  binary_mode?: boolean;
+  is_door?: boolean;
+  is_velux?: boolean;
+  linked_entity?: string;
+  linked_attribute?: string;
+  display_format?: 'raw' | 'date_short' | 'date_long' | 'date_time_fr' | 'time_only' | 'relative';
   name?: string;
   title?: string;
   label?: string;
@@ -110,6 +149,42 @@ export interface HaloButtonCardConfig {
   icon_hold_action?: ActionConfig;
   icon_double_tap_action?: ActionConfig;
   sub_buttons?: SubButtonConfig[];
+}
+
+export interface HaloSceneTargetConfig {
+  entity: string;
+  domain?: 'light' | 'cover';
+  state?: 'on' | 'off';
+  brightness_pct?: number;
+  color_temp_kelvin?: number;
+  rgb_color?: [number, number, number];
+  position?: number;
+}
+
+export interface HaloSceneCardConfig {
+  type: string;
+  name?: string;
+  label?: string;
+  subtitle?: string;
+  icon?: string;
+  color?: string | [number, number, number];
+  halo_color?: string | [number, number, number];
+  accent_color?: string | [number, number, number];
+  theme_entity?: string;
+  border_width?: number;
+  layout?: 'horizontal' | 'vertical';
+  text_align?: 'left' | 'center' | 'right';
+  title_size?: number | string;
+  label_size?: number | string;
+  min_height?: number | string;
+  toggle_on_reclick?: boolean;
+  show_badge?: boolean;
+  mode?: 'individual' | 'common';
+  targets?: HaloSceneTargetConfig[];
+  common_light_brightness?: number;
+  common_light_kelvin?: number;
+  common_light_rgb?: [number, number, number];
+  common_cover_position?: number;
 }
 
 export interface LegendItemConfig {
@@ -206,6 +281,71 @@ export interface HaloPaletteCardConfig {
   icon?: string;
   columns?: number;
   colors?: Array<{ name: string; hex: string }>;
+}
+
+export interface HaloMarkdownCardConfig {
+  type: string;
+  content: string;
+  title?: string;
+  color?: string | [number, number, number];
+  bar_color?: string | [number, number, number];
+  gradient_color?: string | [number, number, number];
+  bar_width?: number;
+  border_radius?: number;
+  gradient_opacity?: number;
+  text_color?: string;
+  theme_entity?: string;
+  card_mod?: any;
+}
+
+export interface HaloFoldCardConfig {
+  type: string;
+  name?: string;
+  title?: string;
+  icon?: string;
+  color?: string | [number, number, number];
+  theme_entity?: string;
+  expanded?: boolean;
+  initial_collapsed?: boolean;
+  label_on?: string;
+  label_off?: string;
+  toggle_entity?: string;
+  columns?: number | string;
+  gap?: number;
+  cards?: Array<Record<string, any>>;
+  // Contour en pointillé & halo néon léger paramétrables (matérialisant l'enclos des cartes)
+  show_border?: boolean;
+  border_style?: 'dashed' | 'dotted' | 'solid' | 'none';
+  border_width?: number;
+  border_color?: string | [number, number, number];
+  show_halo?: boolean;
+  halo_color?: string | [number, number, number];
+  enclosure_padding?: number;
+  border_radius?: number;
+}
+
+export interface HaloCounterCardConfig {
+  type: string;
+  mode?: 'auto' | 'cover' | 'binary';
+  entity?: string;
+  entities?: string[];
+  name?: string;
+  title?: string;
+  subtitle?: string;
+  ok_text?: string;
+  counter_label?: string;
+  show_details?: boolean;
+  show_counter?: boolean;
+  border_width?: number;
+  color_closed?: string | [number, number, number];
+  color_open?: string | [number, number, number];
+  color_partial?: string | [number, number, number];
+  color_moving?: string | [number, number, number];
+  color_unavail?: string | [number, number, number];
+  entity_labels?: Record<string, string>;
+  tap_action?: ActionConfig;
+  hold_action?: ActionConfig;
+  double_tap_action?: ActionConfig;
 }
 
 export interface VoletTrack {

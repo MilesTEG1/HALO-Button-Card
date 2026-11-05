@@ -7,11 +7,38 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.2
- * 📅 Date         : 2026-10-31
+ * 📦 Version      : 1.7.1-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.1-beta.1 (2026-11-03) : custom:halo-fold-card : contour en pointillé paramétrable
+ *                                     avec halo néon léger et fond Liquid Glass matérialisant d'un
+ *                                     seul tenant l'ensemble des cartes repliées (show_border,
+ *                                     border_style, border_width, border_color, show_halo, halo_color,
+ *                                     enclosure_padding, border_radius) et contrôles éditeur UI.
+ *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Évolution majeure custom:halo-button-card :
+ *                                     - Support d'un 3ème statut de couleur 'unavailable' (fallback Ambre Doré).
+ *                                     - Style sobre 'subtle_inactive' (alias 'hybrid_style') sans halo envahissant
+ *                                       à l'état fermé / inactif avec médaillon neutre et icône colorée.
+ *                                     - Mode 'binary_mode', 'is_door', 'is_velux' et dynamisation automatique
+ *                                       des icônes d'ouverture et sous-titres d'états (Ouvert / Fermé, etc.).
+ *                                     - 3ème onglet de couleur 'color_unavailable' dans l'éditeur de carte UI.
+ *   - 🆕 v1.6.0-beta.5 (2026-11-02) : Intégration de custom:halo-counter-card (tuile
+ *                                     récapitulative et compteur polyvalent pour volets
+ *                                     roulants et ouvertures/fenêtres avec détection des
+ *                                     capteurs indisponibles).
+ *   - ✨ v1.6.0-beta.2 (2026-11-02) : Amélioration ergonomique de custom:halo-scene-card :
+ *                                     retrait par défaut de la pastille compteur, bascule
+ *                                     d'extinction au second clic et typographie compacte
+ *                                     sans troncature à hauteur constante.
+ *   - 🆕 v1.6.0-beta.1 (2026-11-02) : Intégration de custom:halo-fold-card (conteneur
+ *                                     accordéon repliable Liquid Glass pour cartes enfants).
+ *   - 🌟 v1.5.2 (2026-11-02) : Intégration de custom:halo-markdown-card (callout Liquid Glass
+ *                              avec barre latérale néon et dégradé horizontal personnalisables).
+ *   - 🌟 v1.5.0 (2026-11-01) : Intégration de custom:halo-scene-card (ambiances multi-cibles
+ *                              lumières et volets sans script backend) et enrichissement de
+ *                              custom:halo-button-card (linked_entity, linked_attribute, display_format).
  *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO,
  *                              renommage de la teinte `Cyan` et synchronisation de version.
  *   - 🌍 v1.4.0 (2026-10-30) : Internationalisation (i18n) en/fr de toute la suite :
@@ -44,6 +71,8 @@
 
 import { HaloButtonCard } from './components/halo-button-card';
 import { HaloButtonCardEditor } from './editors/halo-button-card-editor';
+import { HaloSceneCard } from './components/halo-scene-card';
+import { HaloSceneCardEditor } from './editors/halo-scene-card-editor';
 import { HaloCoverCard } from './components/halo-cover-card';
 import { HaloCoverCardEditor } from './editors/halo-cover-card-editor';
 import { HaloLightCard } from './components/halo-light-card';
@@ -54,13 +83,19 @@ import { HaloCoverColorCard } from './components/halo-cover-color-card';
 import { HaloCoverColorCardEditor } from './editors/halo-cover-color-card-editor';
 import { HaloPaletteCard } from './components/halo-palette-card';
 import { HaloPaletteCardEditor } from './editors/halo-palette-card-editor';
+import { HaloMarkdownCard } from './components/halo-markdown-card';
+import { HaloMarkdownCardEditor } from './editors/halo-markdown-card-editor';
+import { HaloFoldCard } from './components/halo-fold-card';
+import { HaloFoldCardEditor } from './editors/halo-fold-card-editor';
+import { HaloCounterCard } from './components/halo-counter-card';
+import { HaloCounterCardEditor } from './editors/halo-counter-card-editor';
 
 import { voletHelperInstance } from './core/volet-helper';
 import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.4.2';
+const VERSION = '1.7.1-beta.1';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -85,7 +120,14 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'halo-button-card',
   name: 'HALO Button Card',
-  description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts and sub-buttons.',
+  description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts, external entity linking and sub-buttons.',
+  preview: true
+});
+
+window.customCards.push({
+  type: 'halo-scene-card',
+  name: 'HALO Scene Card',
+  description: 'Turnkey Liquid Glass scene & ambiance tile for direct multi-target light and cover control without HA scripts.',
   preview: true
 });
 
@@ -124,12 +166,40 @@ window.customCards.push({
   preview: true
 });
 
+window.customCards.push({
+  type: 'halo-markdown-card',
+  name: 'HALO Markdown Card',
+  description: 'Turnkey Liquid Glass markdown callout with customizable neon accent bar and horizontal gradient.',
+  preview: true
+});
+
+window.customCards.push({
+  type: 'halo-fold-card',
+  name: 'HALO Fold Card',
+  description: 'Turnkey collapsible Liquid Glass container card with neon gradient header, badge counter and child cards drawer.',
+  preview: true
+});
+
+window.customCards.push({
+  type: 'halo-counter-card',
+  name: 'HALO Counter Card',
+  description: 'Turnkey Liquid Glass summary & counter card for roller shutters (4 states + movement) and window/door openings (open & fault pills).',
+  preview: true
+});
+
 // Register Web Component custom elements
 if (!customElements.get('halo-button-card')) {
   customElements.define('halo-button-card', HaloButtonCard);
 }
 if (!customElements.get('halo-button-card-editor')) {
   customElements.define('halo-button-card-editor', HaloButtonCardEditor);
+}
+
+if (!customElements.get('halo-scene-card')) {
+  customElements.define('halo-scene-card', HaloSceneCard);
+}
+if (!customElements.get('halo-scene-card-editor')) {
+  customElements.define('halo-scene-card-editor', HaloSceneCardEditor);
 }
 
 if (!customElements.get('halo-light-card')) {
@@ -167,10 +237,33 @@ if (!customElements.get('halo-palette-card-editor')) {
   customElements.define('halo-palette-card-editor', HaloPaletteCardEditor);
 }
 
+if (!customElements.get('halo-markdown-card')) {
+  customElements.define('halo-markdown-card', HaloMarkdownCard);
+}
+if (!customElements.get('halo-markdown-card-editor')) {
+  customElements.define('halo-markdown-card-editor', HaloMarkdownCardEditor);
+}
+
+if (!customElements.get('halo-fold-card')) {
+  customElements.define('halo-fold-card', HaloFoldCard);
+}
+if (!customElements.get('halo-fold-card-editor')) {
+  customElements.define('halo-fold-card-editor', HaloFoldCardEditor);
+}
+
+if (!customElements.get('halo-counter-card')) {
+  customElements.define('halo-counter-card', HaloCounterCard);
+}
+if (!customElements.get('halo-counter-card-editor')) {
+  customElements.define('halo-counter-card-editor', HaloCounterCardEditor);
+}
+
 // Export for external consumers
 export {
   HaloButtonCard,
   HaloButtonCardEditor,
+  HaloSceneCard,
+  HaloSceneCardEditor,
   HaloLightCard,
   HaloLightCardEditor,
   HaloCoverCard,
@@ -181,6 +274,12 @@ export {
   HaloCoverColorCardEditor,
   HaloPaletteCard,
   HaloPaletteCardEditor,
+  HaloMarkdownCard,
+  HaloMarkdownCardEditor,
+  HaloFoldCard,
+  HaloFoldCardEditor,
+  HaloCounterCard,
+  HaloCounterCardEditor,
   voletHelperInstance,
   lightHelper,
   themeHelper,

@@ -7,11 +7,15 @@
  *                    génération dynamique des feuilles CSS des cartes.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.2
- * 📅 Date         : 2026-10-31
+ * 📦 Version      : 1.5.2
+ * 📅 Date         : 2026-11-02
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 💡 v1.5.2 (2026-11-02) : Alias 'Cyan HOLM' ajouté à HALO_PALETTE pour compatibilité.
+ *   - ✨ v1.5.1 (2026-11-01) : Support des mots-clés 'theme' et 'auto' dans resolveThemeColor
+ *                              pour résolution dynamique vers l'entité de thème ou thèmes globaux,
+ *                              et support des codes hexadécimaux directs dans les entités d'état.
  *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO
  *                              (`HALO_PALETTE`) et renommage de la teinte `Cyan`.
  *   - ✨ v1.3.0 (2026-10-30) : Support de l'épaisseur de bordure paramétrable (`border_width`).
@@ -30,6 +34,7 @@ export interface CoverColors {
 
 export const HALO_PALETTE: Record<string, string> = {
   'Cyan': '#26c6da',
+  'Cyan HOLM': '#26c6da',
   'Bleu Céleste': '#38bdf8',
   'Saphir Océan': '#2f86ff',
   'Menthe Givrée': '#00e5a3',
@@ -109,7 +114,10 @@ export function resolveThemeColor(
   themeEntity?: string,
   fallback: string = '#26c6da'
 ): string {
-  if (explicitColor && typeof explicitColor === 'string' && explicitColor.trim() !== '') {
+  const isThemeKeyword = typeof explicitColor === 'string' &&
+    (explicitColor.trim().toLowerCase() === 'theme' || explicitColor.trim().toLowerCase() === 'auto');
+
+  if (explicitColor && !isThemeKeyword) {
     return toHexColor(explicitColor, fallback);
   }
   const states = hass?.states || {};
@@ -128,6 +136,7 @@ export function resolveThemeColor(
   for (const ent of commonEntities) {
     const st = states[ent]?.state;
     if (st && HALO_PALETTE[st]) return HALO_PALETTE[st];
+    if (st && st.startsWith('#')) return st;
   }
   return fallback;
 }

@@ -7,11 +7,24 @@
  *                    et support complet des sous-boutons interactifs.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.4.2
- * 📅 Date         : 2026-10-31
+ * 📦 Version      : 1.7.0-beta.1
+ * 📅 Date         : 2026-11-03
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🌟 v1.7.0-beta.1 (2026-11-03) : Logique d'état tripartite (active, inactive, unavailable),
+ *                                     gestion du style sobre subtle_inactive à l'état fermé
+ *                                     (bordure fine, zéro halo, médaillon neutre),
+ *                                     support de binary_mode / is_door / is_velux avec icônes
+ *                                     et sous-titres d'ouverture automatiques.
+ *   - ✨ v1.5.1 (2026-11-01) : Support complet des couleurs par état (state_colors, color_on,
+ *                              color_off, active_color, inactive_color), correction du cycle de vie
+ *                              DOM (connectedCallback) évitant la perte d'interactions lors du
+ *                              changement d'onglets, et nettoyage hermétique des écouteurs.
+ *   - ✨ v1.5.0 (2026-11-01) : Support de `linked_entity`, `linked_attribute` et
+ *                              `display_format` (date_short, date_long, date_time_fr,
+ *                              time_only, relative) pour l'affichage de valeurs externes
+ *                              (ex. input_datetime) dans le sous-titre.
  *   - ♻️ v1.4.2 (2026-10-31) : Uniformisation intégrale de la nomenclature HALO.
  *   - 🩹 v1.2.1 (2026-10-30) : Ajout du contour net (border 1.5px solid) et
  *                              du halo lumineux permanent (box-shadow) sur ha-card.
@@ -97,6 +110,14 @@ export class HaloButtonCard extends HTMLElement {
     return this._config?.layout === 'vertical' ? 2 : 1;
   }
 
+  public connectedCallback() {
+    // Si la carte a déjà été construite et que les interactions ont été détachées
+    // (ex: retour de vue Lovelace sans changement d'état d'entité), réactiver immédiatement
+    if (this._cardEl && !this._unbindCardTouch) {
+      this._bindInteractions();
+    }
+  }
+
   public disconnectedCallback() {
     this._cleanupBindings();
   }
@@ -117,9 +138,21 @@ export class HaloButtonCard extends HTMLElement {
   private _hasChanged(oldHass?: HomeAssistant, newHass?: HomeAssistant): boolean {
     if (!oldHass || !newHass || !this._config) return true;
 
+    // Changement de thème d'interface ou langue
+    if (oldHass.themes !== newHass.themes || oldHass.language !== newHass.language) {
+      return true;
+    }
+
     // Entité principale
     if (this._config.entity) {
       if (oldHass.states[this._config.entity] !== newHass.states[this._config.entity]) {
+        return true;
+      }
+    }
+
+    // Entité liée
+    if (this._config.linked_entity) {
+      if (oldHass.states[this._config.linked_entity] !== newHass.states[this._config.linked_entity]) {
         return true;
       }
     }
@@ -154,20 +187,103 @@ export class HaloButtonCard extends HTMLElement {
     return false;
   }
 
+  private _getEntityStateCategory(): 'active' | 'inactive' | 'unavailable' {
+    if (!this._config.entity || !this._hass?.states?.[this._config.entity]) {
+      return 'active'; // En l'absence d'entité, le bouton reste actif (déclencheur d'action pur)
+    }
+    const state = this._hass.states[this._config.entity].state?.toLowerCase();
+    if (state === 'unavailable' || state === 'unknown') {
+      return 'unavailable';
+    }
+    const inactiveStates = [
+      'off',
+      'closed',
+      'closing',
+      'idle',
+      'standby',
+      'paused',
+      'not_home'
+    ];
+    if (inactiveStates.includes(state)) {
+      return 'inactive';
+    }
+    return 'active';
+  }
+
+  private _isEntityActive(): boolean {
+    return this._getEntityStateCategory() === 'active';
+  }
+
+  private _isBinaryMode(): boolean {
+    if (this._config.binary_mode !== undefined) {
+      return Boolean(this._config.binary_mode);
+    }
+    if (this._config.entity) {
+      if (this._config.entity.startsWith('binary_sensor.')) {
+        return true;
+      }
+      const devClass = this._hass?.states?.[this._config.entity]?.attributes?.device_class;
+      if (devClass && ['window', 'door', 'opening', 'garage_door'].includes(devClass)) {
+        return true;
+      }
+    }
+    return Boolean(this._config.is_door || this._config.is_velux);
+  }
+
+  private _isDoor(): boolean {
+    if (this._config.is_door !== undefined) {
+      return Boolean(this._config.is_door);
+    }
+    if (this._config.entity) {
+      const devClass = this._hass?.states?.[this._config.entity]?.attributes?.device_class;
+      if (devClass === 'door' || devClass === 'garage_door') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private _isVelux(): boolean {
+    return Boolean(this._config.is_velux);
+  }
+
   private _getEffectiveColor(): string {
+    const stateCat = this._getEntityStateCategory();
+    const colorUnavail = this._config.color_unavailable || this._config.color_unavail || this._config.unavail_color;
+    const colorOn = this._config.color_on || this._config.active_color;
+    const colorOff = this._config.color_off || this._config.inactive_color;
+
+    // 1. Couleurs distinctes par état si explicitement activées ou définies
+    if (this._config.state_colors || colorOn || colorOff || colorUnavail) {
+      if (stateCat === 'unavailable') {
+        const unavailSpec = colorUnavail || '#f59e0b';
+        return resolveThemeColor(this._hass, unavailSpec, this._config.theme_entity, '#f59e0b');
+      } else if (stateCat === 'active') {
+        const activeSpec = colorOn || this._config.color || this._config.halo_color || this._config.accent_color || '#f43f5e';
+        return resolveThemeColor(this._hass, activeSpec, this._config.theme_entity, '#f43f5e');
+      } else {
+        const inactiveSpec = colorOff || '#64748b';
+        return resolveThemeColor(this._hass, inactiveSpec, this._config.theme_entity, '#64748b');
+      }
+    }
+
+    // 2. Si l'état est unavailable : Ambre Doré par défaut
+    if (stateCat === 'unavailable') {
+      return resolveThemeColor(this._hass, colorUnavail || '#f59e0b', this._config.theme_entity, '#f59e0b');
+    }
+
+    // 3. Couleur explicite unique définie (color / halo_color / accent_color)
     const explicit = this._config.color || this._config.halo_color || this._config.accent_color;
     if (explicit) {
       return resolveThemeColor(this._hass, explicit, this._config.theme_entity, '#26c6da');
     }
 
-    // Si entité liée (ex: light ou switch)
-    if (this._config.entity && this._hass?.states?.[this._config.entity]) {
-      const stateObj = this._hass.states[this._config.entity];
-      if (stateObj.state === 'off') {
-        return '#94a3b8';
-      }
+    // 4. Entité liée sans couleur configurée : état inactif => gris ardoise
+    if (stateCat === 'inactive') {
+      return '#64748b';
     }
 
+    // 5. Entité liée active sans couleur configurée : hériter de la palette du thème
     return resolveThemeColor(
       this._hass,
       undefined,
@@ -374,6 +490,8 @@ export class HaloButtonCard extends HTMLElement {
       this._buildDom();
     }
 
+    const stateCat = this._getEntityStateCategory();
+    const isSubtleInactive = stateCat === 'inactive' && Boolean(this._config.subtle_inactive || this._config.hybrid_style);
     const color = this._getEffectiveColor();
     const layout = this._config.layout || 'horizontal';
     const isVertical = layout === 'vertical';
@@ -385,8 +503,18 @@ export class HaloButtonCard extends HTMLElement {
     const bw = (typeof this._config.border_width === 'number' && !isNaN(this._config.border_width))
       ? this._config.border_width
       : 1.5;
-    const cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
-    const cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+
+    let cardBorder: string;
+    let cardShadow: string;
+
+    if (isSubtleInactive) {
+      cardBorder = '1px solid rgba(255, 255, 255, 0.08)';
+      cardShadow = '0 4px 12px rgba(0, 0, 0, 0.25)';
+    } else {
+      cardBorder = bw > 0 ? `${bw}px solid ${color}` : 'none';
+      cardShadow = `0 0 18px ${color}60, 0 0 6px ${color}40, inset 0 1px 0 rgba(255, 255, 255, 0.18)`;
+    }
+
     if (this._cardEl!.style.border !== cardBorder) {
       this._cardEl!.style.border = cardBorder;
     }
@@ -396,16 +524,56 @@ export class HaloButtonCard extends HTMLElement {
 
     // Icon button styling
     if (this._iconBtnEl) {
-      this._iconBtnEl.style.background = `${color}1A`;
-      this._iconBtnEl.style.borderColor = `${color}40`;
-      this._iconBtnEl.style.border = `1px solid ${color}40`;
-      this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+      if (isSubtleInactive) {
+        this._iconBtnEl.style.background = 'rgba(255, 255, 255, 0.05)';
+        this._iconBtnEl.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+        this._iconBtnEl.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+        this._iconBtnEl.style.boxShadow = 'none';
+      } else {
+        this._iconBtnEl.style.background = `${color}1A`;
+        this._iconBtnEl.style.borderColor = `${color}40`;
+        this._iconBtnEl.style.border = `1px solid ${color}40`;
+        this._iconBtnEl.style.boxShadow = `0 0 10px ${color}30`;
+      }
     }
 
-    // Icon
+    // Icon resolution
     let icon = this._config.icon;
+    const isBinary = this._isBinaryMode();
+    const isDoor = this._isDoor();
+    const isVelux = this._isVelux();
+
+    const getBinaryIcon = () => {
+      if (stateCat === 'unavailable') {
+        return 'mdi:alert-circle';
+      }
+      if (isDoor) {
+        return stateCat === 'active' ? 'mdi:door-open' : 'mdi:door-closed';
+      }
+      if (isVelux) {
+        return stateCat === 'active' ? 'mdi:window-open-variant' : 'mdi:window-closed-variant';
+      }
+      return stateCat === 'active' ? 'mdi:window-open-variant' : 'mdi:window-closed';
+    };
+
+    if (isBinary && !icon) {
+      icon = getBinaryIcon();
+    }
+
     if (!icon && this._config.entity && this._hass?.states?.[this._config.entity]) {
-      icon = this._hass.states[this._config.entity].attributes?.icon || 'mdi:gesture-tap-button';
+      const haIcon = this._hass.states[this._config.entity].attributes?.icon;
+      const genericOpenIcons = [
+        'mdi:door-open',
+        'mdi:door-closed',
+        'mdi:window-open',
+        'mdi:window-open-variant',
+        'mdi:window-closed'
+      ];
+      if (isBinary && (!haIcon || genericOpenIcons.includes(haIcon))) {
+        icon = getBinaryIcon();
+      } else {
+        icon = haIcon || 'mdi:gesture-tap-button';
+      }
     }
     if (!icon) icon = 'mdi:gesture-tap-button';
 
@@ -430,7 +598,30 @@ export class HaloButtonCard extends HTMLElement {
     }
 
     // Subtitle / Label
-    const subtitle = this._config.label || this._config.subtitle;
+    let subtitle = this._config.label || this._config.subtitle;
+    if (!subtitle && (isBinary || (!this._config.linked_entity && this._config.entity))) {
+      const stateObj = this._config.entity ? this._hass?.states?.[this._config.entity] : undefined;
+      const entityName = (
+        this._config.name ||
+        this._config.title ||
+        stateObj?.attributes?.friendly_name ||
+        ''
+      ).toLowerCase();
+      const isMasculine = isDoor && !entityName.includes('porte');
+
+      if (stateCat === 'unavailable') {
+        subtitle = stateObj?.state === 'unknown' ? 'Inconnu' : 'Indisponible';
+      } else if (stateCat === 'active') {
+        subtitle = isMasculine ? 'Ouvert' : 'Ouverte';
+      } else {
+        subtitle = isMasculine ? 'Fermé' : 'Fermée';
+      }
+    }
+
+    const linkedVal = this._formatLinkedValue();
+    if (linkedVal !== null) {
+      subtitle = subtitle ? `${subtitle} • ${linkedVal}` : linkedVal;
+    }
     if (this._subtitleEl) {
       this._subtitleEl.textContent = subtitle || '';
       this._subtitleEl.style.display = subtitle ? 'block' : 'none';
@@ -487,6 +678,60 @@ export class HaloButtonCard extends HTMLElement {
     });
   }
 
+  private _formatLinkedValue(): string | null {
+    if (!this._config.linked_entity || !this._hass?.states?.[this._config.linked_entity]) {
+      return null;
+    }
+    const stateObj = this._hass.states[this._config.linked_entity];
+    let rawValue: any;
+    if (this._config.linked_attribute && stateObj.attributes) {
+      rawValue = stateObj.attributes[this._config.linked_attribute];
+    } else {
+      rawValue = stateObj.state;
+    }
+
+    if (rawValue === undefined || rawValue === null || rawValue === 'unavailable' || rawValue === 'unknown') {
+      return String(rawValue ?? '');
+    }
+
+    const fmt = this._config.display_format || 'raw';
+    if (fmt === 'raw') return String(rawValue);
+
+    // Tentative de parsing Date
+    const d = new Date(rawValue);
+    if (isNaN(d.getTime())) {
+      return String(rawValue);
+    }
+
+    const lang = this._hass.locale?.language || this._hass.language || 'fr';
+
+    switch (fmt) {
+      case 'date_short':
+        return d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' });
+      case 'date_long':
+        return d.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
+      case 'date_time_fr':
+        return `${d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}`;
+      case 'time_only':
+        return d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+      case 'relative': {
+        const now = Date.now();
+        const diffSec = Math.round((d.getTime() - now) / 1000);
+        try {
+          const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
+          if (Math.abs(diffSec) < 60) return rtf.format(diffSec, 'second');
+          if (Math.abs(diffSec) < 3600) return rtf.format(Math.round(diffSec / 60), 'minute');
+          if (Math.abs(diffSec) < 86400) return rtf.format(Math.round(diffSec / 3600), 'hour');
+          return rtf.format(Math.round(diffSec / 86400), 'day');
+        } catch {
+          return `${d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}`;
+        }
+      }
+      default:
+        return String(rawValue);
+    }
+  }
+
   private _bindInteractions() {
     this._cleanupBindings();
 
@@ -515,7 +760,11 @@ export class HaloButtonCard extends HTMLElement {
     const iconDoubleTapAction = this._config.icon_double_tap_action;
 
     if (this._iconBtnEl && (iconTapAction || iconHoldAction || iconDoubleTapAction)) {
-      this._unbindIconTouch = bindTouchActions(this._iconBtnEl, {
+      const stopProp = (e: Event) => e.stopPropagation();
+      this._iconBtnEl.addEventListener('pointerdown', stopProp);
+      this._iconBtnEl.addEventListener('click', stopProp);
+
+      const rawUnbind = bindTouchActions(this._iconBtnEl, {
         onTap: () => {
           if (iconTapAction) {
             handleAction(this, this._hass, iconTapAction, this._config.entity);
@@ -531,9 +780,11 @@ export class HaloButtonCard extends HTMLElement {
         } : undefined
       });
 
-      // Stop propagation pour ne pas déclencher le tap carte
-      this._iconBtnEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-      this._iconBtnEl.addEventListener('click', (e) => e.stopPropagation());
+      this._unbindIconTouch = () => {
+        rawUnbind();
+        this._iconBtnEl?.removeEventListener('pointerdown', stopProp);
+        this._iconBtnEl?.removeEventListener('click', stopProp);
+      };
     }
 
     // 3. Actions sur les sous-boutons
@@ -542,8 +793,9 @@ export class HaloButtonCard extends HTMLElement {
         const el = this._subButtonEls[idx];
         if (!el) return;
 
-        el.addEventListener('pointerdown', (e) => e.stopPropagation());
-        el.addEventListener('click', (e) => e.stopPropagation());
+        const stopSubProp = (e: Event) => e.stopPropagation();
+        el.addEventListener('pointerdown', stopSubProp);
+        el.addEventListener('click', stopSubProp);
 
         const unbind = bindTouchActions(el, {
           onTap: () => {
@@ -558,7 +810,11 @@ export class HaloButtonCard extends HTMLElement {
           } : undefined
         });
 
-        this._unbindSubTouch.push(unbind);
+        this._unbindSubTouch.push(() => {
+          unbind();
+          el.removeEventListener('pointerdown', stopSubProp);
+          el.removeEventListener('click', stopSubProp);
+        });
       });
     }
   }

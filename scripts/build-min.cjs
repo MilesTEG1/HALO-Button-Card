@@ -6,11 +6,23 @@
 //                    scrupuleusement la ponctuation {}:;,>+~.
 // 🖥️  Machine cible : VM-203 - Agent-Debian-Caw
 // 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-// 📦 Version      : 1.3.1
-// 📅 Date         : 2026-10-30
+// 📦 Version      : 1.7.1-beta.1
+// 📅 Date         : 2026-11-03
 // 🤖 LLM utilisé  : Gemini / Antigravity (DÉDALE)
 // ==============================================================================
 // 📋 CHANGELOG (antéchronologique)
+//   - 🆙 v1.7.1-beta.1 (2026-11-03) : Support bundle v1.7.1-beta.1 avec contour en pointillé et halo léger pour custom:halo-fold-card.
+//   - 🆙 v1.7.0-beta.1 (2026-11-03) : Support bundle v1.7.0-beta.1 (évolutions tripartite et subtle_inactive de custom:halo-button-card).
+//   - 🆙 v1.6.0-beta.5 (2026-11-02) : Support bundle v1.6.0-beta.5 avec extension à 10 cartes Web Components
+//                                     (custom:halo-counter-card) et ajustement du plafond à 230 000 octets.
+//   - 🆙 v1.6.0-beta.2 (2026-11-02) : Support bundle v1.6.0-beta.2 (améliorations halo-scene-card).
+//   - 🆙 v1.6.0-beta.1 (2026-11-02) : Support bundle v1.6.0-beta.1 avec extension à 9 cartes Web Components
+//                                     (custom:halo-fold-card) et ajustement du plafond à 200 000 octets.
+//   - 🆙 v1.5.2 (2026-11-02) : Support bundle v1.5.2 avec extension à 8 cartes Web Components (custom:halo-markdown-card)
+//                              et ajustement du plafond à 180 000 octets.
+//   - 🆙 v1.5.1 (2026-11-01) : Support bundle v1.5.1 avec validation continue des 11 blocs CSS.
+//   - 🆙 v1.5.0 (2026-11-01) : Ajustement du plafond budgétaire MAX_BUNDLE_BYTES à 160 000 octets (160 Ko)
+//                              pour accompagner l'extension du bundle à 7 composants (custom:halo-scene-card).
 //   - 🩹 v1.3.1 (2026-10-30) : Prise en charge des blocs <style> interpolés purs (${...})
 //                              dans validateCssAssertions (retour audit QA SENTINELLE).
 //   - 🆕 v1.3.1 (2026-10-30) : Création initiale du script de minification sécurisé
@@ -22,7 +34,7 @@ const fs = require('fs');
 const path = require('path');
 const terser = require('terser');
 
-const MAX_BUNDLE_BYTES = 128000; // Limite stricte pour ressources inline / stockage Lovelace
+const MAX_BUNDLE_BYTES = 240000; // Limite adaptée pour 10 cartes Web Components complètes et enclos fold
 const INPUT_PATH = path.resolve(__dirname, '../dist/halo-button-card.js');
 const OUTPUT_PATH = path.resolve(__dirname, '../dist/halo-button-card.min.js');
 

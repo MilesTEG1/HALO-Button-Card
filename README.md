@@ -218,9 +218,82 @@ tap_action:
     entity_id: scene.living_room_cinema
 ```
 
+```yaml
+# Example 3: External linked entity with automatic date formatting
+type: custom:halo-button-card
+name: Prolonged Absence
+label: Return scheduled
+icon: mdi:airplane-takeoff
+color: Orange Flamme
+entity: input_boolean.mode_absence_prolongee
+linked_entity: input_datetime.date_retour_absence
+display_format: date_time_fr
+```
+
+#### Supported Configuration Options:
+
+| Field | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `name` / `title` | `string` | *optional* | Primary card title. |
+| `label` / `subtitle` | `string` | *optional* | Subtitle or muted description. |
+| `icon` | `string` | `mdi:gesture-tap-button` | MDI icon shown in the Liquid Glass button square. |
+| `layout` | `string` | `horizontal` | Layout: `horizontal` (wide) or `vertical` (compact square). |
+| `text_align` | `string` | *auto* | Alignment: `left`, `center`, `right`. |
+| `color` / `halo_color` | `string` | *theme* | Card, icon and specular halo color (HALO name or Hex). |
+| `state_colors` | `boolean` | `false` | Enable state-based colors (`color_on` when active, `color_off` when inactive). |
+| `color_on` | `string` | `color` / *theme* | Halo color when entity is active (HALO name, Hex or `'theme'`). |
+| `color_off` | `string` | `#64748b` | Halo color when entity is inactive (HALO name, Hex or `'theme'`). |
+| `entity` | `string` | *optional* | Primary entity for state monitoring, halo tint and toggle. |
+| `linked_entity` | `string` | *optional* | Secondary linked entity displayed in subtitle. |
+| `linked_attribute` | `string` | *optional* | Specific attribute of linked entity to display. |
+| `display_format` | `string` | `raw` | Formatting: `raw`, `date_short`, `date_long`, `date_time_fr`, `time_only`, `relative`. |
+| `tap_action` | `object` | *toggle* | Tap action on card. |
+| `hold_action` | `object` | *none* | Hold action (500 ms) on card. |
+| `double_tap_action` | `object` | *none* | Double tap action on card. |
+| `icon_tap_action` | `object` | *optional* | Distinct action triggered exclusively when tapping the icon button. |
+| `sub_buttons` | `array` | *none* | List of embedded sub-buttons (`icon`, `badge`, `color`, `tap_action`, etc.). |
+
 ---
 
-### 5. `custom:halo-cover-color-card`
+### 5. `custom:halo-scene-card`
+
+Turnkey Liquid Glass scene & ambiance tile for direct multi-target light and cover orchestration without any Home Assistant backend scripts.
+
+```yaml
+type: custom:halo-scene-card
+name: Cinema Ambiance
+icon: mdi:movie-open
+color: Améthyste
+mode: individual
+targets:
+  - entity: light.living_room_ceiling
+    domain: light
+    brightness_pct: 20
+    color_temp_kelvin: 2200
+  - entity: light.tv_led_strip
+    domain: light
+    brightness_pct: 60
+    rgb_color: [255, 140, 20]
+  - entity: cover.living_room_shutter
+    domain: cover
+    position: 0
+```
+
+#### Supported Configuration Options:
+
+| Field | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `name` | `string` | `Ambiance HALO` | Custom scene card title. |
+| `icon` | `string` | `mdi:palette-swatch-outline` | Custom MDI icon. |
+| `color` | `string` | `Améthyste` | Halo accent color name or HEX. |
+| `mode` | `string` | `individual` | `individual` (per-target presets) or `common` (shared brightness/position). |
+| `targets` | `array` | `[]` | List of target light & cover configurations. |
+| `theme_entity` | `string` | *optional* | `input_select` driving view/dashboard colors. |
+| `border_width` | `number` | `1.5` | Halo border width (0 to 3 px). |
+
+---
+
+### 6. `custom:halo-cover-color-card`
 
 Turnkey 2×2 grid card for configuring shutter state colors (*Closed*, *Partial*, *Open*, *Moving*) with glowing dots and state icons.
 
@@ -236,7 +309,7 @@ moving_entity: input_text.couleur_volet_en_mouvement
 
 ---
 
-### 6. `custom:halo-palette-card`
+### 7. `custom:halo-palette-card`
 
 Official HALO 16-color theme palette selector in a responsive 2×8 grid with active check badges and instant `input_select` synchronization.
 
@@ -245,6 +318,34 @@ type: custom:halo-palette-card
 entity: input_select.couleur_theme_eclairages
 columns: 2
 ```
+
+---
+
+### 8. `custom:halo-markdown-card`
+
+Frosted Liquid Glass markdown callout card with customizable neon accent bar and horizontal gradient. Supports rich Markdown and live Jinja2 template rendering without requiring `card_mod`.
+
+```yaml
+type: custom:halo-markdown-card
+theme_entity: input_select.couleur_theme_chauffage
+content: |
+  💡 **Automatic Return Operation:**  
+  • **During absence:** Baseline at **17.0 °C** on all radiators.  
+  • **Return day (00:00 - 06:00):** Deep warmup at **20.0 °C** during Off-Peak hours.
+```
+
+#### Supported Configuration Options:
+
+| Field | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `content` | `string` | **required** | Rich Markdown text or Jinja2 template. |
+| `title` | `string` | *optional* | Title displayed above the callout box. |
+| `color` | `string` | `'theme'` | Master accent color name or HEX. |
+| `bar_color` | `string` | inherited | Specific color for the left accent bar. |
+| `gradient_color` | `string` | inherited | Specific color for the horizontal gradient. |
+| `bar_width` | `number` | `4` | Left bar thickness in pixels (0 to 8 px). |
+| `border_radius` | `number` | `12` | Corner border radius in pixels. |
+| `theme_entity` | `string` | *optional* | `input_select` driving view/dashboard colors. |
 
 ---
 
