@@ -4,11 +4,14 @@
  * 📝 Description   : Définitions des types et interfaces TypeScript pour HALO Button Card
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.7.1-beta.1
- * 📅 Date         : 2026-11-03
+ * 📦 Version      : 1.8.0-beta.2
+ * 📅 Date         : 2026-11-11
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🆕 v1.8.0-beta.2 (2026-11-11) : Ajout de l'interface HaloMarketplaceCardConfig pour
+ *                                     le composant Web custom:halo-marketplace-card
+ *                                     (gestionnaire et rafraîchissement des dépôts Marketplace).
  *   - 🌟 v1.7.1-beta.1 (2026-11-03) : Ajout dans HaloFoldCardConfig des propriétés de contour
  *                                     en pointillé et halo néon léger paramétrables (show_border,
  *                                     border_style, border_width, border_color, show_halo, halo_color,
@@ -346,6 +349,28 @@ export interface HaloCounterCardConfig {
   tap_action?: ActionConfig;
   hold_action?: ActionConfig;
   double_tap_action?: ActionConfig;
+}
+
+export interface HaloMarketplaceCardConfig {
+  type: string;
+  title?: string;
+  icon?: string;
+  color?: string | [number, number, number];
+  theme_color?: string | [number, number, number];
+  theme_entity?: string;
+  border_width?: number;
+  all_action?: {
+    service?: string;
+    data?: Record<string, any>;
+  };
+  selection_action?: {
+    service?: string;
+    data?: Record<string, any>;
+  };
+  pinned_repositories?: string[];
+  show_search?: boolean;
+  show_select_all?: boolean;
+  max_height?: number | string;
 }
 
 export interface VoletTrack {
