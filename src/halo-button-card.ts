@@ -7,11 +7,16 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.8.0-beta.1
- * 📅 Date         : 2026-11-05
+ * 📦 Version      : 1.8.0-beta.2
+ * 📅 Date         : 2026-11-11
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - 🆕 v1.8.0-beta.2 (2026-11-11) : Intégration de custom:halo-marketplace-card :
+ *                                     - Gestionnaire Liquid Glass du Marketplace Home Assistant.
+ *                                     - Double mode de rafraîchissement : Global et Sélectif multi-dépôts.
+ *                                     - Support des dépôts prioritaires épinglés (HALO, HOLM, HA-MCP).
+ *                                     - Filtre instantané et surcharges YAML des actions.
  *   - 🎨 v1.8.0-beta.1 (2026-11-05) : Intégration de la roue chromatique interactive :
  *                                     - Roue de sélection Canvas HSL/HSV sur custom:halo-cover-color-card.
  *                                     - Slider de luminosité dynamique et pipette native.
@@ -93,13 +98,15 @@ import { HaloFoldCard } from './components/halo-fold-card';
 import { HaloFoldCardEditor } from './editors/halo-fold-card-editor';
 import { HaloCounterCard } from './components/halo-counter-card';
 import { HaloCounterCardEditor } from './editors/halo-counter-card-editor';
+import { HaloMarketplaceCard } from './components/halo-marketplace-card';
+import { HaloMarketplaceCardEditor } from './editors/halo-marketplace-card-editor';
 
 import { voletHelperInstance } from './core/volet-helper';
 import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.8.0-beta.1';
+const VERSION = '1.8.0-beta.2';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -191,6 +198,13 @@ window.customCards.push({
   preview: true
 });
 
+window.customCards.push({
+  type: 'halo-marketplace-card',
+  name: 'HALO Marketplace Card',
+  description: 'Turnkey Liquid Glass marketplace manager with global and selective repository refresh.',
+  preview: true
+});
+
 // Register Web Component custom elements
 if (!customElements.get('halo-button-card')) {
   customElements.define('halo-button-card', HaloButtonCard);
@@ -262,6 +276,13 @@ if (!customElements.get('halo-counter-card-editor')) {
   customElements.define('halo-counter-card-editor', HaloCounterCardEditor);
 }
 
+if (!customElements.get('halo-marketplace-card')) {
+  customElements.define('halo-marketplace-card', HaloMarketplaceCard);
+}
+if (!customElements.get('halo-marketplace-card-editor')) {
+  customElements.define('halo-marketplace-card-editor', HaloMarketplaceCardEditor);
+}
+
 // Export for external consumers
 export {
   HaloButtonCard,
@@ -284,6 +305,8 @@ export {
   HaloFoldCardEditor,
   HaloCounterCard,
   HaloCounterCardEditor,
+  HaloMarketplaceCard,
+  HaloMarketplaceCardEditor,
   voletHelperInstance,
   lightHelper,
   themeHelper,

@@ -6,11 +6,13 @@
 //                    scrupuleusement la ponctuation {}:;,>+~.
 // 🖥️  Machine cible : VM-203 - Agent-Debian-Caw
 // 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
-// 📦 Version      : 2.0.0
-// 📅 Date         : 2026-11-05
+// 📦 Version      : 2.1.0
+// 📅 Date         : 2026-11-11
 // 🤖 LLM utilisé  : Gemini / Antigravity (DÉDALE)
 // ==============================================================================
 // 📋 CHANGELOG (antéchronologique)
+//   - 🆙 v2.1.0 (2026-11-11) : Extension à 11 cartes Web Components avec custom:halo-marketplace-card
+//                              et ajustement du plafond MAX_BUNDLE_BYTES à 280 000 octets.
 //   - 🆙 v2.0.0 (2026-11-05) : Support de la roue chromatique interactive (Color Wheel Canvas)
 //                              sur custom:halo-cover-color-card et ajustement du plafond à 260 000 octets.
 //   - 🆙 v1.7.1-beta.1 (2026-11-03) : Support bundle v1.7.1-beta.1 avec contour en pointillé et halo léger pour custom:halo-fold-card.
@@ -36,7 +38,7 @@ const fs = require('fs');
 const path = require('path');
 const terser = require('terser');
 
-const MAX_BUNDLE_BYTES = 260000; // Limite adaptée pour 10 cartes Web Components et roue chromatique interactive
+const MAX_BUNDLE_BYTES = 280000; // Limite adaptée pour 11 cartes Web Components (custom:halo-marketplace-card)
 const INPUT_PATH = path.resolve(__dirname, '../dist/halo-button-card.js');
 const OUTPUT_PATH = path.resolve(__dirname, '../dist/halo-button-card.min.js');
 
