@@ -101,7 +101,7 @@ export class HaloMarketplaceCard extends HTMLElement {
     }
     this._config = {
       title: 'Marketplace & Dépôts Custom',
-      icon: 'mdi:store-refresh',
+      icon: 'mdi:storefront-outline',
       theme_color: 'Cyan',
       border_width: 1,
       show_search: true,
@@ -306,7 +306,7 @@ export class HaloMarketplaceCard extends HTMLElement {
       btnAll.disabled = this._isLoadingAll;
       btnAll.innerHTML = this._isLoadingAll
         ? `<span class="spinner"></span> Rechargement du Marketplace en cours...`
-        : `<ha-icon icon="mdi:store-refresh"></ha-icon> Tout rafraîchir le Marketplace`;
+        : `<ha-icon icon="mdi:sync"></ha-icon> Tout rafraîchir le Marketplace`;
     }
 
     if (btnSel) {
@@ -744,7 +744,7 @@ export class HaloMarketplaceCard extends HTMLElement {
         <!-- En-tête -->
         <div class="card-header">
           <div class="header-title-box">
-            <ha-icon class="header-icon" icon="${this._config.icon || 'mdi:store-refresh'}"></ha-icon>
+            <ha-icon class="header-icon" icon="${this._config.icon || 'mdi:storefront-outline'}"></ha-icon>
             <div class="card-title">${this._config.title || 'Marketplace & Dépôts Custom'}</div>
           </div>
           <div class="header-badge" id="total-badge">${totalCount} dépôts</div>
@@ -755,7 +755,7 @@ export class HaloMarketplaceCard extends HTMLElement {
 
         <!-- Bouton Global : Tout rafraîchir -->
         <button id="btn-reload-all" class="action-primary-btn">
-          <ha-icon icon="mdi:store-refresh"></ha-icon>
+          <ha-icon icon="mdi:sync"></ha-icon>
           Tout rafraîchir le Marketplace
         </button>
 
