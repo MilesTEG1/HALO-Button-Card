@@ -7,11 +7,20 @@
  *                    et exportation des composants et moteurs d'aide.
  * 🖥️  Machine cible : Navigateur Web / Home Assistant Lovelace
  * 👤 Auteur       : Pierrick / DÉDALE (Escouade Homelab)
- * 📦 Version      : 1.8.0-beta.1
- * 📅 Date         : 2026-11-05
+ * 📦 Version      : 1.8.0-beta.3
+ * 📅 Date         : 2026-11-17
  * 🤖 LLM utilisé  : Gemini / Claude via Antigravity CLI
  * ==============================================================================
  * 📋 CHANGELOG (antéchronologique)
+ *   - ✨ v1.8.0-beta.3 (2026-11-17) : Ajout des icônes MDI dans window.customCards :
+ *                                     - Déclaration de la propriété icon pour chaque carte dans le sélecteur Lovelace.
+ *                                     - halo-button-card : mdi:gesture-tap-button.
+ *                                     - Harmonisation des 10 autres cartes (Light, Cover, Scene, Separator, etc.).
+ *   - 🆕 v1.8.0-beta.2 (2026-11-11) : Intégration de custom:halo-marketplace-card :
+ *                                     - Gestionnaire Liquid Glass du Marketplace Home Assistant.
+ *                                     - Double mode de rafraîchissement : Global et Sélectif multi-dépôts.
+ *                                     - Support des dépôts prioritaires épinglés (HALO, HOLM, HA-MCP).
+ *                                     - Filtre instantané et surcharges YAML des actions.
  *   - 🎨 v1.8.0-beta.1 (2026-11-05) : Intégration de la roue chromatique interactive :
  *                                     - Roue de sélection Canvas HSL/HSV sur custom:halo-cover-color-card.
  *                                     - Slider de luminosité dynamique et pipette native.
@@ -93,13 +102,15 @@ import { HaloFoldCard } from './components/halo-fold-card';
 import { HaloFoldCardEditor } from './editors/halo-fold-card-editor';
 import { HaloCounterCard } from './components/halo-counter-card';
 import { HaloCounterCardEditor } from './editors/halo-counter-card-editor';
+import { HaloMarketplaceCard } from './components/halo-marketplace-card';
+import { HaloMarketplaceCardEditor } from './editors/halo-marketplace-card-editor';
 
 import { voletHelperInstance } from './core/volet-helper';
 import * as lightHelper from './core/light-helper';
 import * as themeHelper from './core/theme-helper';
 import * as actionHandler from './core/action-handler';
 
-const VERSION = '1.8.0-beta.1';
+const VERSION = '1.8.0-beta.3';
 
 console.info(
   `%c  HALO-BUTTON-CARD  %c v${VERSION} `,
@@ -115,6 +126,7 @@ declare global {
       name: string;
       description: string;
       preview?: boolean;
+      icon?: string;
     }>;
   }
 }
@@ -125,70 +137,88 @@ window.customCards.push({
   type: 'halo-button-card',
   name: 'HALO Button Card',
   description: 'Polyvalent Liquid Glass button with specular glow, horizontal/vertical layouts, external entity linking and sub-buttons.',
-  preview: true
+  preview: true,
+  icon: 'mdi:gesture-tap-button'
 });
 
 window.customCards.push({
   type: 'halo-scene-card',
   name: 'HALO Scene Card',
   description: 'Turnkey Liquid Glass scene & ambiance tile for direct multi-target light and cover control without HA scripts.',
-  preview: true
+  preview: true,
+  icon: 'mdi:palette-outline'
 });
 
 window.customCards.push({
   type: 'halo-light-card',
   name: 'HALO Light Card',
   description: 'Turnkey unified lighting tile with HALO glass styling, dynamic halo, brightness and kelvin sub-buttons.',
-  preview: true
+  preview: true,
+  icon: 'mdi:lightbulb-outline'
 });
 
 window.customCards.push({
   type: 'halo-cover-card',
   name: 'HALO Cover Card',
   description: 'Turnkey roller shutter card with Liquid Glass styling and dynamic glowing halo.',
-  preview: true
+  preview: true,
+  icon: 'mdi:window-shutter'
 });
 
 window.customCards.push({
   type: 'halo-separator-card',
   name: 'HALO Separator Card',
   description: 'Sleek section divider with neon gradient line, collapsible toggle button and built-in legend drawer.',
-  preview: true
+  preview: true,
+  icon: 'mdi:view-headline'
 });
 
 window.customCards.push({
   type: 'halo-cover-color-card',
   name: 'HALO Cover Color Card',
   description: 'Interactive 2x2 grid for configuring shutter state colors with glowing dots, HEX codes and state icons.',
-  preview: true
+  preview: true,
+  icon: 'mdi:window-shutter-cog'
 });
 
 window.customCards.push({
   type: 'halo-palette-card',
   name: 'HALO Palette Card',
   description: 'Official 16-color HALO theme palette picker with glowing halos and active check badges.',
-  preview: true
+  preview: true,
+  icon: 'mdi:palette-swatch-outline'
 });
 
 window.customCards.push({
   type: 'halo-markdown-card',
   name: 'HALO Markdown Card',
   description: 'Turnkey Liquid Glass markdown callout with customizable neon accent bar and horizontal gradient.',
-  preview: true
+  preview: true,
+  icon: 'mdi:language-markdown'
 });
 
 window.customCards.push({
   type: 'halo-fold-card',
   name: 'HALO Fold Card',
   description: 'Turnkey collapsible Liquid Glass container card with neon gradient header, badge counter and child cards drawer.',
-  preview: true
+  preview: true,
+  icon: 'mdi:arrow-collapse-vertical'
 });
 
 window.customCards.push({
   type: 'halo-counter-card',
   name: 'HALO Counter Card',
   description: 'Turnkey Liquid Glass summary & counter card for roller shutters (4 states + movement) and window/door openings (open & fault pills).',
-  preview: true
+  preview: true,
+  icon: 'mdi:counter'
+});
+
+window.customCards.push({
+  type: 'halo-marketplace-card',
+  name: 'HALO Marketplace Card',
+  description: 'Turnkey Liquid Glass marketplace manager with global and selective repository refresh.',
+  preview: true,
+  icon: 'mdi:storefront-outline'
 });
 
 // Register Web Component custom elements
@@ -262,6 +292,13 @@ if (!customElements.get('halo-counter-card-editor')) {
   customElements.define('halo-counter-card-editor', HaloCounterCardEditor);
 }
 
+if (!customElements.get('halo-marketplace-card')) {
+  customElements.define('halo-marketplace-card', HaloMarketplaceCard);
+}
+if (!customElements.get('halo-marketplace-card-editor')) {
+  customElements.define('halo-marketplace-card-editor', HaloMarketplaceCardEditor);
+}
+
 // Export for external consumers
 export {
   HaloButtonCard,
@@ -284,6 +321,8 @@ export {
   HaloFoldCardEditor,
   HaloCounterCard,
   HaloCounterCardEditor,
+  HaloMarketplaceCard,
+  HaloMarketplaceCardEditor,
   voletHelperInstance,
   lightHelper,
   themeHelper,

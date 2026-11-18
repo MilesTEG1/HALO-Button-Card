@@ -8,7 +8,7 @@
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2026.svg
 [releases-shield]: https://img.shields.io/github/release/MilesTEG1/HALO-Button-Card.svg
 [releases]: https://github.com/MilesTEG1/HALO-Button-Card/releases/latest
-[releases-dev-shield]: https://img.shields.io/github/package-json/v/MilesTEG1/HALO-Button-Card/dev?label=release%40dev
+[releases-dev-shield]: https://img.shields.io/github/v/release/MilesTEG1/HALO-Button-Card?include_prereleases&label=release%40dev
 [releases-dev]: https://github.com/MilesTEG1/HALO-Button-Card/releases
 [hacs-badge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg
 [downloads]: https://img.shields.io/github/downloads/MilesTEG1/HALO-Button-Card/total
