@@ -3,13 +3,17 @@
 
 version: 2
 updates:
-  # Surveillance hebdomadaire des dépendances npm (package.json / package-lock.json)
+  # Surveillance des dependances npm (package.json / package-lock.json)
+  # open-pull-requests-limit: 0 desactive l'ouverture de PRs de confort/version
+  # pour eviter qu'elles ne soient supprimees en boucle par le miroir de pousse Forgejo.
+  # La surveillance active et les alertes de securite (CVE / Dependabot alerts)
+  # sont pleinement preservees dans l'onglet Security de GitHub.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     ignore:
-      # TypeScript 7 (compilateur Go natif) ne supporte pas encore l'API programmatique JS utilisée par @rollup/plugin-typescript
+      # TypeScript 7 (compilateur Go natif) ne supporte pas encore l'API programmatique JS utilisee par @rollup/plugin-typescript
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
